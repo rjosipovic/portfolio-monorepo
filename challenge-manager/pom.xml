@@ -95,7 +95,37 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-		</plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/ChallengeManagerApplication.class</exclude>
+                                <exclude>com/playground/challenge_manager/config/**/*</exclude>
+                                <exclude>com/playground/challenge_manager/dto/**/*</exclude>
+                                <exclude>com/playground/challenge_manager/domain/**/*</exclude>
+                                <exclude>com/playground/challenge_manager/exception/**/*</exclude>
+                                <exclude>com/playground/challenge_manager/auth/**/*</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
 	</build>
 
 </project>

@@ -103,7 +103,36 @@
 					</excludes>
 				</configuration>
 			</plugin>
-		</plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>com/playground/analytics_manager/config/**/*</exclude>
+                                <exclude>com/playground/analytics_manager/outbound/api/dto/**/*</exclude>
+                                <exclude>com/playground/analytics_manager/outbound/auth/**/*</exclude>
+                                <exclude>com/playground/analytics_manager/outbound/errors/**/*</exclude>
+                                <exclude>**/AnalyticsManagerApplication.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
 	</build>
 
 </project>

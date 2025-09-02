@@ -111,6 +111,43 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/UserManagerApplication.class</exclude>
+                                <exclude>com/playground/user_manager/config/**/*</exclude>
+                                <exclude>com/playground/user_manager/log/**/*</exclude>
+                                <exclude>com/playground/user_manager/errors/**/*</exclude>
+                                <exclude>com/playground/user_manager/messaging/**/*</exclude>
+                                <exclude>com/playground/user_manager/auth/api/dto/**/*</exclude>
+                                <exclude>com/playground/user_manager/auth/filters/**/*</exclude>
+                                <exclude>com/playground/user_manager/auth/messaging/**/*</exclude>
+                                <exclude>com/playground/user_manager/user/api/dto/**/*</exclude>
+                                <exclude>com/playground/user_manager/user/api/validation/**/*</exclude>
+                                <exclude>com/playground/user_manager/user/dataaccess/UserEntity.class</exclude>
+                                <exclude>com/playground/user_manager/user/model/**/*</exclude>
+                                <exclude>com/playground/user_manager/user/messaging/**/*</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

@@ -1,5 +1,6 @@
 package com.playground.analytics_manager.outbound.api.controllers;
 
+import com.playground.analytics_manager.config.CorsConfig;
 import com.playground.analytics_manager.config.SecurityConfig;
 import com.playground.analytics_manager.outbound.api.dto.UserSuccessRate;
 import com.playground.analytics_manager.outbound.auth.AuthConfig;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @AutoConfigureJsonTesters
 @WebMvcTest(StatisticsController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, CorsConfig.class})
 class StatisticsControllerTest {
 
     @Autowired
