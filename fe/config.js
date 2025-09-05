@@ -1,5 +1,8 @@
-const CHALLENGE_MANAGER = 'http://localhost:8080/';
-const USER_MANAGER = 'http://localhost:8081/';
-const GAMIFICATION_MANAGER = 'http://localhost:8082/' 
-const NOTIFICATION_MANAGER = 'http://localhost:8083/'
-const ANALYTICS_MANAGER = 'http://localhost:8084/';
+const PROTOCOL = 'http';
+const HOST = 'localhost';
+
+const CHALLENGE_MANAGER = PROTOCOL + '://' + HOST + ':8080/';
+const USER_MANAGER = PROTOCOL + '://' + HOST + ':8081/';
+const GAMIFICATION_MANAGER = PROTOCOL + '://' + HOST + ':8082/';
+const NOTIFICATION_MANAGER = PROTOCOL + '://' + HOST + ':8083/';
+const ANALYTICS_MANAGER = PROTOCOL + '://' + HOST + ':8084/';
