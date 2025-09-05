@@ -13,5 +13,5 @@ public class StatisticsUpdate {
     String userId;
     String game;
     String difficulty;
-    boolean success;
+    Boolean success;
 }
