@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Movie Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-purple-800 to-indigo-800 p-4 shadow-lg rounded-b-lg mx-2 mt-2">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-white tracking-wide">
+                My Movie Hub
+            </h1>
+            <!-- Navigation -->
+            <nav>
+                <ul class="flex space-x-4">
+                    <li>
+                        <a href="#" id="nav-home" class="text-white hover:text-purple-200 transition duration-300 ease-in-out">Home</a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-movies" class="text-white hover:text-purple-200 transition duration-300 ease-in-out">Movies</a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-actors" class="text-white hover:text-purple-200 transition duration-300 ease-in-out">Actors</a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-directors" class="text-white hover:text-purple-200 transition duration-300 ease-in-out">Directors</a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-characters" class="text-white hover:text-purple-200 transition duration-300 ease-in-out">Characters</a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-about" class="text-white hover:text-purple-200 transition duration-300 ease-in-out">About</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container mx-auto p-4 flex-grow">
+
+        <!-- Home View -->
+        <section id="home-view" class="view-section active text-center py-16">
+            <h2 class="text-5xl font-extrabold text-white mb-6 animate-fade-in">
+                Welcome to My Movie Hub!
+            </h2>
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto animate-slide-up">
+                Your ultimate destination for discovering movies and exploring your favorite actors, directors, and characters.
+            </p>
+            <!-- SVG Logo for Movie Hub -->
+            <div class="mx-auto w-full max-w-lg mb-8 animate-zoom-in">
+                <svg viewBox="0 0 200 100" class="w-full h-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="10" y="10" width="180" height="80" rx="15" fill="#4C1D95" stroke="#8B5CF6" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="30" fill="#6D28D9"/>
+                    <circle cx="150" cy="50" r="30" fill="#6D28D9"/>
+                    <path d="M50 20 L50 80 M50 20 L150 20 M150 20 L150 80 M150 80 L50 80" stroke="#C4B5FD" stroke-width="4" stroke-linecap="round"/>
+                    <polygon points="90,40 110,50 90,60" fill="#FDE047"/>
+                    <text x="100" y="58" font-family="Inter, sans-serif" font-size="20" font-weight="bold" fill="#FFFFFF" text-anchor="middle">HUB</text>
+                </svg>
+            </div>
+            <div class="mt-10 flex flex-wrap justify-center gap-4">
+                <button id="home-to-movies" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    Explore Movies
+                </button>
+                <button id="home-to-actors" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    Meet Actors
+                </button>
+                <button id="home-to-directors" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    Discover Directors
+                </button>
+                <button id="home-to-characters" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                    Find Characters
+                </button>
+            </div>
+        </section>
+
+        <!-- Movies View -->
+        <section id="movies-view" class="view-section py-8">
+            <h2 class="text-4xl font-extrabold text-center mb-8 text-white">
+                Featured Movies
+            </h2>
+
+            <!-- Search and Filter Section for Movies -->
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
+                <input
+                    type="text"
+                    id="movie-search-input"
+                    placeholder="Search movies by title..."
+                    class="w-full sm:w-1/2 md:w-1/3 p-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <select
+                    id="genre-filter"
+                    class="w-full sm:w-auto p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                    <option value="all">All Genres</option>
+                    <option value="action">Action</option>
+                    <option value="adventure">Adventure</option>
+                    <option value="sci-fi">Sci-fi</option>
+                    <option value="mystery">Mystery</option>
+                    <option value="drama">Drama</option>
+                </select>
+            </div>
+
+            <!-- Movie Grid Container -->
+            <div id="movie-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Movie cards will be injected here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Movie Detail View -->
+        <section id="movie-detail-view" class="view-section py-8 justify-center items-start">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-3xl flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3 flex-shrink-0">
+                    <img id="movie-detail-image" src="" alt="Movie Poster" class="w-full h-auto rounded-lg shadow-md mb-4 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x600/6B7280/FFFFFF?text=No+Image';">
+                </div>
+                <div class="md:w-2/3 text-left">
+                    <h2 id="movie-detail-title" class="text-4xl font-extrabold text-white mb-4"></h2>
+                    <p id="movie-detail-genre" class="text-purple-400 text-lg mb-2"></p>
+                    <p id="movie-detail-description" class="text-gray-300 text-base leading-relaxed mb-6"></p>
+                    <button id="back-to-movies-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                        ← Back to Movies
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actors View -->
+        <section id="actors-view" class="view-section py-8">
+            <h2 class="text-4xl font-extrabold text-center mb-8 text-white">
+                Meet the Actors
+            </h2>
+
+            <!-- Search Section for Actors -->
+            <div class="flex justify-center items-center mb-8">
+                <input
+                    type="text"
+                    id="actor-search-input"
+                    placeholder="Search actors by name..."
+                    class="w-full sm:w-1/2 md:w-1/3 p-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+            </div>
+
+            <!-- Actor Grid Container -->
+            <div id="actor-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Actor cards will be injected here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Actor Detail View -->
+        <section id="actor-detail-view" class="view-section py-8 justify-center items-start">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-3xl flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3 flex-shrink-0 flex justify-center">
+                    <img id="actor-detail-image" src="" alt="Actor Photo" class="w-48 h-48 object-cover rounded-full shadow-md mb-4 border-4 border-indigo-500" onerror="this.onerror=null;this.src='https://placehold.co/400x600/6B7280/FFFFFF?text=No+Image';">
+                </div>
+                <div class="md:w-2/3 text-left">
+                    <h2 id="actor-detail-name" class="text-4xl font-extrabold text-white mb-4"></h2>
+                    <p id="actor-detail-bio" class="text-gray-300 text-base leading-relaxed mb-6"></p>
+                    <button id="back-to-actors-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                        ← Back to Actors
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Directors View -->
+        <section id="directors-view" class="view-section py-8">
+            <h2 class="text-4xl font-extrabold text-center mb-8 text-white">
+                Visionary Directors
+            </h2>
+
+            <!-- Search Section for Directors -->
+            <div class="flex justify-center items-center mb-8">
+                <input
+                    type="text"
+                    id="director-search-input"
+                    placeholder="Search directors by name..."
+                    class="w-full sm:w-1/2 md:w-1/3 p-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+            </div>
+
+            <!-- Director Grid Container -->
+            <div id="director-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Director cards will be injected here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Director Detail View -->
+        <section id="director-detail-view" class="view-section py-8 justify-center items-start">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-3xl flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3 flex-shrink-0 flex justify-center">
+                    <img id="director-detail-image" src="" alt="Director Photo" class="w-48 h-48 object-cover rounded-full shadow-md mb-4 border-4 border-emerald-500" onerror="this.onerror=null;this.src='https://placehold.co/400x600/6B7280/FFFFFF?text=No+Image';">
+                </div>
+                <div class="md:w-2/3 text-left">
+                    <h2 id="director-detail-name" class="text-4xl font-extrabold text-white mb-4"></h2>
+                    <p id="director-detail-bio" class="text-gray-300 text-base leading-relaxed mb-6"></p>
+                    <button id="back-to-directors-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                        ← Back to Directors
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Characters View -->
+        <section id="characters-view" class="view-section py-8">
+            <h2 class="text-4xl font-extrabold text-center mb-8 text-white">
+                Iconic Movie Characters
+            </h2>
+
+            <!-- Search Section for Characters -->
+            <div class="flex justify-center items-center mb-8">
+                <input
+                    type="text"
+                    id="character-search-input"
+                    placeholder="Search characters by name..."
+                    class="w-full sm:w-1/2 md:w-1/3 p-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+            </div>
+
+            <!-- Character Grid Container -->
+            <div id="character-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Character cards will be injected here by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Character Detail View -->
+        <section id="character-detail-view" class="view-section py-8 justify-center items-start">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-3xl flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3 flex-shrink-0 flex justify-center">
+                    <img id="character-detail-image" src="" alt="Character Photo" class="w-48 h-48 object-cover rounded-full shadow-md mb-4 border-4 border-yellow-500" onerror="this.onerror=null;this.src='https://placehold.co/400x600/6B7280/FFFFFF?text=No+Image';">
+                </div>
+                <div class="md:w-2/3 text-left">
+                    <h2 id="character-detail-name" class="text-4xl font-extrabold text-white mb-4"></h2>
+                    <p id="character-detail-movie" class="text-yellow-400 text-lg mb-2"></p>
+                    <p id="character-detail-description" class="text-gray-300 text-base leading-relaxed mb-6"></p>
+                    <button id="back-to-characters-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                        ← Back to Characters
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- About View -->
+        <section id="about-view" class="view-section text-center py-16">
+            <h2 class="text-4xl font-extrabold text-white mb-6">
+                About My Movie Hub
+            </h2>
+            <p class="text-lg text-gray-300 mb-4 max-w-3xl mx-auto">
+                My Movie Hub is your go-to destination for discovering and exploring a vast collection of movies, talented actors, visionary directors, and iconic movie characters. We aim to provide a simple, intuitive, and enjoyable experience for movie enthusiasts.
+            </p>
+            <p class="text-lg text-gray-300 mb-8 max-w-3xl mx-auto">
+                Whether you're looking for the latest blockbusters, timeless classics, or want to learn more about your favorite stars, My Movie Hub has you covered.
+            </p>
+            <p class="text-xl font-semibold text-white mb-4">
+                Contact Us:
+            </p>
+            <p class="text-lg text-blue-400 hover:text-blue-300 transition duration-300">
+                <a href="mailto:info@mymoviehub.com">info@mymoviehub.com</a>
+            </p>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 p-4 text-center text-gray-400 rounded-t-lg mx-2 mb-2">
+        <p>&copy; <span id="current-year"></span> My Movie Hub. All rights reserved.</p>
+    </footer>
+
+    <!-- Link to external JavaScript file -->
+    <script src="script.js"></script>
+</body>
+</html>

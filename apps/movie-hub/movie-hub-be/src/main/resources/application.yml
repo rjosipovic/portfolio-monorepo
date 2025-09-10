@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: movie-hub
+  datasource:
+    url: jdbc:h2:mem:movie-hub-db;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+
+app: # Application-specific properties
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5500}
+    allowed-methods: GET,POST,PUT,DELETE
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin

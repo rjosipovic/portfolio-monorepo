@@ -1,0 +1,119 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "movie-hub", "version": "1.0.0" },
+  "servers": [ { "url": "http://localhost:8080" } ],
+  "paths": {
+    "/${app.api.endpoints.actors}": {
+      "get": {
+        "summary": "ActorController.getAllActors",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "summary": "ActorController.create",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.actors}/{id}": {
+      "delete": {
+        "summary": "ActorController.delete",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "get": {
+        "summary": "ActorController.getActorById",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "patch": {
+        "summary": "ActorController.patch",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "put": {
+        "summary": "ActorController.update",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.characters}": {
+      "get": {
+        "summary": "CharacterController.getAll",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "summary": "CharacterController.create",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.characters}/{id}": {
+      "delete": {
+        "summary": "CharacterController.delete",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "get": {
+        "summary": "CharacterController.getById",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "patch": {
+        "summary": "CharacterController.patch",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "put": {
+        "summary": "CharacterController.update",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.directors}": {
+      "get": {
+        "summary": "DirectorController.getAll",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "summary": "DirectorController.create",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.directors}/{id}": {
+      "delete": {
+        "summary": "DirectorController.delete",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "get": {
+        "summary": "DirectorController.getById",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "patch": {
+        "summary": "DirectorController.patch",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "put": {
+        "summary": "DirectorController.update",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.movies}": {
+      "get": {
+        "summary": "MovieController.getAllMovies",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "summary": "MovieController.create",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/${app.api.endpoints.movies}/{id}": {
+      "delete": {
+        "summary": "MovieController.delete",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "get": {
+        "summary": "MovieController.getMovieById",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "patch": {
+        "summary": "MovieController.patch",
+        "responses": { "200": { "description": "OK" } }
+      },
+      "put": {
+        "summary": "MovieController.update",
+        "responses": { "200": { "description": "OK" } }
+      }
+    }
+  }
+}

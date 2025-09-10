@@ -1,0 +1,46 @@
+/* Custom font for better aesthetics */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+/* Apply Inter font to the body */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Hide views by default, show only the active one */
+.view-section {
+    display: none;
+}
+
+.view-section.active {
+    display: block;
+}
+
+/* Basic fade-in animation for home view elements */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+}
+
+/* Slide-up animation for home view paragraph */
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.8s ease-out 0.2s forwards; /* Delayed start */
+}
+
+/* Zoom-in animation for home view image */
+@keyframes zoomIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.animate-zoom-in {
+    animation: zoomIn 1s ease-out 0.4s forwards; /* Delayed start */
+}
