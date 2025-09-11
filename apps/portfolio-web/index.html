@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roman Josipović</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font: Inter (similar to sample's clean sans-serif) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body class="text-gray-800">
+
+    <!-- Header Section -->
+    <header class="bg-white shadow-md py-4 px-6 md:px-12 fixed w-full z-10">
+        <nav class="container mx-auto flex justify-between items-center">
+            <!-- Logo/Home Link - similar to sample's simple text logo -->
+            <a href="#" class="text-2xl font-bold text-blue-600 rounded-md p-2 hover:text-blue-800 transition-colors">Roman Josipović</a>
+            <div class="hidden md:flex space-x-6">
+                <a href="#about" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+                <a href="#portfolio" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Portfolio</a>
+                <a href="#contact" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Contact</a>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 hover:text-blue-600 focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu"
+        class="fixed inset-0 bg-white bg-opacity-95 z-20 hidden flex-col items-center justify-center space-y-6 md:hidden">
+        <button id="close-mobile-menu" class="absolute top-6 right-6 text-gray-700 hover:text-blue-600 focus:outline-none">
+            <i class="fas fa-times text-3xl"></i>
+        </button>
+        <a href="#about" class="text-3xl text-gray-800 hover:text-blue-600 font-medium transition-colors py-2"
+            onclick="toggleMobileMenu()">About</a>
+        <a href="#portfolio" class="text-3xl text-gray-800 hover:text-blue-600 font-medium transition-colors py-2"
+            onclick="toggleMobileMenu()">Portfolio</a>
+        <a href="#contact" class="text-3xl text-gray-800 hover:text-blue-600 font-medium transition-colors py-2"
+            onclick="toggleMobileMenu()">Contact</a>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="hero" class="relative text-white flex items-center justify-center min-h-screen pt-16 md:pt-0 overflow-hidden">
+        <div class="hero-background"></div> <!-- Background image layer -->
+        <div class="container mx-auto text-center px-6 py-20 relative z-0">
+            <!-- Placeholder for your photo, still prominent but with background -->
+            <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-4 animate-fade-in-up delay-200"><span class="text-blue-600">Roman Josipović</span></h1>
+            <p class="text-xl md:text-2xl mb-8 opacity-90 animate-fade-in-up delay-300 text-blue-500">Software Engineer</p>
+            <a href="#portfolio" class="bg-blue-600 text-white-600 hover:bg-blue-500 transition-all duration-300 py-3 px-8 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-block animate-fade-in-up delay-400">View My Work</a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto px-6 md:px-12 text-center">
+            <h2 class="section-title mx-auto">About Me</h2>
+            <div class="flex flex-col md:flex-row items-center md:space-x-12 mt-12">
+                <div class="md:w-1/2 mb-8 md:mb-0">
+                    <!-- Placeholder for about image -->
+                    <img src="images/code.png" alt="About Me" class="rounded-lg shadow-lg w-full h-auto object-cover">
+                </div>
+                <div class="md:w-1/2 text-lg leading-relaxed text-left">
+                    <p class="mb-4">Hello! I'm Roman Josipović, a Software Engineer with 15 years of experience in java backend development.</p>
+                    <p class="mb-4">Proficient in Java, experienced with Spring Boot, skilled in PostgreSQL and Neo4j, adept with Azure cloud platforms, familiar with tools like Git and Kubernetes. Entry level in web development (html/css/js) and Angular framework.</p>
+                    <p>Career goal includes leveraging technical skills to drive innovative solutions in software development.</p>
+                    <div class="mt-8">
+                        <h3 class="text-2xl font-semibold mb-4 text-blue-600">My Expertise Includes:</h3>
+                        <div class="columns-2 space-y-4">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-800">Programming Languages</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Java
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Kotlin
+                                <div class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 15%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>JavaScript TypeScript<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 40%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Frameworks</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Spring Boot<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>JavaEE<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 65%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Angular<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 30%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Databases</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>PostgreSQL<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 75%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Neo4j<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 75%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>MongoDB<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 20%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Middleware</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>WildFly<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 60%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Redis<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 75%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>RabbitMQ<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Tools</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Git<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Intellij<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 75%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Containers</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Docker<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 65%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Kubernetes<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 20%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Design and Architecture</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Microservice architecture<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 65%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Technical analysis<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Design patterns<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 60%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        <h3 class='text-xl font-semibold mb-4 text-gray-800'>Leadership</h3>
+                        <ul class="list-none space-y-2">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Agile metodologies<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Team leadership<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 60%;"></div>
+                                </div>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Mentoring<div
+                                    class="w-full bg-gray-200 rounded-full h-2.5 mx-4">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 80%;"></div>
+                                </div>
+                            </li>
+                        </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="py-16 md:py-24 bg-gray-100">
+        <div class="container mx-auto px-6 md:px-12 text-center">
+            <h2 class="section-title mx-auto">My Portfolio</h2>
+            <p class="text-lg text-gray-700 mb-12 max-w-2xl mx-auto">Here are some of the projects I'm working on. Click to learn more!</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project Card 1 - Replicated structure from sample -->
+                <div
+                    class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <img src="https://placehold.co/600x400/a0a0a0/ffffff?text=Project+1" alt="Math Challenges"
+                        class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-gray-800" data-project-title="Math Challenges">Math Challenges</h3>
+                        <p class="text-gray-600 mb-4 text-sm" data-project-categories="Web Development, Spring Boot backend, PostgreSQL, Neo4j, Redis, RabbitMQ">Web Development, Spring Boot backend, PostgreSQL, Neo4j, Redis, RabbitMQ</p>
+                        <a href="#" class="inline-block bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">View Project <i class="fas fa-external-link-alt ml-1"></i></a>
+                    </div>
+                </div>
+                <!-- Project Card 2 -->
+                <div
+                    class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <img src="https://placehold.co/600x400/b0b0b0/ffffff?text=Project+2" alt="Movies Hub" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-gray-800" data-project-title="Movies Hub">Movies Hub</h3>
+                        <p class="text-gray-600 mb-4 text-sm" data-project-categories="Web Application, Spring Boot Backend, Neo4j">Web Application, Spring Boot Backend, Neo4j</p>
+                        <a href="#" class="inline-block bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">View Project <i class="fas fa-external-link-alt ml-1"></i></a>
+                    </div>
+                </div>
+                <!-- Project Card 3 -->
+                <div
+                    class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <img src="https://placehold.co/600x400/c0c0c0/ffffff?text=Project+3" alt="Book Hub" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-gray-800" data-project-title="Book Hub">Book Hub</h3>
+                        <p class="text-gray-600 mb-4 text-sm" data-project-categories="Web Application, Spring Boot Backend, PostgreSQL">Web Application, Spring Boot Backend, PostgreSQL</p>
+                        <a href="#" class="inline-block bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">View Project <i class="fas fa-external-link-alt ml-1"></i></a>
+                    </div>
+                </div>
+                <!-- Project Card 4 -->
+                <div
+                    class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <img src="https://placehold.co/600x400/d0d0d0/ffffff?text=Project+4" alt="Scheduler" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-gray-800" data-project-title="Scheduler">Scheduler</h3>
+                        <p class="text-gray-600 mb-4 text-sm" data-project-categories="Web Application, Spring Boot Backend">Web Application, Spring Boot Backend</p>
+                        <a href="#" class="inline-block bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">View Project <i class="fas fa-external-link-alt ml-1"></i></a>
+                    </div>
+                </div>
+                <!-- Project Card 5 -->
+                <div
+                    class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                    <img src="https://placehold.co/600x400/d0d0d0/ffffff?text=Project+5" alt="Garden Util" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-gray-800" data-project-title="Garden Util">Garden Util</h3>
+                        <p class="text-gray-600 mb-4 text-sm" data-project-categories="Web Application, Spring Boot Backend">Mobile Application, Spring Boot Backend</p>
+                        <a href="#" class="inline-block bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors text-sm font-medium">View Project <i class="fas fa-external-link-alt ml-1"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto px-6 md:px-12 text-center">
+            <h2 class="section-title mx-auto">Get In Touch</h2>
+            <div class="max-w-3xl mx-auto bg-gray-100 p-8 rounded-lg shadow-md">
+                <div class="text-center">
+                    <a href="mailto:rjosipovic@gmail.com"
+                        class="bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300 py-3 px-8 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 inline-block">
+                        Send Email
+                    </a>
+                </div>
+                <div class="mt-12 text-center">
+                    <p class="text-xl font-semibold text-gray-800 mb-4">Find me:</p>
+                    <div class="flex justify-center space-x-6">
+                        <a href="https://www.linkedin.com/in/roman-josipovi%C4%87-80640710/" class="text-blue-600 hover:text-blue-800 text-4xl transition-colors" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        <a href="https://github.com/rjosipovic" class="text-gray-700 hover:text-gray-900 text-4xl transition-colors" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto text-center px-6">
+            <p>&copy; 2025 Roman Josipović. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src='scripts/script.js'>
+        
+    </script>
+</body>
+
+</html>

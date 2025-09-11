@@ -1,0 +1,49 @@
+spring:
+    application:
+        name: analytics-manager
+    rabbitmq:
+      host: ${RABBITMQ_HOST:localhost}
+      port: ${RABBITMQ_PORT:5672}
+      username: ${RABBITMQ_USER:guest}
+      password: ${RABBITMQ_PASSWORD:guest}
+      listener:
+        simple:
+          retry:
+            enabled: true
+            max-attempts: 10
+            initial-interval: 1000
+            multiplier: 4
+            max-interval: 3600000
+          default-requeue-rejected: false
+    neo4j:
+      uri: ${NEO4J_URI:bolt://localhost:7687}
+      authentication:
+        username: ${NEO4J_USER:neo4j}
+        password: ${NEO4J_PASSWORD:neo4jlocal}
+      database: ${NEO4J_DATABASE:neo4j}
+server:
+  port: 8084
+logging:
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://127.0.0.1:3000}
+    allowed-methods: GET,POST,PUT,DELETE
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin
+  auth:
+    secret: ${AUTH_SECRET:}
+    expiration-time: "PT6H"
+  messaging:
+    dead-letter:
+      exchange: dead-letter-exchange
+      binding-key: dead-letter
+      queue: dead-letter-queue
+    user:
+      exchange: user-exchange
+      binding-key: user.*
+      queue: user-queue
+    challenge:
+      exchange: challenge-exchange
+      binding-key: challenge-solved.*
+      queue: challenges-queue
