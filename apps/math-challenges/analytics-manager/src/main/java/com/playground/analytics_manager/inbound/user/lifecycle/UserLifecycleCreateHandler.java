@@ -30,9 +30,6 @@ public class UserLifecycleCreateHandler implements UserLifecycleHandler {
     }
 
     private UserEntity toUserEntity(User user) {
-        return UserEntity.builder()
-                .id(UUID.fromString(user.getId()))
-                .alias(user.getAlias())
-                .build();
+        return UserEntity.create(UUID.fromString(user.getId()), user.getAlias());
     }
 }

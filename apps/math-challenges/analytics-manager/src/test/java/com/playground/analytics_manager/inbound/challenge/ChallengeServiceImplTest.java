@@ -41,8 +41,9 @@ class ChallengeServiceImplTest {
     void process_shouldSaveChallengeEntityWithCorrectFields() {
         //given
         var userId = UUID.randomUUID();
+        var alias = "alias";
         var challengeAttemptId = UUID.randomUUID();
-        var userEntity = UserEntity.builder().id(userId).build();
+        var userEntity = UserEntity.create(userId, alias);
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
 
         var event = new ChallengeSolvedEvent(

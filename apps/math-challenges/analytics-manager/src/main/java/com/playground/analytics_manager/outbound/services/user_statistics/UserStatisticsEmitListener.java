@@ -19,7 +19,7 @@ public class UserStatisticsEmitListener {
                 .userId(event.getUserId())
                 .game(event.getGame())
                 .difficulty(event.getDifficulty())
-                .success(event.isCorrect())
+                .success(event.getCorrect())
                 .build();
         statisticsController.publishStatisticsUpdate(statisticsUpdate);
     }

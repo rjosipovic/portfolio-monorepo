@@ -13,10 +13,10 @@ public class ChallengeSolvedEvent {
 
     private final String userId;
     private final String challengeAttemptId;
-    private final int firstNumber;
-    private final int secondNumber;
-    private final int resultAttempt;
-    private final boolean correct;
+    private final Integer firstNumber;
+    private final Integer secondNumber;
+    private final Integer resultAttempt;
+    private final Boolean correct;
     private final String game;
     private final String difficulty;
     private final ZonedDateTime attemptDate;
