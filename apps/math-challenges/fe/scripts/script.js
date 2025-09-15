@@ -2,24 +2,6 @@ const USER_NOT_FOUND_CODE = 'U001';
 const USER_EXISTS_CODE = 'U002';
 const INVALID_VERIFICATION_CODE = 'A001';
 
-// challenge-manager
-const CHALLENGE_API = CHALLENGE_MANAGER + 'challenges';
-const ATTEMPT_API = CHALLENGE_MANAGER + 'attempts';
-
-// user-manager
-const AUTH_API = USER_MANAGER + 'auth';
-const USERS_API = USER_MANAGER + 'users';
-
-//gamification-manager
-const LEADERBOARD_API = GAMIFICATION_MANAGER + 'leaders';
-
-//notification-manager
-const CONTACT_API = NOTIFICATION_MANAGER + 'notifications';
-
-//analitics-manager
-const STATS_API = ANALYTICS_MANAGER + 'statistics/user';
-const HISTORY_API = ANALYTICS_MANAGER + 'attempts';
-
 
 // Get the current year for the footer
 document.getElementById('current-year').textContent = new Date().getFullYear();
@@ -168,7 +150,7 @@ async function generateProblem() {
 
     const difficultyValue = difficultySelect.value;
     console.log("Retrieving challenge with difficulty: ", difficultyValue);
-    const apiUrl = CHALLENGE_API + '/random?difficulty=' + difficultyValue;
+    const apiUrl = API_ENDPOINTS.CHALLENGE_API + '/random?difficulty=' + difficultyValue;
     const token = localStorage.getItem("token");
 
     try {
@@ -231,7 +213,7 @@ async function fetchStatistics() {
     if (!token) return;
 
     try {
-        const result = await callApi(STATS_API, 'GET', null, token);
+        const result = await callApi(API_ENDPOINTS.STATS_API, 'GET', null, token);
         if (result) renderStatistics(result);
     } catch (error) {
         alertMessage('Could not fetch your statistics.');
@@ -289,7 +271,7 @@ async function fetchHistory() {
     currentUser = extractUserFromToken();
     if (!currentUser) return;
 
-    const apiUrl = HISTORY_API;
+    const apiUrl = API_ENDPOINTS.HISTORY_API;
     if (!token) return;
 
     try {
@@ -336,7 +318,7 @@ async function fetchLeaderboard() {
 
     try {
         // Step 1: Fetch the core leaderboard data (scores, badges)
-        const leaderboardStats = await callApi(LEADERBOARD_API, 'GET', null, token);
+        const leaderboardStats = await callApi(API_ENDPOINTS.LEADERBOARD_API, 'GET', null, token);
 
         if (!leaderboardStats || leaderboardStats.length === 0) {
             renderLeaderboard([]); // Render an empty board if no data
@@ -345,7 +327,7 @@ async function fetchLeaderboard() {
 
         // Step 2: Extract user IDs to fetch their aliases
         const userIds = leaderboardStats.map(stat => stat.userId);
-        const apiUrl = USERS_API + `?userIds=${userIds.join(",")}`;
+        const apiUrl = API_ENDPOINTS.USERS_API + `?userIds=${userIds.join(",")}`;
         const aliasesArray = await callApi(apiUrl, 'GET', null, token);
 
         if (!aliasesArray) {
@@ -464,7 +446,7 @@ async function submitAnswer() {
     let isCorrect;
     let correctAnswer;
 
-    const apiUrl = ATTEMPT_API;
+    const apiUrl = API_ENDPOINTS.ATTEMPT_API;
     const body = JSON.stringify(data);
 
     try {
@@ -689,7 +671,7 @@ async function handleRegister(e) {
 
     const user = { alias, email, birthdate, gender };
     const body = JSON.stringify(user);
-    const registrationApi = AUTH_API + '/register';
+    const registrationApi = API_ENDPOINTS.AUTH_API + '/register';
 
     try {
         await callApi(registrationApi, 'POST', body);
@@ -718,7 +700,7 @@ async function handleGenerateCode() {
         return;
     }
 
-    const apiUrl = AUTH_API + '/request-code';
+    const apiUrl = API_ENDPOINTS.AUTH_API + '/request-code';
     const codeGenerationRequest = {
         "email": email
     };
@@ -765,7 +747,7 @@ async function handleVerifyCode() {
         "code": enteredCode
     };
 
-    const apiUrl = AUTH_API + '/verify-code';
+    const apiUrl = API_ENDPOINTS.AUTH_API + '/verify-code';
     const body = JSON.stringify(codeVerificationRequest);
 
     try {
@@ -816,7 +798,7 @@ async function handleContactFormSubmit(e) {
     const body = JSON.stringify({ from, subject, content });
 
     try {
-        await callApi(CONTACT_API, 'POST', body);
+        await callApi(API_ENDPOINTS.CONTACT_API, 'POST', body);
         showBannerMessage("Your message has been sent successfully!", "bg-green-600");
         contactForm.reset();
     } catch (error) {
