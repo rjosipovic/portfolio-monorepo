@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: roman
+      changes:
+        - addColumn:
+            tableName: scores
+            columns:
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - addColumn:
+            tableName: badges
+            columns:
+              - column:
+                  name: version
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false

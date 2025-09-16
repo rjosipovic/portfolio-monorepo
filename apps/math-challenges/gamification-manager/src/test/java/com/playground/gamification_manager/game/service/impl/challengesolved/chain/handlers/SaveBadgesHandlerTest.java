@@ -60,9 +60,6 @@ class SaveBadgesHandlerTest {
         var userId = UUID.randomUUID().toString();
         when(ctx.getUserId()).thenReturn(userId);
         when(ctx.getBadges()).thenReturn(Set.of(BadgeType.FIRST_WON));
-        var badgeEntity = new BadgeEntity();
-        badgeEntity.setUserId(UUID.fromString(userId));
-        badgeEntity.setBadgeType(BadgeType.FIRST_WON);
         //when
         saveBadgesHandler.handle(ctx);
         //then

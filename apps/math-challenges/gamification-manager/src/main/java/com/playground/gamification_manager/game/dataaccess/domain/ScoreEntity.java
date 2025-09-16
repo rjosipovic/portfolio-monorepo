@@ -5,34 +5,72 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import jakarta.persistence.Version;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity(name = "scores")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScoreEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
-    @Column(name = "challenge_attempt_id")
+    @Column(name = "challenge_attempt_id", nullable = false, updatable = false)
     private UUID challengeAttemptId;
 
-    @Column(name = "score")
+    @Column(name = "score", nullable = false)
     private int score;
 
     @CreationTimestamp
     @Column(name = "score_at")
     private ZonedDateTime scoreAt;
+
+    @Version
+    @Column(name = "version")
+    private long version;
+
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ScoreEntity that)) return false;
+        if (Objects.isNull(this.id) || Objects.isNull(that.id)) return false;
+
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.nonNull(this.id) ? Objects.hashCode(id) : getClass().hashCode();
+    }
+
+    public static ScoreEntity create(UUID userId, UUID challengeAttemptId, int score) {
+        if (Objects.isNull(userId)) {
+            throw new IllegalArgumentException("ScoreEntity userId must not be null");
+        }
+        if (Objects.isNull(challengeAttemptId)) {
+            throw new IllegalArgumentException("ScoreEntity challengeAttemptId must not be null");
+        }
+        if (score <= 0) {
+            throw new IllegalArgumentException("ScoreEntity score must be a positive value");
+        }
+        var scoreEntity = new ScoreEntity();
+        scoreEntity.setUserId(userId);
+        scoreEntity.setChallengeAttemptId(challengeAttemptId);
+        scoreEntity.setScore(score);
+        return scoreEntity;
+    }
 }

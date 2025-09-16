@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 
-import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,15 +70,15 @@ class LeaderBoardServiceImplTest {
                 .totalScore(thirdTotalScore)
                 .badges(thirdBadges)
                 .build();
-        var firstFirstWonBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.FIRST_WON, ZonedDateTime.now());
-        var firstBronzeBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.BRONZE, ZonedDateTime.now());
-        var firstSilverBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.SILVER, ZonedDateTime.now());
-        var firstGoldBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.GOLD, ZonedDateTime.now());
-        var secondFirstWonBadge = new BadgeEntity(UUID.randomUUID(), secondUserId, BadgeType.FIRST_WON, ZonedDateTime.now());
-        var secondBronzeBadge = new BadgeEntity(UUID.randomUUID(), secondUserId, BadgeType.BRONZE, ZonedDateTime.now());
-        var secondSilverBadge = new BadgeEntity(UUID.randomUUID(), secondUserId, BadgeType.SILVER, ZonedDateTime.now());
-        var thirdFirstWonBadge = new BadgeEntity(UUID.randomUUID(), thirdUserId, BadgeType.FIRST_WON, ZonedDateTime.now());
-        var thirdBronzeBadge = new BadgeEntity(UUID.randomUUID(), thirdUserId, BadgeType.BRONZE, ZonedDateTime.now());
+        var firstFirstWonBadge = BadgeEntity.create(firstUserId, BadgeType.FIRST_WON);
+        var firstBronzeBadge = BadgeEntity.create(firstUserId, BadgeType.BRONZE);
+        var firstSilverBadge = BadgeEntity.create(firstUserId, BadgeType.SILVER);
+        var firstGoldBadge = BadgeEntity.create(firstUserId, BadgeType.GOLD);
+        var secondFirstWonBadge = BadgeEntity.create(secondUserId, BadgeType.FIRST_WON);
+        var secondBronzeBadge = BadgeEntity.create(secondUserId, BadgeType.BRONZE);
+        var secondSilverBadge = BadgeEntity.create(secondUserId, BadgeType.SILVER);
+        var thirdFirstWonBadge = BadgeEntity.create(thirdUserId, BadgeType.FIRST_WON);
+        var thirdBronzeBadge = BadgeEntity.create(thirdUserId, BadgeType.BRONZE);
 
         when(badgeRepository.findAllByUserId(firstUserId)).thenReturn(List.of(firstFirstWonBadge, firstBronzeBadge, firstSilverBadge, firstGoldBadge));
         when(badgeRepository.findAllByUserId(secondUserId)).thenReturn(List.of(secondFirstWonBadge, secondBronzeBadge, secondSilverBadge));

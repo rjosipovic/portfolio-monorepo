@@ -30,10 +30,7 @@ public class SaveScoreHandler implements ChallengeSolvedHandler {
         var userId = ctx.getUserId();
         var challengeAttemptId = ctx.getChallengeAttemptId();
         var score = ctx.getScore();
-        var scoreEntity = new ScoreEntity();
-        scoreEntity.setUserId(UUID.fromString(userId));
-        scoreEntity.setScore(score);
-        scoreEntity.setChallengeAttemptId(UUID.fromString(challengeAttemptId));
+        var scoreEntity = ScoreEntity.create(UUID.fromString(userId), UUID.fromString(challengeAttemptId), score);
         scoreRepository.save(scoreEntity);
     }
 }
