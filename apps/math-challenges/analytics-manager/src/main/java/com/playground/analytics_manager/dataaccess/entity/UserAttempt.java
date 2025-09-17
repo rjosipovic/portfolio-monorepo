@@ -42,6 +42,18 @@ public class UserAttempt {
     }
 
     public static UserAttempt create(ZonedDateTime attemptDate, Integer resultAttempt, Boolean correct, UserEntity user) {
+        if (Objects.isNull(attemptDate)) {
+            throw new IllegalArgumentException("UserAttempt attemptDate must not be null");
+        }
+        if (Objects.isNull(resultAttempt)) {
+            throw new IllegalArgumentException("UserAttempt resultAttempt must not be null");
+        }
+        if (Objects.isNull(correct)) {
+            throw new IllegalArgumentException("UserAttempt correct must not be null");
+        }
+        if (Objects.isNull(user)) {
+            throw new IllegalArgumentException("UserAttempt user must not be null");
+        }
         var userAttempt = new UserAttempt();
         userAttempt.setAttemptDate(attemptDate);
         userAttempt.setResultAttempt(resultAttempt);

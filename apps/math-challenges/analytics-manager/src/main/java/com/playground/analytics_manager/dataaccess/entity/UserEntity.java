@@ -42,6 +42,12 @@ public class UserEntity {
     }
 
     public static UserEntity create(UUID id, String alias) {
+        if (Objects.isNull(id)) {
+            throw new IllegalArgumentException("UserEntity id must not be null");
+        }
+        if (Objects.isNull(alias)) {
+            throw new IllegalArgumentException("UserEntity alias must not be null");
+        }
         var userEntity = new UserEntity();
         userEntity.setId(id);
         userEntity.setAlias(alias);

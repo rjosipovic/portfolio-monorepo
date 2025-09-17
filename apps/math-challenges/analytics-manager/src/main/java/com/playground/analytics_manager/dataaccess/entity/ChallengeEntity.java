@@ -54,7 +54,25 @@ public class ChallengeEntity {
         return Objects.nonNull(id) ? Objects.hashCode(id) : getClass().hashCode();
     }
 
-    public static ChallengeEntity create(UUID id, int firstNumber, int secondNumber, String game, String difficulty, UserAttempt userAttempt) {
+    public static ChallengeEntity create(UUID id, Integer firstNumber, Integer secondNumber, String game, String difficulty, UserAttempt userAttempt) {
+        if (Objects.isNull(id)) {
+            throw new IllegalArgumentException("ChallengeEntity id must not be null");
+        }
+        if (Objects.isNull(firstNumber)) {
+            throw new IllegalArgumentException("ChallengeEntity firstNumber must not be null");
+        }
+        if (Objects.isNull(secondNumber)) {
+            throw new IllegalArgumentException("ChallengeEntity secondNumber must not be null");
+        }
+        if (Objects.isNull(game)) {
+            throw new IllegalArgumentException("ChallengeEntity game must not be null");
+        }
+        if (Objects.isNull(difficulty)) {
+            throw new IllegalArgumentException("ChallengeEntity difficulty must not be null");
+        }
+        if (Objects.isNull(userAttempt)) {
+            throw new IllegalArgumentException("ChallengeEntity userAttempt must not be null");
+        }
         var challengeEntity = new ChallengeEntity();
         challengeEntity.setId(id);
         challengeEntity.setFirstNumber(firstNumber);
