@@ -7,11 +7,11 @@ import com.playground.challenge_manager.challenge.services.impl.challengeservice
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.util.MathUtil;
 import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class CheckResultHandler implements AttemptHandler {
 

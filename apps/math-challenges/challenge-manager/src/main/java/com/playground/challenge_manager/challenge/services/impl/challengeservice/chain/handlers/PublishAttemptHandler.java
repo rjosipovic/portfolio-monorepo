@@ -6,9 +6,9 @@ import com.playground.challenge_manager.challenge.services.impl.challengeservice
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @Slf4j
 @RequiredArgsConstructor
 public class PublishAttemptHandler implements AttemptHandler {

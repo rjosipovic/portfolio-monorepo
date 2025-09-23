@@ -4,7 +4,9 @@ import com.playground.challenge_manager.challenge.api.dto.ChallengeResultDTO;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptHandler;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.util.MathUtil;
+import org.springframework.stereotype.Service;
 
+@Service
 public class AttemptResultHandler implements AttemptHandler {
 
     @Override

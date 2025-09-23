@@ -16,6 +16,8 @@ public class AttemptVerifierConfig {
     private final CheckResultHandler checkResultHandler;
     private final SaveAttemptHandler saveAttemptHandler;
     private final PublishAttemptHandler publishAttemptHandler;
+    private final AttemptResultHandler attemptResultHandler;
+
 
     @Bean
     public AttemptVerifierChain attemptVerifierChain() {
@@ -23,7 +25,7 @@ public class AttemptVerifierConfig {
         chain.addHandler(checkResultHandler);
         chain.addHandler(saveAttemptHandler);
         chain.addHandler(publishAttemptHandler);
-        chain.addHandler(new AttemptResultHandler());
+        chain.addHandler(attemptResultHandler);
         return chain;
     }
 }

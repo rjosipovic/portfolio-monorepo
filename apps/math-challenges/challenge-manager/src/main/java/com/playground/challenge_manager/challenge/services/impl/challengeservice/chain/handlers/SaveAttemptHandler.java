@@ -6,9 +6,9 @@ import com.playground.challenge_manager.challenge.services.impl.challengeservice
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @RequiredArgsConstructor
 public class SaveAttemptHandler implements AttemptHandler {
 
