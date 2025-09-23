@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,8 +41,11 @@ class RegistrationServiceImplTest {
         var email = "someemail@gmail.com";
         var uuid = UUID.randomUUID();
         var registerUserRequest = RegisterUserRequest.builder().alias(alias).email(email).build();
+        var userEntity = mock(UserEntity.class);
         when(userRepository.findByAlias(alias)).thenReturn(Optional.empty());
-        when(userRepository.save(any(UserEntity.class))).thenReturn(UserEntity.create(alias, email, null, null));
+        when(userRepository.save(any(UserEntity.class))).thenReturn(userEntity);
+        when(userEntity.getId()).thenReturn(uuid);
+        when(userEntity.getAlias()).thenReturn(alias);
         //when
         registrationService.register(registerUserRequest);
         //then

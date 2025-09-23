@@ -68,5 +68,4 @@ public class UserEntity {
         userEntity.setGender(gender);
         return userEntity;
     }
-
 }

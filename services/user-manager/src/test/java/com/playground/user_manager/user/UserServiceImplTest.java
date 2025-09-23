@@ -15,9 +15,8 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
@@ -33,9 +32,11 @@ class UserServiceImplTest {
         //given
         var id1 = UUID.randomUUID();
         var id2 = UUID.randomUUID();
-        var user1 = UserEntity.create("test-user1", "someemail1@gmail.com", null, null);
-        var user2 = UserEntity.create("test-user2", "somemail2@gmail.com", null, null);
+        var user1 = mock(UserEntity.class);
+        var user2 = mock(UserEntity.class);
         when(userRepository.findAll()).thenReturn(Arrays.asList(user1, user2));
+        when(user1.getId()).thenReturn(id1);
+        when(user2.getId()).thenReturn(id2);
         //when
         var users = userService.getAllUsers();
         //then
