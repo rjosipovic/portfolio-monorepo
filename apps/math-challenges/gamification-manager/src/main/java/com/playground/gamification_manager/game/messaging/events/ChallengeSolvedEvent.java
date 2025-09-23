@@ -2,6 +2,7 @@ package com.playground.gamification_manager.game.messaging.events;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -19,6 +20,9 @@ public class ChallengeSolvedEvent {
 
     @UUID @NotNull
     String userId;
+
+    @NotBlank
+    String alias;
 
     @UUID @NotNull
     String challengeAttemptId;

@@ -317,39 +317,13 @@ async function fetchLeaderboard() {
     if (!token) return; // Should be caught by the view gate, but good practice
 
     try {
-        // Step 1: Fetch the core leaderboard data (scores, badges)
         const leaderboardStats = await callApi(API_ENDPOINTS.LEADERBOARD_API, 'GET', null, token);
 
         if (!leaderboardStats || leaderboardStats.length === 0) {
             renderLeaderboard([]); // Render an empty board if no data
             return;
         }
-
-        // Step 2: Extract user IDs to fetch their aliases
-        const userIds = leaderboardStats.map(stat => stat.userId);
-        const apiUrl = API_ENDPOINTS.USERS_API + `?userIds=${userIds.join(",")}`;
-        const aliasesArray = await callApi(apiUrl, 'GET', null, token);
-
-        if (!aliasesArray) {
-            alertMessage("Could not load user names for the leaderboard.", "text-red-500");
-            // Fallback: render with a placeholder if aliases fail
-            renderLeaderboard(leaderboardStats.map(stat => ({ ...stat, alias: 'Unknown' })));
-            return;
-        }
-
-        // Convert the array to a map for efficient lookup
-        const aliasesMap = aliasesArray.reduce((map, user) => {
-            map[user.id] = user.alias;
-            return map;
-        }, {});
-
-        // Step 4: Combine the data and render
-        const enrichedLeaderboardData = leaderboardStats.map(stat => ({
-            ...stat,
-            alias: aliasesMap[stat.userId] || 'Unknown User' // Add alias with a fallback
-        }));
-
-        renderLeaderboard(enrichedLeaderboardData);
+        renderLeaderboard(leaderboardStats);
 
     } catch (error) {
         console.error('Error during leaderboard fetch process:', error);

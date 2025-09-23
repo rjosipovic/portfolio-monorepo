@@ -178,6 +178,8 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
       - AUTH_SECRET=${AUTH_SECRET}
+      - USER_MANAGER_HOST=user-manager
+      - USER_MANAGER_PORT=8081
     depends_on:
       redis:
         condition: service_healthy

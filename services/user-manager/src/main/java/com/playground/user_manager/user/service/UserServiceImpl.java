@@ -1,6 +1,5 @@
 package com.playground.user_manager.user.service;
 
-import com.playground.user_manager.errors.exceptions.UserNotFoundException;
 import com.playground.user_manager.user.dataaccess.UserRepository;
 import com.playground.user_manager.user.dataaccess.UserEntity;
 import com.playground.user_manager.user.model.User;
@@ -31,14 +30,6 @@ public class UserServiceImpl implements UserService {
                 .map(toUserModel)
                 .toList();
     };
-
-    @Override
-    public User getUserByAlias(String alias) {
-        return userRepository
-                .findByAlias(alias)
-                .map(toUserModel)
-                .orElseThrow(() -> new UserNotFoundException(String.format("User with alias %s not found", alias)));
-    }
 
     private static final Function<UserEntity, User> toUserModel = userEntity ->
             User.builder()

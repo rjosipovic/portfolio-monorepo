@@ -6,12 +6,15 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-@ConfigurationProperties("app.leaderboard")
-@Configuration
-@Getter @Setter
-@NoArgsConstructor
-public class LeaderBoardConfiguration {
+import java.time.Duration;
 
-    private String key;
-    private int size;
+@ConfigurationProperties("app.alias-cache")
+@Configuration
+@Getter
+@Setter
+@NoArgsConstructor
+public class AliasCacheConfiguration {
+
+    private String key = "user_aliases";
+    private Duration duration = Duration.ofHours(1);
 }

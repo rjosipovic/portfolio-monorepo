@@ -28,12 +28,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         verifyUniqueness(alias, email);
         var birthdate = registerUserRequest.getBirthdate();
         var gender = registerUserRequest.getGender();
-        var userEntity = UserEntity.builder()
-                .alias(alias)
-                .email(email)
-                .birthdate(birthdate)
-                .gender(gender)
-                .build();
+        var userEntity = UserEntity.create(alias, email, birthdate, gender);
         var savedUserEntity = userRepository.save(userEntity);
         var user = User.builder().id(savedUserEntity.getId().toString()).alias(savedUserEntity.getAlias()).build();
         publishUserCreatedMessage(user);

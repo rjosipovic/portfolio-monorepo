@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,16 +41,16 @@ class RegistrationServiceImplTest {
         var uuid = UUID.randomUUID();
         var registerUserRequest = RegisterUserRequest.builder().alias(alias).email(email).build();
         when(userRepository.findByAlias(alias)).thenReturn(Optional.empty());
-        when(userRepository.save(any(UserEntity.class))).thenReturn(UserEntity.builder().alias(alias).id(uuid).email(email).build());
+        when(userRepository.save(any(UserEntity.class))).thenReturn(UserEntity.create(alias, email, null, null));
         //when
         registrationService.register(registerUserRequest);
         //then
         var userEntityCapture = ArgumentCaptor.forClass(UserEntity.class);
         var userCapture = ArgumentCaptor.forClass(User.class);
 
-        verify(userRepository).findByAlias(alias);
-        verify(userRepository).save(userEntityCapture.capture());
-        verify(userMessageProducer).sendUserCreatedMessage(userCapture.capture());
+        verify(userRepository, times(1)).findByAlias(alias);
+        verify(userRepository, times(1)).save(userEntityCapture.capture());
+        verify(userMessageProducer, times(1)).sendUserCreatedMessage(userCapture.capture());
 
         assertAll(
                 () -> assertEquals(alias, userEntityCapture.getValue().getAlias()),

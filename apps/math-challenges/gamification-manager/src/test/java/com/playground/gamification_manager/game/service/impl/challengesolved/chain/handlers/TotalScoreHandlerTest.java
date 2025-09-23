@@ -1,7 +1,7 @@
 package com.playground.gamification_manager.game.service.impl.challengesolved.chain.handlers;
 
 import com.playground.gamification_manager.game.service.impl.challengesolved.chain.ChallengeSolvedContext;
-import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardConfiguration;
+import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardCacheConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +28,7 @@ class TotalScoreHandlerTest {
     private ZSetOperations<String, Object> zSetOperations;
 
     @Mock
-    private LeaderBoardConfiguration leaderBoardConfiguration;
+    private LeaderBoardCacheConfiguration leaderBoardCacheConfiguration;
 
     @InjectMocks
     private TotalScoreHandler totalScoreHandler;
@@ -69,7 +69,7 @@ class TotalScoreHandlerTest {
         var ctx = mock(ChallengeSolvedContext.class);
         when(ctx.getUserId()).thenReturn(userId);
         when(ctx.getTotalScore()).thenReturn(totalScore);
-        when(leaderBoardConfiguration.getKey()).thenReturn(key);
+        when(leaderBoardCacheConfiguration.getKey()).thenReturn(key);
         when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
         //when

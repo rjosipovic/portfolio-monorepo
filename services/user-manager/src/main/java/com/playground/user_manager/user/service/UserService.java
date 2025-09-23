@@ -8,5 +8,4 @@ public interface UserService {
 
     List<User> getAllUsers();
     List<User> getUsersByIds(List<String> ids);
-    User getUserByAlias(String alias);
 }

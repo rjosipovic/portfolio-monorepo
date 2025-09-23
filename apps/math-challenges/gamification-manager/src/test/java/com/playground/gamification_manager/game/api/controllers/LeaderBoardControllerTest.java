@@ -17,7 +17,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,17 +46,17 @@ class LeaderBoardControllerTest {
     void shouldGetLeaderBoard() throws Exception {
         //given
         var first = LeaderBoardItem.builder()
-                .userId(UUID.randomUUID())
+                .alias("player1")
                 .totalScore(750)
                 .badges(Set.of(BadgeType.FIRST_WON, BadgeType.BRONZE, BadgeType.SILVER, BadgeType.GOLD))
                 .build();
         var second = LeaderBoardItem.builder()
-                .userId(UUID.randomUUID())
+                .alias("player2")
                 .totalScore(500)
                 .badges(Set.of(BadgeType.FIRST_WON, BadgeType.BRONZE, BadgeType.SILVER))
                 .build();
         var third = LeaderBoardItem.builder()
-                .userId(UUID.randomUUID())
+                .alias("player3")
                 .totalScore(250)
                 .badges(Set.of(BadgeType.FIRST_WON, BadgeType.BRONZE))
                 .build();
