@@ -22,21 +22,21 @@ public class ChallengeAttemptEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
-    @Column(name = "first_number")
+    @Column(name = "first_number", nullable = false)
     private int firstNumber;
-    @Column(name = "second_number")
+    @Column(name = "second_number", nullable = false)
     private int secondNumber;
-    @Column(name = "result_attempt")
+    @Column(name = "result_attempt", nullable = false)
     private int resultAttempt;
-    @Column(name = "correct")
+    @Column(name = "correct", nullable = false)
     private boolean correct;
-    @Column(name = "game")
+    @Column(name = "game", nullable = false)
     private String game;
-    @Column(name = "difficulty")
+    @Column(name = "difficulty", nullable = false)
     private String difficulty;
     @CreationTimestamp
-    @Column(name = "attempt_date")
+    @Column(name = "attempt_date", nullable = false)
     private ZonedDateTime attemptDate;
 }

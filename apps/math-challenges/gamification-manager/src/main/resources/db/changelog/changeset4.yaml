@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: roman
+      comment: "Re-apply NOT NULL constraints to badges table."
+      changes:
+        - addNotNullConstraint:
+            tableName: badges
+            columnName: user_id
+            columnDataType: uuid
+        - addNotNullConstraint:
+            tableName: badges
+            columnName: badge_name
+            columnDataType: varchar
+        - addNotNullConstraint:
+            tableName: badges
+            columnName: badge_at
+            columnDataType: "timestamp with time zone"
+
+  - changeSet:
+      id: 6
+      author: roman
+      comment: "Re-apply NOT NULL constraints to scores table."
+      changes:
+        - addNotNullConstraint:
+            tableName: scores
+            columnName: user_id
+            columnDataType: uuid
+        - addNotNullConstraint:
+            tableName: scores
+            columnName: challenge_attempt_id
+            columnDataType: uuid
+        - addNotNullConstraint:
+            tableName: scores
+            columnName: score
+            columnDataType: int
+        - addNotNullConstraint:
+            tableName: scores
+            columnName: score_at
+            columnDataType: "timestamp with time zone"

@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: roman
+      comment: "Remove redundant version column from the immutable scores table."
+      changes:
+        - dropColumn:
+            tableName: scores
+            columnName: version
+
+  - changeSet:
+      id: 4
+      author: roman
+      comment: "Remove redundant version column from the immutable badges table."
+      changes:
+        - dropColumn:
+            tableName: badges
+            columnName: version

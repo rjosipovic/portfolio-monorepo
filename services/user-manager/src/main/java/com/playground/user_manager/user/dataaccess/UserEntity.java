@@ -24,10 +24,10 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "alias", unique = true)
+    @Column(name = "alias", unique = true, nullable = false)
     private String alias;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
     @Column(name = "birthdate")

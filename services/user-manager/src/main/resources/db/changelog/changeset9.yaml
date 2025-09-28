@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 9
+      author: roman
+      comment: "Add NOT NULL constraints to align the database with business rules."
+      changes:
+        - addNotNullConstraint:
+            tableName: users
+            columnName: alias
+            columnDataType: varchar(64)
+        - addNotNullConstraint:
+            tableName: users
+            columnName: email
+            columnDataType: varchar(255)

@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,16 +31,12 @@ public class ScoreEntity {
     @Column(name = "challenge_attempt_id", nullable = false, updatable = false)
     private UUID challengeAttemptId;
 
-    @Column(name = "score", nullable = false)
+    @Column(name = "score", nullable = false, updatable = false)
     private int score;
 
     @CreationTimestamp
-    @Column(name = "score_at")
+    @Column(name = "score_at", nullable = false, updatable = false)
     private ZonedDateTime scoreAt;
-
-    @Version
-    @Column(name = "version")
-    private long version;
 
     @Override
     public final boolean equals(Object o) {
@@ -54,7 +49,7 @@ public class ScoreEntity {
 
     @Override
     public int hashCode() {
-        return Objects.nonNull(this.id) ? Objects.hashCode(id) : getClass().hashCode();
+        return Objects.nonNull(id) ? Objects.hashCode(id) : getClass().hashCode();
     }
 
     public static ScoreEntity create(UUID userId, UUID challengeAttemptId, int score) {

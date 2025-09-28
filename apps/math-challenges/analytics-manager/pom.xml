@@ -51,6 +51,27 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-neo4j</artifactId>
 		</dependency>
+
+		<!-- Liquibase: The main schema migration engine -->
+		<dependency>
+			<groupId>org.liquibase</groupId>
+			<artifactId>liquibase-core</artifactId>
+		</dependency>
+
+		<!-- Liquibase: The adapter that teaches Liquibase how to speak to Neo4j -->
+		<dependency>
+			<groupId>org.liquibase.ext</groupId>
+			<artifactId>liquibase-neo4j</artifactId>
+			<version>4.33.0</version>
+		</dependency>
+
+		<!-- Liquibase: The low-level JDBC driver for making the actual connection to Neo4j -->
+		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j-jdbc-driver</artifactId>
+			<version>4.0.10</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
