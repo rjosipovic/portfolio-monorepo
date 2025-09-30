@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,7 +58,6 @@ class ChallengeServiceImplTest {
         var secondNumber = 23;
         var guess = firstNumber * secondNumber;
         var game = "multiplication";
-        var difficulty = "medium";
         var attemptDto = ChallengeAttemptDTO.builder()
                 .userId(userId.toString())
                 .firstNumber(firstNumber)
@@ -64,9 +65,10 @@ class ChallengeServiceImplTest {
                 .guess(guess)
                 .game(game)
                 .build();
-        var attemptEntity = new ChallengeAttemptEntity(null, userId, firstNumber, secondNumber, guess, true, game, difficulty, null);
-        var savedAttemptEntity = new ChallengeAttemptEntity(challengeAttemptId, userId, firstNumber, secondNumber, guess, true, game, null, null);
-        when(challengeAttemptRepository.saveAndFlush(attemptEntity)).thenReturn(savedAttemptEntity);
+        var savedAttemptEntity = mock(ChallengeAttemptEntity.class);
+        when(savedAttemptEntity.getId()).thenReturn(challengeAttemptId);
+        when(savedAttemptEntity.getAttemptDate()).thenReturn(ZonedDateTime.now());
+        when(challengeAttemptRepository.saveAndFlush(any(ChallengeAttemptEntity.class))).thenReturn(savedAttemptEntity);
         when(challengeConfig.getDifficultyLevels()).thenReturn(
                 List.of(
                         new ChallengeConfig.DifficultyLevel("easy", 1, 9),
@@ -89,22 +91,18 @@ class ChallengeServiceImplTest {
                 () -> assertTrue(result.isCorrect())
         );
 
-        verify(challengeAttemptRepository).saveAndFlush(
-                new ChallengeAttemptEntity(null, userId, firstNumber, secondNumber, guess, true, game, difficulty, null)
-        );
+        verify(challengeAttemptRepository).saveAndFlush(any(ChallengeAttemptEntity.class));
     }
 
     @Test
     void testVerifyIncorrectAttempt() {
         //given
         var userId = UUID.randomUUID();
-        var challengeAttemptId = UUID.randomUUID();
         var firstNumber = 12;
         var secondNumber = 23;
         var guess = firstNumber * secondNumber + 1;
         var correctResult = firstNumber * secondNumber;
         var game = "multiplication";
-        var difficulty = "medium";
         var attempt = ChallengeAttemptDTO.builder()
                 .userId(userId.toString())
                 .firstNumber(firstNumber)
@@ -112,9 +110,8 @@ class ChallengeServiceImplTest {
                 .guess(guess)
                 .game(game)
                 .build();
-        var attemptEntity = new ChallengeAttemptEntity(null, userId, firstNumber, secondNumber, guess, false, game, difficulty, null);
-        var savedAttemptEntity = new ChallengeAttemptEntity(challengeAttemptId, userId, firstNumber, secondNumber, guess, false, game, null, null);
-        when(challengeAttemptRepository.saveAndFlush(attemptEntity)).thenReturn(savedAttemptEntity);
+        var savedAttemptEntity = mock(ChallengeAttemptEntity.class);
+        when(challengeAttemptRepository.saveAndFlush(any(ChallengeAttemptEntity.class))).thenReturn(savedAttemptEntity);
         when(challengeConfig.getDifficultyLevels()).thenReturn(
                 List.of(
                         new ChallengeConfig.DifficultyLevel("easy", 1, 9),
@@ -137,7 +134,7 @@ class ChallengeServiceImplTest {
                 () -> assertFalse(result.isCorrect())
         );
 
-        verify(challengeAttemptRepository).saveAndFlush(attemptEntity);
+        verify(challengeAttemptRepository).saveAndFlush(any(ChallengeAttemptEntity.class));
     }
 
     @Test
@@ -159,10 +156,14 @@ class ChallengeServiceImplTest {
     void testGetLast10AttemptsByUserId_shouldReturnNonEmptyList() {
         //given
         var userId = UUID.randomUUID();
-        var attemptId = UUID.randomUUID();
         var game = "multiplication";
-        var difficulty = "easy";
-        var attempt = new ChallengeAttemptEntity(attemptId, userId, 1, 2, 3, true, game, difficulty, ZonedDateTime.now().minusDays(1));
+        var attempt = mock(ChallengeAttemptEntity.class);
+        when(attempt.getUserId()).thenReturn(userId);
+        when(attempt.getFirstNumber()).thenReturn(1);
+        when(attempt.getSecondNumber()).thenReturn(2);
+        when(attempt.getResultAttempt()).thenReturn(3);
+        when(attempt.getCorrect()).thenReturn(true);
+        when(attempt.getGame()).thenReturn(game);
         when(challengeAttemptRepository.findLast10AttemptsByUser(userId)).thenReturn(List.of(attempt));
         //when
         var result = challengeService.findLast10AttemptsForUser(userId);

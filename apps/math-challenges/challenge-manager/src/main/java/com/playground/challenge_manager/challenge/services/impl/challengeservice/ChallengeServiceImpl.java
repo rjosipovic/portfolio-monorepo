@@ -39,7 +39,7 @@ public class ChallengeServiceImpl implements AttemptService {
                         .secondNumber(e.getSecondNumber())
                         .guess(e.getResultAttempt())
                         .correctResult(MathUtil.calculateResult(e.getFirstNumber(), e.getSecondNumber(), e.getGame()))
-                        .correct(e.isCorrect())
+                        .correct(e.getCorrect())
                         .game(e.getGame())
                         .build())
                 .toList();

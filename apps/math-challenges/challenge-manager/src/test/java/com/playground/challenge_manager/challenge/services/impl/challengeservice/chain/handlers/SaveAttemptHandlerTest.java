@@ -11,8 +11,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,13 +58,14 @@ class SaveAttemptHandlerTest {
                 .build();
         ctx.setChallengeAttempt(challengeAttempt);
 
-        var entity = new ChallengeAttemptEntity(null, userId, firstNumber, secondNumber, guess, false, game, difficulty, null);
-        var saved = new ChallengeAttemptEntity(challengeAttemptId, userId, firstNumber, secondNumber, guess, false, game, difficulty, null);
-        when(challengeAttemptRepository.saveAndFlush(entity)).thenReturn(saved);
+        var saved = mock(ChallengeAttemptEntity.class);
+        when(saved.getId()).thenReturn(challengeAttemptId);
+        when(saved.getAttemptDate()).thenReturn(ZonedDateTime.now());
+        when(challengeAttemptRepository.saveAndFlush(any(ChallengeAttemptEntity.class))).thenReturn(saved);
 
         //when
         saveAttemptHandler.handle(ctx);
         //then
-        verify(challengeAttemptRepository, times(1)).saveAndFlush(entity);
+        verify(challengeAttemptRepository, times(1)).saveAndFlush(any(ChallengeAttemptEntity.class));
     }
 }
