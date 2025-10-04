@@ -83,6 +83,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
         <!-- Testcontainers: Provides JUnit 5 support for container-based testing -->
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -94,6 +95,13 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers: Provides the specific implementation for RabbitMQ containers -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>rabbitmq</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

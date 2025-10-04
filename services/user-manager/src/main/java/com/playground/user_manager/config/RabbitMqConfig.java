@@ -1,5 +1,6 @@
 package com.playground.user_manager.config;
 
+import com.playground.user_manager.auth.messaging.AuthMessagingConfiguration;
 import com.playground.user_manager.messaging.callback.CallbackManager;
 import com.playground.user_manager.messaging.callback.DlxMessagingConfiguration;
 import com.playground.user_manager.user.messaging.UserMessagingConfiguration;
@@ -23,6 +24,7 @@ public class RabbitMqConfig {
 
     private final CallbackManager callbackManager;
     private final UserMessagingConfiguration userMessagingConfiguration;
+    private final AuthMessagingConfiguration authMessagingConfiguration;
     private final DlxMessagingConfiguration dlxMessagingConfiguration;
 
     @Bean
@@ -46,6 +48,12 @@ public class RabbitMqConfig {
     @Bean
     public TopicExchange userExchange() {
         var exchangeName = userMessagingConfiguration.getExchange();
+        return ExchangeBuilder.topicExchange(exchangeName).durable(true).build();
+    }
+
+    @Bean
+    public TopicExchange notificationsExchange() {
+        var exchangeName = authMessagingConfiguration.getExchange();
         return ExchangeBuilder.topicExchange(exchangeName).durable(true).build();
     }
 
