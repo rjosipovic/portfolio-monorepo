@@ -1,46 +1,31 @@
 package com.playground.analytics_manager.inbound.messaging.events;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Value;
 
 import java.time.ZonedDateTime;
 
-@Getter
-@ToString
+@Value
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonDeserialize(builder = ChallengeSolvedEvent.ChallengeSolvedEventBuilder.class)
 public class ChallengeSolvedEvent {
 
-    private final String userId;
-    private final String challengeAttemptId;
-    private final Integer firstNumber;
-    private final Integer secondNumber;
-    private final Integer resultAttempt;
-    private final Boolean correct;
-    private final String game;
-    private final String difficulty;
-    private final ZonedDateTime attemptDate;
+    String userId;
+    String challengeAttemptId;
+    Integer firstNumber;
+    Integer secondNumber;
+    Integer resultAttempt;
+    Boolean correct;
+    String game;
+    String difficulty;
+    ZonedDateTime attemptDate;
 
-    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public ChallengeSolvedEvent(
-            @JsonProperty("userId") String userId,
-            @JsonProperty("challengeAttemptId") String challengeAttemptId,
-            @JsonProperty("firstNumber") int firstNumber,
-            @JsonProperty("secondNumber") int secondNumber,
-            @JsonProperty("resultAttempt") int resultAttempt,
-            @JsonProperty("correct") boolean correct,
-            @JsonProperty("game") String game,
-            @JsonProperty("difficulty") String difficulty,
-            @JsonProperty("attemptDate") ZonedDateTime attemptDate
-    ) {
-        this.userId = userId;
-        this.challengeAttemptId = challengeAttemptId;
-        this.firstNumber = firstNumber;
-        this.secondNumber = secondNumber;
-        this.resultAttempt = resultAttempt;
-        this.correct = correct;
-        this.game = game;
-        this.difficulty = difficulty;
-        this.attemptDate = attemptDate;
-    }
+    @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
+    public static class ChallengeSolvedEventBuilder {}
+
 }

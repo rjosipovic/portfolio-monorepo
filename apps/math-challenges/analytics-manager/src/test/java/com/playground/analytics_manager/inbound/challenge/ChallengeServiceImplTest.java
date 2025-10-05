@@ -46,17 +46,17 @@ class ChallengeServiceImplTest {
         var userEntity = UserEntity.create(userId, alias);
         when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
 
-        var event = new ChallengeSolvedEvent(
-                userId.toString(),
-                challengeAttemptId.toString(),
-                12,
-                34,
-                46,
-                true,
-                "addition",
-                "easy",
-                ZonedDateTime.now()
-        );
+        var event = ChallengeSolvedEvent.builder()
+                .userId(userId.toString())
+                .challengeAttemptId(challengeAttemptId.toString())
+                .firstNumber(12)
+                .secondNumber(34)
+                .resultAttempt(46)
+                .correct(true)
+                .game("addition")
+                .difficulty("easy")
+                .attemptDate(ZonedDateTime.now())
+                .build();
 
         //when
         challengeService.process(event);
@@ -86,17 +86,17 @@ class ChallengeServiceImplTest {
         var userId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        var event = new ChallengeSolvedEvent(
-                userId.toString(),
-                UUID.randomUUID().toString(),
-                12,
-                34,
-                46,
-                true,
-                "addition",
-                "easy",
-                ZonedDateTime.now()
-        );
+        var event = ChallengeSolvedEvent.builder()
+                .userId(userId.toString())
+                .challengeAttemptId(UUID.randomUUID().toString())
+                .firstNumber(12)
+                .secondNumber(34)
+                .resultAttempt(46)
+                .correct(true)
+                .game("addition")
+                .difficulty("easy")
+                .attemptDate(ZonedDateTime.now())
+                .build();
 
         //when
         challengeService.process(event);
