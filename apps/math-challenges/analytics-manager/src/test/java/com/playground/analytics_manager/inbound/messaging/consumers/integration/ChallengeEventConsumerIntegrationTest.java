@@ -1,15 +1,18 @@
 package com.playground.analytics_manager.inbound.messaging.consumers.integration;
 
+import ac.simons.neo4j.migrations.springframework.boot.autoconfigure.MigrationsAutoConfiguration;
 import com.playground.analytics_manager.inbound.challenge.ChallengeService;
 import com.playground.analytics_manager.inbound.messaging.events.ChallengeSolvedEvent;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -18,7 +21,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,11 +31,10 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Testcontainers
-@TestPropertySource(properties = {
-        "app.auth.secret=some-dummy-secret-for-testing",
-        "org.neo4j.migrations.enabled=false"
-})
+@TestPropertySource(properties = { "app.auth.secret=some-dummy-secret-for-testing" })
 @Import(ChallengeEventConsumerIntegrationTest.TestConfig.class)
+@EnableAutoConfiguration(exclude = { MigrationsAutoConfiguration.class })
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ChallengeEventConsumerIntegrationTest {
 
     @Container
@@ -69,7 +70,6 @@ class ChallengeEventConsumerIntegrationTest {
                 .correct(true)
                 .game("addition")
                 .difficulty("easy")
-                .attemptDate(ZonedDateTime.now())
                 .build();
 
         // when

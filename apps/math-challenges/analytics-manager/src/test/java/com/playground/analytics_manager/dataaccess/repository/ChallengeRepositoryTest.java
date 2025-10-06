@@ -14,6 +14,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -90,7 +91,7 @@ class ChallengeRepositoryTest {
         challengeRepository.save(challenge2);
 
         // when
-        var foundChallenges = challengeRepository.findByUserAttempt_UserId(targetUserId);
+        List<ChallengeEntity> foundChallenges = challengeRepository.findByUserAttempt_UserId(targetUserId);
 
         // then
         assertAll(
@@ -108,7 +109,7 @@ class ChallengeRepositoryTest {
         neo4jTemplate.save(targetUser);
 
         // when
-        var foundChallenges = challengeRepository.findByUserAttempt_UserId(targetUserId);
+        List<ChallengeEntity> foundChallenges = challengeRepository.findByUserAttempt_UserId(targetUserId);
 
         // then
         assertTrue(foundChallenges.isEmpty());

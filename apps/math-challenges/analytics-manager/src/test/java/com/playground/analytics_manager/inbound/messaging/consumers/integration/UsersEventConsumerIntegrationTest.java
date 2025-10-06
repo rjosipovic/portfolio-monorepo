@@ -1,17 +1,21 @@
 package com.playground.analytics_manager.inbound.messaging.consumers.integration;
 
-import com.playground.analytics_manager.inbound.user.model.UserLifecycleType;
-import com.playground.analytics_manager.inbound.user.model.User;
+
+import ac.simons.neo4j.migrations.springframework.boot.autoconfigure.MigrationsAutoConfiguration;
 import com.playground.analytics_manager.inbound.messaging.events.UserLifecycleEvent;
 import com.playground.analytics_manager.inbound.user.UserService;
+import com.playground.analytics_manager.inbound.user.model.User;
+import com.playground.analytics_manager.inbound.user.model.UserLifecycleType;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -30,11 +34,10 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Testcontainers
-@TestPropertySource(properties = {
-        "app.auth.secret=some-dummy-secret-for-testing",
-        "org.neo4j.migrations.enabled=false"
-})
+@TestPropertySource(properties = { "app.auth.secret=some-dummy-secret-for-testing" })
 @Import(UsersEventConsumerIntegrationTest.TestConfig.class)
+@EnableAutoConfiguration(exclude = { MigrationsAutoConfiguration.class })
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class UsersEventConsumerIntegrationTest {
 
     @Container
