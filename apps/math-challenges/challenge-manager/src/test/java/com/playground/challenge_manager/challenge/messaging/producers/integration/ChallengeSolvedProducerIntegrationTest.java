@@ -1,5 +1,6 @@
 package com.playground.challenge_manager.challenge.messaging.producers.integration;
 
+import com.playground.challenge_manager.challenge.dataaccess.repositories.ChallengeAttemptRepository;
 import com.playground.challenge_manager.challenge.messaging.events.ChallengeSolvedEvent;
 import com.playground.challenge_manager.challenge.messaging.producers.ChallengeSolvedProducer;
 import com.playground.challenge_manager.messaging.callback.CallbackManager;
@@ -11,11 +12,16 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -36,6 +42,8 @@ import static org.mockito.Mockito.mock;
 @Testcontainers
 @TestPropertySource(properties = { "app.auth.secret=some-dummy-secret-for-testing" })
 @Import(ChallengeSolvedProducerIntegrationTest.RabbitTestConfig.class)
+@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class, HibernateJpaAutoConfiguration.class, LiquibaseAutoConfiguration.class })
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ChallengeSolvedProducerIntegrationTest {
 
     @Container
@@ -62,9 +70,6 @@ class ChallengeSolvedProducerIntegrationTest {
 
     @Autowired
     private AllAnswersListener allAnswersListener;
-
-    @Autowired
-    private CallbackManager callbackManager;
 
     @Test
     void whenPublishCorrectAnswer_thenMessageIsConsumedByCorrectListener() throws InterruptedException {
@@ -177,6 +182,11 @@ class ChallengeSolvedProducerIntegrationTest {
         @Bean
         public CallbackManager callbackManager() {
             return mock(CallbackManager.class);
+        }
+
+        @Bean
+        public ChallengeAttemptRepository challengeAttemptRepository() {
+            return mock(ChallengeAttemptRepository.class);
         }
     }
 
