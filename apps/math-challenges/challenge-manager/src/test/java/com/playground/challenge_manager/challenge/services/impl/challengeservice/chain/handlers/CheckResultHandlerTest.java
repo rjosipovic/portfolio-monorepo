@@ -1,11 +1,13 @@
 package com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.handlers;
 
 import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
+import com.playground.challenge_manager.challenge.mappers.ChallengeMapper;
 import com.playground.challenge_manager.challenge.services.config.ChallengeConfig;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,8 +26,13 @@ class CheckResultHandlerTest {
 
     @Mock
     private ChallengeConfig challengeConfig;
-    @InjectMocks
+    private final ChallengeMapper challengeMapper = Mappers.getMapper(ChallengeMapper.class);
     private CheckResultHandler checkResultHandler;
+
+    @BeforeEach
+    void init() {
+        checkResultHandler = new CheckResultHandler(challengeConfig, challengeMapper);
+    }
 
     @Test
     void shouldCheckCorrectResult() {

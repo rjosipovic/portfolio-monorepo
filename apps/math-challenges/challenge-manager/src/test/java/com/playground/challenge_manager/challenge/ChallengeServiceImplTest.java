@@ -3,6 +3,7 @@ package com.playground.challenge_manager.challenge;
 import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
 import com.playground.challenge_manager.challenge.dataaccess.entities.ChallengeAttemptEntity;
 import com.playground.challenge_manager.challenge.dataaccess.repositories.ChallengeAttemptRepository;
+import com.playground.challenge_manager.challenge.mappers.ChallengeMapper;
 import com.playground.challenge_manager.challenge.services.config.ChallengeConfig;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.ChallengeServiceImpl;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierChain;
@@ -12,6 +13,7 @@ import com.playground.challenge_manager.challenge.services.impl.challengeservice
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -37,16 +39,17 @@ class ChallengeServiceImplTest {
     @Mock
     private ChallengeAttemptRepository challengeAttemptRepository;
     private ChallengeServiceImpl challengeService;
+    private final ChallengeMapper challengeMapper = Mappers.getMapper(ChallengeMapper.class);
 
     @BeforeEach
     void setUp() {
-        var checkResultHandler = new CheckResultHandler(challengeConfig);
-        var saveAttemptHandler = new SaveAttemptHandler(challengeAttemptRepository);
+        var checkResultHandler = new CheckResultHandler(challengeConfig, challengeMapper);
+        var saveAttemptHandler = new SaveAttemptHandler(challengeAttemptRepository, challengeMapper);
         var chain = new AttemptVerifierChain();
         chain.addHandler(checkResultHandler);
         chain.addHandler(saveAttemptHandler);
-        chain.addHandler(new AttemptResultHandler());
-        challengeService = new ChallengeServiceImpl(chain, challengeAttemptRepository);
+        chain.addHandler(new AttemptResultHandler(challengeMapper));
+        challengeService = new ChallengeServiceImpl(chain, challengeAttemptRepository, challengeMapper);
     }
 
     @Test

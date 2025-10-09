@@ -1,12 +1,14 @@
 package com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.handlers;
 
+import com.playground.challenge_manager.challenge.mappers.ChallengeMapper;
 import com.playground.challenge_manager.challenge.messaging.events.ChallengeSolvedEvent;
 import com.playground.challenge_manager.challenge.messaging.producers.ChallengeSolvedProducer;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,8 +24,13 @@ class PublishAttemptHandlerTest {
     @Mock
     private ChallengeSolvedProducer challengeSolvedProducer;
 
-    @InjectMocks
+    private final ChallengeMapper challengeMapper = Mappers.getMapper(ChallengeMapper.class);
     private PublishAttemptHandler handler;
+
+    @BeforeEach
+    void init() {
+        handler = new PublishAttemptHandler(challengeSolvedProducer, challengeMapper);
+    }
 
     @Test
     void shouldPublishChallengeSolvedEvent() {

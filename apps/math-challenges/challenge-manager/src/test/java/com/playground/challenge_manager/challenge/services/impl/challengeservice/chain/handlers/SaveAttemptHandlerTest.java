@@ -3,11 +3,13 @@ package com.playground.challenge_manager.challenge.services.impl.challengeservic
 import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
 import com.playground.challenge_manager.challenge.dataaccess.entities.ChallengeAttemptEntity;
 import com.playground.challenge_manager.challenge.dataaccess.repositories.ChallengeAttemptRepository;
+import com.playground.challenge_manager.challenge.mappers.ChallengeMapper;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -25,9 +27,14 @@ class SaveAttemptHandlerTest {
 
     @Mock
     private ChallengeAttemptRepository challengeAttemptRepository;
+    private final ChallengeMapper challengeMapper = Mappers.getMapper(ChallengeMapper.class);
 
-    @InjectMocks
     private SaveAttemptHandler saveAttemptHandler;
+
+    @BeforeEach
+    void init() {
+        saveAttemptHandler = new SaveAttemptHandler(challengeAttemptRepository, challengeMapper);
+    }
 
     @Test
     void shouldSaveAttempt() {
