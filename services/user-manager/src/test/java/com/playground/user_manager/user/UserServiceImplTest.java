@@ -2,10 +2,12 @@ package com.playground.user_manager.user;
 
 import com.playground.user_manager.user.dataaccess.UserEntity;
 import com.playground.user_manager.user.dataaccess.UserRepository;
+import com.playground.user_manager.user.mappers.UserMapper;
 import com.playground.user_manager.user.service.UserServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,8 +26,14 @@ class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
+    private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
+
     private UserServiceImpl userService;
+
+    @BeforeEach
+    void init() {
+        userService = new UserServiceImpl(userRepository, userMapper);
+    }
 
     @Test
     void testGetAllUsers() {

@@ -3,7 +3,6 @@ package com.playground.user_manager.user;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.playground.user_manager.user.api.controllers.UserController;
-import com.playground.user_manager.user.api.dto.CreateUserRequest;
 import com.playground.user_manager.user.model.User;
 import com.playground.user_manager.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
 import org.springframework.boot.test.json.JacksonTester;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -38,9 +36,7 @@ class UserControllerTest {
 
     private MockMvc mockMvc;
 
-    private JacksonTester<User> userJacksonTester;
     private JacksonTester<List<User>> usersJacksonTester;
-    private JacksonTester<CreateUserRequest> createUserJacksonTester;
 
     @BeforeEach
     void setup() {

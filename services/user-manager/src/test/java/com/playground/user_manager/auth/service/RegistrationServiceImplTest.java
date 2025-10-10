@@ -3,12 +3,14 @@ package com.playground.user_manager.auth.service;
 import com.playground.user_manager.auth.api.dto.RegisterUserRequest;
 import com.playground.user_manager.user.dataaccess.UserEntity;
 import com.playground.user_manager.user.dataaccess.UserRepository;
+import com.playground.user_manager.user.mappers.UserMapper;
 import com.playground.user_manager.user.messaging.producers.UserMessageProducer;
 import com.playground.user_manager.user.model.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -31,8 +33,14 @@ class RegistrationServiceImplTest {
     @Mock
     private UserMessageProducer userMessageProducer;
 
-    @InjectMocks
+    private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
+
     private RegistrationServiceImpl registrationService;
+
+    @BeforeEach
+    void init() {
+        registrationService = new RegistrationServiceImpl(userRepository, userMessageProducer, userMapper);
+    }
 
     @Test
     void testRegisterUser() {
