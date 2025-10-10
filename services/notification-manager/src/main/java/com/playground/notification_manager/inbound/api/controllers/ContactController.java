@@ -1,7 +1,7 @@
 package com.playground.notification_manager.inbound.api.controllers;
 
 import com.playground.notification_manager.inbound.api.dto.ContactMessage;
-import com.playground.notification_manager.outbound.email.EmailMessage;
+import com.playground.notification_manager.mappers.NotificationMapper;
 import com.playground.notification_manager.outbound.email.config.EmailConfig;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +19,11 @@ public class ContactController {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final EmailConfig emailConfig;
+    private final NotificationMapper notificationMapper;
 
     @PostMapping
     public ResponseEntity<Void> createNotification(@RequestBody @Valid ContactMessage contactMessage) {
-        var to = emailConfig.getDefaultTo();
-        var from = contactMessage.getFrom();
-        var subject = contactMessage.getSubject();
-        var body = contactMessage.getContent();
-        var emailMessage = EmailMessage.builder()
-                .from(from)
-                .to(to)
-                .subject(subject)
-                .body(body)
-                .build();
+        var emailMessage = notificationMapper.toEmailMessage(contactMessage, emailConfig);
         applicationEventPublisher.publishEvent(emailMessage);
         return ResponseEntity.accepted().build();
     }
