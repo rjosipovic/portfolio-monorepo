@@ -1,6 +1,7 @@
 package com.playground.challenge_manager.challenge.dataaccess.repositories;
 
 import com.playground.challenge_manager.challenge.dataaccess.entities.ChallengeAttemptEntity;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -19,6 +20,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataJpaTest
@@ -100,5 +102,29 @@ class ChallengeAttemptRepositoryTest {
                     assertEquals(sortedList, foundAttempts, "The list should be ordered by attemptDate descending.");
                 }
         );
+    }
+
+    // --- Bean Validation Tests ---
+
+    @Test
+    void whenSaveAttemptWithBlankGame_thenThrowException() {
+        // given
+        var attempt = ChallengeAttemptEntity.create(
+                UUID.randomUUID(), 10, 20, 200, true, "", "easy"
+        );
+
+        // when & then
+        assertThrows(ConstraintViolationException.class, () -> entityManager.persistAndFlush(attempt));
+    }
+
+    @Test
+    void whenSaveAttemptWithBlankDifficulty_thenThrowException() {
+        // given
+        var attempt = ChallengeAttemptEntity.create(
+                UUID.randomUUID(), 10, 20, 200, true, "addition", ""
+        );
+
+        // when & then
+        assertThrows(ConstraintViolationException.class, () -> entityManager.persistAndFlush(attempt));
     }
 }

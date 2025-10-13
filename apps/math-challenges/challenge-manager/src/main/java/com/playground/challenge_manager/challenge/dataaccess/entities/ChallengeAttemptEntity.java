@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,24 +27,31 @@ public class ChallengeAttemptEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
+    @NotNull
     @Column(name = "first_number", nullable = false)
     private Integer firstNumber;
 
+    @NotNull
     @Column(name = "second_number", nullable = false)
     private Integer secondNumber;
 
+    @NotNull
     @Column(name = "result_attempt", nullable = false)
     private Integer resultAttempt;
 
+    @NotNull
     @Column(name = "correct", nullable = false)
     private Boolean correct;
 
+    @NotBlank
     @Column(name = "game", nullable = false)
     private String game;
 
+    @NotBlank
     @Column(name = "difficulty", nullable = false)
     private String difficulty;
 
