@@ -6,6 +6,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Version;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,15 +28,20 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotBlank
     @Column(name = "alias", unique = true, nullable = false)
     private String alias;
 
+    @NotBlank
+    @Email
     @Column(name = "email", unique = true, nullable = false)
     private String email;
 
+    @Past
     @Column(name = "birthdate")
     private LocalDate birthdate;
 
+    @Pattern(regexp = "male|female")
     @Column(name = "gender")
     private String gender;
 

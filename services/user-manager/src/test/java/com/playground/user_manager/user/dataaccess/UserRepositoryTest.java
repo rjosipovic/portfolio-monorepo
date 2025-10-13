@@ -1,6 +1,7 @@
 package com.playground.user_manager.user.dataaccess;
 
 import jakarta.persistence.PersistenceException;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -11,6 +12,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -169,6 +171,8 @@ class UserRepositoryTest {
         assertTrue(foundUsers.isEmpty());
     }
 
+    // --- Database Constraint Tests ---
+
     @Test
     void whenSaveUserWithDuplicateAlias_thenThrowException() {
         // given
@@ -178,7 +182,6 @@ class UserRepositoryTest {
         var user2 = UserEntity.create("duplicate-alias", "email2@test.com", null, null);
 
         // when & then
-        // We assert for PersistenceException, as it's the standard JPA exception that wraps the provider-specific ConstraintViolationException.
         assertThrows(PersistenceException.class, () -> entityManager.persistAndFlush(user2));
     }
 
@@ -191,7 +194,36 @@ class UserRepositoryTest {
         var user2 = UserEntity.create("alias2", "duplicate@email.com", null, null);
 
         // when & then
-        // We assert for PersistenceException, as it's the standard JPA exception that wraps the provider-specific ConstraintViolationException.
         assertThrows(PersistenceException.class, () -> entityManager.persistAndFlush(user2));
+    }
+
+    // --- Bean Validation Tests ---
+
+    @Test
+    void whenSaveUserWithInvalidEmail_thenThrowException() {
+        // given
+        var user = UserEntity.create("test-alias", "not-an-email", null, null);
+
+        // when & then
+        assertThrows(ConstraintViolationException.class, () -> entityManager.persistAndFlush(user));
+    }
+
+    @Test
+    void whenSaveUserWithFutureBirthdate_thenThrowException() {
+        // given
+        var futureDate = LocalDate.now().plusDays(1);
+        var user = UserEntity.create("test-alias", "test@email.com", futureDate, null);
+
+        // when & then
+        assertThrows(ConstraintViolationException.class, () -> entityManager.persistAndFlush(user));
+    }
+
+    @Test
+    void whenSaveUserWithInvalidGender_thenThrowException() {
+        // given
+        var user = UserEntity.create("test-alias", "test@email.com", null, "other");
+
+        // when & then
+        assertThrows(ConstraintViolationException.class, () -> entityManager.persistAndFlush(user));
     }
 }
