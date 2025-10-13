@@ -1,15 +1,23 @@
 package com.playground.gamification_manager.game.messaging.consumers.integration;
 
+import com.playground.gamification_manager.game.dataaccess.repositories.BadgeRepository;
+import com.playground.gamification_manager.game.dataaccess.repositories.ScoreRepository;
 import com.playground.gamification_manager.game.messaging.events.ChallengeSolvedEvent;
 import com.playground.gamification_manager.game.service.interfaces.GameService;
+import com.playground.gamification_manager.game.startup.InitLeaderBoard;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
@@ -31,6 +39,8 @@ import static org.mockito.Mockito.verify;
 @Testcontainers
 @TestPropertySource(properties = { "app.auth.secret=some-dummy-secret-for-testing" })
 @Import(ChallengesSolvedConsumerIntegrationTest.TestConfig.class)
+@EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class, HibernateJpaAutoConfiguration.class, LiquibaseAutoConfiguration.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ChallengesSolvedConsumerIntegrationTest {
 
     @Container
@@ -93,6 +103,21 @@ class ChallengesSolvedConsumerIntegrationTest {
         @Bean
         public GameService gameService() {
             return mock(GameService.class);
+        }
+
+        @Bean
+        public ScoreRepository scoreRepository() {
+            return mock(ScoreRepository.class);
+        }
+
+        @Bean
+        public BadgeRepository badgeRepository() {
+            return mock(BadgeRepository.class);
+        }
+
+        @Bean
+        public InitLeaderBoard initLeaderBoard() {
+            return mock(InitLeaderBoard.class);
         }
     }
 }
