@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,12 +27,15 @@ public class ScoreEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @NotNull
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
+    @NotNull
     @Column(name = "challenge_attempt_id", nullable = false, updatable = false)
     private UUID challengeAttemptId;
 
+    @Positive
     @Column(name = "score", nullable = false, updatable = false)
     private int score;
 

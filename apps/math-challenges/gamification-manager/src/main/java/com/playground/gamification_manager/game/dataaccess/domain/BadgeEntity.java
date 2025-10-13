@@ -6,6 +6,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,9 +28,11 @@ public class BadgeEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @NotNull
     @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
+    @NotNull
     @Enumerated(jakarta.persistence.EnumType.STRING)
     @Column(name = "badge_name", nullable = false, updatable = false)
     private BadgeType badgeType;
