@@ -1,5 +1,7 @@
 package com.playground.analytics_manager.dataaccess.entity;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,11 +21,13 @@ import java.util.UUID;
 public class UserEntity {
 
     @Id
+    @NotNull
     private UUID id;
 
     @Version
     private Long version;
 
+    @NotBlank
     @Property("alias")
     private String alias;
 

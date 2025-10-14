@@ -1,5 +1,7 @@
 package com.playground.analytics_manager.dataaccess.entity;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.UUID;
 public class ChallengeEntity {
 
     @Id
+    @NotNull
     private UUID id;
 
     @Version
@@ -31,12 +34,15 @@ public class ChallengeEntity {
     @Property("secondNumber")
     private int secondNumber;
 
+    @NotBlank
     @Property("game")
     private String game;
 
+    @NotBlank
     @Property("difficulty")
     private String difficulty;
 
+    @NotNull
     @Relationship(type = "ATTEMPT", direction = Relationship.Direction.INCOMING)
     private UserAttempt userAttempt;
 
