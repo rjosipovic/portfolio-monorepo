@@ -8,9 +8,9 @@ import lombok.Getter;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -105,7 +105,7 @@ class AuthMessageProducerIntegrationTest {
         }
 
         @Bean
-        public Binding testBinding(Queue testQueue, TopicExchange notificationsExchange) {
+        public Binding testBinding(Queue testQueue, DirectExchange notificationsExchange) {
             return BindingBuilder.bind(testQueue).to(notificationsExchange).with(ROUTING_KEY);
         }
 

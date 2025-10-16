@@ -52,9 +52,9 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public TopicExchange notificationsExchange() {
+    public DirectExchange notificationsExchange() {
         var exchangeName = authMessagingConfiguration.getExchange();
-        return ExchangeBuilder.topicExchange(exchangeName).durable(true).build();
+        return ExchangeBuilder.directExchange(exchangeName).durable(true).build();
     }
 
     @Bean
