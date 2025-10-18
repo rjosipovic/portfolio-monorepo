@@ -63,9 +63,22 @@ app:
       score_threshold: 500
     - badge-type: LUCKY_NUMBER
       lucky_number: 42
-  leaderboard:
+  alias-cache:
+    key: user_aliases
+    duration: PT1H
+  leaderboard-cache:
     key: leaderboard
     size: 10
+  clients:
+    user-manager:
+      scheme: ${USER_MANAGER_SCHEMA:http}
+      host: ${USER_MANAGER_HOST:localhost}
+      port: ${USER_MANAGER_PORT:8081}
+      base-path: /users
+      retry:
+        max-attempts: 3
+        wait-duration: 500ms
+        exponential-backoff: 1.5
   messaging:
     dead-letter:
       exchange: dead-letter-exchange

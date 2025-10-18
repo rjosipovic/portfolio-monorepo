@@ -2,11 +2,13 @@ package com.playground.challenge_manager.challenge.services.impl.challengeservic
 
 
 import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
+import com.playground.challenge_manager.challenge.mappers.ChallengeMapper;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.UUID;
@@ -24,7 +26,8 @@ class AttemptResultHandlerTest {
 
     @BeforeEach
     void setUp() {
-        attemptResultHandler = new AttemptResultHandler();
+        ChallengeMapper challengeMapper = Mappers.getMapper(ChallengeMapper.class);
+        attemptResultHandler = new AttemptResultHandler(challengeMapper);
     }
 
     @Test

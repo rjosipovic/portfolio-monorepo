@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface ChallengeRepository extends CrudRepository<ChallengeEntity, UUID> {
 
     List<ChallengeEntity> findByUserAttempt_UserId(UUID userId);
+
+    boolean existsByIdAndUserAttempt_User_Id(UUID challengeId, UUID userId);
 }

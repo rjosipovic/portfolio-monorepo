@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5
+      author: roman
+      comment: "Re-apply NOT NULL constraints that were lost during column renames."
+      changes:
+        - addNotNullConstraint:
+            tableName: challenge_attempts
+            columnName: attempt_date
+            columnDataType: "timestamp with time zone"
+        - addNotNullConstraint:
+            tableName: challenge_attempts
+            columnName: correct
+            columnDataType: boolean
+        - addNotNullConstraint:
+            tableName: challenge_attempts
+            columnName: first_number
+            columnDataType: int
+        - addNotNullConstraint:
+            tableName: challenge_attempts
+            columnName: second_number
+            columnDataType: int
+        - addNotNullConstraint:
+            tableName: challenge_attempts
+            columnName: result_attempt
+            columnDataType: int
+        - addNotNullConstraint:
+            tableName: challenge_attempts
+            columnName: user_id
+            columnDataType: uuid

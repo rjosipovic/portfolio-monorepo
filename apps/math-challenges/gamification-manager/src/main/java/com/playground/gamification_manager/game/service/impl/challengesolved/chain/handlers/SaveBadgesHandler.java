@@ -28,12 +28,7 @@ public class SaveBadgesHandler implements ChallengeSolvedHandler {
     private void saveBadges(ChallengeSolvedContext ctx) {
         var userId = ctx.getUserId();
         var badges = ctx.getBadges();
-        var badgeEntities = badges.stream().map(badge -> {
-            var badgeEntity = new BadgeEntity();
-            badgeEntity.setUserId(UUID.fromString(userId));
-            badgeEntity.setBadgeType(badge);
-            return badgeEntity;
-        }).toList();
+        var badgeEntities = badges.stream().map(badge -> BadgeEntity.create(UUID.fromString(userId), badge)).toList();
         badgeRepository.saveAll(badgeEntities);
     }
 

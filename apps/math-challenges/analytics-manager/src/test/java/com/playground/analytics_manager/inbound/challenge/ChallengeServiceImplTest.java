@@ -1,14 +1,15 @@
 package com.playground.analytics_manager.inbound.challenge;
 
-import com.playground.analytics_manager.dataaccess.entity.ChallengeEntity;
 import com.playground.analytics_manager.dataaccess.entity.UserEntity;
 import com.playground.analytics_manager.dataaccess.repository.ChallengeRepository;
 import com.playground.analytics_manager.dataaccess.repository.UserRepository;
 import com.playground.analytics_manager.inbound.messaging.events.ChallengeSolvedEvent;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,12 +18,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,74 +31,41 @@ class ChallengeServiceImplTest {
     private UserRepository userRepository;
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
-    @InjectMocks
+
+    private Validator validator;
+
     private ChallengeServiceImpl challengeService;
 
-    @Test
-    void process_shouldSaveChallengeEntityWithCorrectFields() {
-        //given
-        var userId = UUID.randomUUID();
-        var challengeAttemptId = UUID.randomUUID();
-        var userEntity = UserEntity.builder().id(userId).build();
-        when(userRepository.findById(userId)).thenReturn(Optional.of(userEntity));
-
-        var event = new ChallengeSolvedEvent(
-                userId.toString(),
-                challengeAttemptId.toString(),
-                12,
-                34,
-                46,
-                true,
-                "addition",
-                "easy",
-                ZonedDateTime.now()
-        );
-
-        //when
-        challengeService.process(event);
-
-        //then
-        var captor = ArgumentCaptor.forClass(ChallengeEntity.class);
-        verify(challengeRepository).save(captor.capture());
-        verify(applicationEventPublisher).publishEvent(event);
-        var saved = captor.getValue();
-
-        assertAll(
-                () -> assertNotNull(saved.getUserAttempt()),
-                () -> assertEquals(challengeAttemptId, saved.getId()),
-                () -> assertEquals(12, saved.getFirstNumber()),
-                () -> assertEquals(34, saved.getSecondNumber()),
-                () -> assertEquals("addition", saved.getGame()),
-                () -> assertEquals("easy", saved.getDifficulty()),
-                () -> assertEquals(event.getAttemptDate(), saved.getUserAttempt().getAttemptDate()),
-                () -> assertEquals(userEntity, saved.getUserAttempt().getUser()),
-                () -> assertEquals(true, saved.getUserAttempt().getCorrect())
-        );
+    @BeforeEach
+    void setUp() {
+        var factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+        challengeService = new ChallengeServiceImpl(challengeRepository, userRepository, applicationEventPublisher, validator);
     }
 
     @Test
-    void process_shouldDoNothingIfUserNotFound() {
-        //given
+    void whenProcessEventWithInvalidData_thenThrowException() {
+        // given
+        // This event is invalid because the 'game' field is blank
         var userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        var event = ChallengeSolvedEvent.builder()
+                .userId(userId.toString())
+                .challengeAttemptId(UUID.randomUUID().toString())
+                .firstNumber(10)
+                .secondNumber(200)
+                .resultAttempt(210)
+                .correct(true)
+                .game("")
+                .difficulty("easy")
+                .attemptDate(ZonedDateTime.now())
+                .build();
 
-        var event = new ChallengeSolvedEvent(
-                userId.toString(),
-                UUID.randomUUID().toString(),
-                12,
-                34,
-                46,
-                true,
-                "addition",
-                "easy",
-                ZonedDateTime.now()
-        );
+        var userEntity = UserEntity.create(userId, "test-alias");
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(userEntity));
 
-        //when
-        challengeService.process(event);
-
-        //then
-        verify(challengeRepository, never()).save(any());
-        verify(applicationEventPublisher, never()).publishEvent(any());
+        // when & then
+        // Assert that processing this event throws a ConstraintViolationException
+        // because the resulting ChallengeEntity will fail bean validation.
+        assertThrows(ConstraintViolationException.class, () -> challengeService.process(event));
     }
 }

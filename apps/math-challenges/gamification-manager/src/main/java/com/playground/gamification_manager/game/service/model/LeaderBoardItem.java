@@ -8,14 +8,13 @@ import lombok.Singular;
 import lombok.Value;
 
 import java.util.Set;
-import java.util.UUID;
 
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class LeaderBoardItem {
 
-    UUID userId;
+    String alias;
     long totalScore;
     @Singular
     Set<BadgeType> badges;

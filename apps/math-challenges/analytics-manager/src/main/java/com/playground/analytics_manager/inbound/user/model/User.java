@@ -1,21 +1,22 @@
 package com.playground.analytics_manager.inbound.user.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Value;
 
-@Getter
+@Value
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonDeserialize(builder = User.UserBuilder.class)
 public class User {
 
-    private final String id;
-    private final String alias;
+    String id;
+    String alias;
 
-    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
-    public User(
-            @JsonProperty("id") String id,
-            @JsonProperty("alias") String alias
-    ) {
-        this.id = id;
-        this.alias = alias;
-    }
+    @JsonPOJOBuilder(withPrefix = "", buildMethodName = "build")
+    public static class UserBuilder {}
+
 }

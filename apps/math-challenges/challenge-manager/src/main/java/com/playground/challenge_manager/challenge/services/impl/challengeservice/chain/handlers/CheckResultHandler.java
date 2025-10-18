@@ -1,43 +1,35 @@
 package com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.handlers;
 
 
+import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
+import com.playground.challenge_manager.challenge.mappers.ChallengeMapper;
 import com.playground.challenge_manager.challenge.services.config.ChallengeConfig;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptHandler;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.AttemptVerifierContext;
 import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.util.MathUtil;
 import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
-@Service
+@Component
 @RequiredArgsConstructor
 public class CheckResultHandler implements AttemptHandler {
 
     private final ChallengeConfig challengeConfig;
+    private final ChallengeMapper challengeMapper;
 
     @Override
     public void handle(AttemptVerifierContext ctx) {
         var attempt = ctx.getAttempt();
-        var userId = UUID.fromString(attempt.getUserId());
-        var firstNumber = attempt.getFirstNumber();
-        var secondNumber = attempt.getSecondNumber();
-        var guess = attempt.getGuess();
-        var game = attempt.getGame();
-        var difficulty = determineDifficulty(firstNumber, secondNumber);
-        var isCorrect = isCorrect(guess, MathUtil.calculateResult(firstNumber, secondNumber, game));
-
-        var challengeAttempt = ChallengeAttempt.builder()
-                .userId(userId)
-                .firstNumber(firstNumber)
-                .secondNumber(secondNumber)
-                .resultAttempt(guess)
-                .correct(isCorrect)
-                .game(game)
-                .difficulty(difficulty)
-                .build();
+        var challengeAttempt = build(attempt);
         ctx.setChallengeAttempt(challengeAttempt);
+    }
+
+    private ChallengeAttempt build(ChallengeAttemptDTO dto) {
+        var mapped = challengeMapper.toChallengeAttempt(dto);
+        var difficulty = determineDifficulty(mapped.getFirstNumber(), mapped.getSecondNumber());
+        var correct = isCorrect(mapped.getResultAttempt(), MathUtil.calculateResult(mapped.getFirstNumber(), mapped.getSecondNumber(), mapped.getGame()));
+        return mapped.toBuilder().correct(correct).difficulty(difficulty).build();
     }
 
     private String determineDifficulty(int firstNumber, int secondNumber) {

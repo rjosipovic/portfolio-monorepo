@@ -41,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var signedJwt = SignedJWT.parse(token);
                 var valid = signedJwt.verify(new MACVerifier(secret));
                 if (valid && notExpired(signedJwt)) {
-                    var authentication = getUsernamePasswordAuthenticationToken(signedJwt);
+                    var authentication = getUsernamePasswordAuthenticationToken(signedJwt, token);
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     var securityContext = SecurityContextHolder.getContext();
                     securityContext.setAuthentication(authentication);
@@ -57,11 +57,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return signedJwt.getJWTClaimsSet().getExpirationTime().after(new Date());
     }
 
-    private static UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(SignedJWT signedJwt) throws ParseException {
+    private static UsernamePasswordAuthenticationToken getUsernamePasswordAuthenticationToken(SignedJWT signedJwt, String token) throws ParseException {
         var email = signedJwt.getJWTClaimsSet().getSubject();
         var alias = signedJwt.getJWTClaimsSet().getStringClaim("alias");
         var userId = signedJwt.getJWTClaimsSet().getStringClaim("userId");
         var userPrincipal = JwtUserPrincipal.builder().email(email).claim("alias", alias).claim("userId", userId).build();
-        return new UsernamePasswordAuthenticationToken(userPrincipal, null, Collections.emptyList());
+        return new UsernamePasswordAuthenticationToken(userPrincipal, token, Collections.emptyList());
     }
 }

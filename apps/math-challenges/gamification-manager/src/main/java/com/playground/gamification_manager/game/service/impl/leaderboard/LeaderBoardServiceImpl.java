@@ -1,15 +1,18 @@
 package com.playground.gamification_manager.game.service.impl.leaderboard;
 
 import com.playground.gamification_manager.game.dataaccess.domain.BadgeEntity;
+import com.playground.gamification_manager.game.dataaccess.domain.BadgeType;
+import com.playground.gamification_manager.game.dataaccess.domain.UserScore;
 import com.playground.gamification_manager.game.dataaccess.repositories.BadgeRepository;
+import com.playground.gamification_manager.game.service.interfaces.AliasService;
 import com.playground.gamification_manager.game.service.interfaces.LeaderBoardService;
 import com.playground.gamification_manager.game.service.model.LeaderBoardItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -21,36 +24,58 @@ public class LeaderBoardServiceImpl implements LeaderBoardService {
 
     private final BadgeRepository badgeRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final LeaderBoardConfiguration leaderBoardConfiguration;
+    private final LeaderBoardCacheConfiguration leaderBoardCacheConfiguration;
+    private final AliasService aliasService;
 
     @Override
     public List<LeaderBoardItem> getLeaderBoard() {
 
         var leaders = getLeaders();
+        var userIds = leaders.stream().map(UserScore::getUserId).collect(Collectors.toSet());
+        var aliasMap = buildAliasMap(userIds);
+        return mapToLeaderBoard(leaders, aliasMap);
+    }
 
+    private List<UserScore> getLeaders() {
+        var key = leaderBoardCacheConfiguration.getKey();
+        var startIdx = 0;
+        var endIdx = leaderBoardCacheConfiguration.getSize() - 1;
+        var zSetOps = redisTemplate.opsForZSet();
+        var tuples = zSetOps.reverseRangeWithScores(key, startIdx, endIdx);
+        if (Objects.isNull(tuples)) {
+            return List.of();
+        }
+        return tuples.stream()
+                .filter(t -> Objects.nonNull(t.getValue()) && Objects.nonNull(t.getScore()))
+                .map(t -> new UserScore(UUID.fromString(t.getValue().toString()), t.getScore().longValue()))
+                .collect(Collectors.toList());
+    }
+
+    private List<LeaderBoardItem> mapToLeaderBoard(List<UserScore> leaders, Map<String, String> aliasMap) {
         return leaders.stream()
-                .filter(leader -> Objects.nonNull(leader.getValue()) && Objects.nonNull(leader.getScore()))
-                .map(leader -> {
-                    var userId = UUID.fromString(leader.getValue().toString());
-                    var totalScore = leader.getScore();
-                    var badges = badgeRepository.findAllByUserId(userId)
-                            .stream()
-                            .map(BadgeEntity::getBadgeType)
-                            .collect(Collectors.toSet());
-                    return LeaderBoardItem.builder()
-                            .userId(userId)
-                            .totalScore(totalScore.longValue())
-                            .badges(badges)
-                            .build();
-                })
+                .map(leader -> mapToLeaderBoardItem(leader, aliasMap.get(leader.getUserId().toString())))
                 .toList();
     }
 
-    private Set<ZSetOperations.TypedTuple<Object>> getLeaders() {
-        var key = leaderBoardConfiguration.getKey();
-        var startIdx = 0;
-        var endIdx = leaderBoardConfiguration.getSize() - 1;
-        var zSetOps = redisTemplate.opsForZSet();
-        return zSetOps.reverseRangeWithScores(key, startIdx, endIdx);
+    private LeaderBoardItem mapToLeaderBoardItem(UserScore leader, String alias) {
+        var userId = leader.getUserId();
+        var totalScore = leader.getTotalScore();
+        var badges = getBadgesForUser(userId);
+        return LeaderBoardItem.builder()
+                .alias(Objects.nonNull(alias) ? alias : "Unknown")
+                .totalScore(totalScore)
+                .badges(badges)
+                .build();
+    }
+
+    private Set<BadgeType> getBadgesForUser(UUID userId) {
+        return badgeRepository.findAllByUserId(userId)
+                .stream()
+                .map(BadgeEntity::getBadgeType)
+                .collect(Collectors.toSet());
+    }
+
+    private Map<String, String> buildAliasMap(Set<UUID> userIds) {
+        return aliasService.getAlias(userIds);
     }
 }

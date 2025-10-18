@@ -1,19 +1,15 @@
 package com.playground.gamification_manager.game.dataaccess.domain;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter @Setter
+@RequiredArgsConstructor
 public class UserScore {
 
-    private UUID userId;
-    private long totalScore;
+    private final UUID userId;
+    private final long totalScore;
 }

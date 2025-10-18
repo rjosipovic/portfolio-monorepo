@@ -1,0 +1,5 @@
+CREATE CONSTRAINT unique_user_id IF NOT EXISTS
+FOR (u:User) REQUIRE u.id IS UNIQUE;
+
+CREATE CONSTRAINT unique_challenge_id IF NOT EXISTS
+FOR (c:Challenge) REQUIRE c.id IS UNIQUE;

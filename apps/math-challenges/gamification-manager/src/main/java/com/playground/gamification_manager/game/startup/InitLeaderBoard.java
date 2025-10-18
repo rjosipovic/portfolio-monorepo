@@ -1,7 +1,7 @@
 package com.playground.gamification_manager.game.startup;
 
 import com.playground.gamification_manager.game.dataaccess.repositories.ScoreRepository;
-import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardConfiguration;
+import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardCacheConfiguration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class InitLeaderBoard {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final LeaderBoardConfiguration leaderBoardConfiguration;
+    private final LeaderBoardCacheConfiguration leaderBoardCacheConfiguration;
     private final ScoreRepository scoreRepository;
 
     @EventListener(ApplicationReadyEvent.class)
@@ -23,7 +23,7 @@ public class InitLeaderBoard {
     }
 
     private void setLeaderBoard() {
-        var key = leaderBoardConfiguration.getKey();
+        var key = leaderBoardCacheConfiguration.getKey();
         scoreRepository.totalScorePerUser().forEach(user -> {
             var userId = user.getUserId().toString();
             var totalScore = user.getTotalScore();
@@ -33,7 +33,7 @@ public class InitLeaderBoard {
     }
 
     private void removeLeaderBoardIfPresent() {
-        var key = leaderBoardConfiguration.getKey();
+        var key = leaderBoardCacheConfiguration.getKey();
         redisTemplate.unlink(key);
     }
 }

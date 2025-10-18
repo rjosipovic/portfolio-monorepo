@@ -60,11 +60,6 @@ class SaveScoreHandlerTest {
         when(ctx.getScore()).thenReturn(20);
         when(ctx.getChallengeAttemptId()).thenReturn(challengeAttemptId);
 
-        var scoreEntity = new ScoreEntity();
-        scoreEntity.setUserId(UUID.fromString(userId));
-        scoreEntity.setChallengeAttemptId(UUID.fromString(challengeAttemptId));
-        scoreEntity.setScore(20);
-
         //when
         saveScoreHandler.handle(ctx);
         //then

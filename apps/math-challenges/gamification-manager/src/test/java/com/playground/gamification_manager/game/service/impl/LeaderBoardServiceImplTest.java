@@ -3,8 +3,9 @@ package com.playground.gamification_manager.game.service.impl;
 import com.playground.gamification_manager.game.dataaccess.domain.BadgeEntity;
 import com.playground.gamification_manager.game.dataaccess.domain.BadgeType;
 import com.playground.gamification_manager.game.dataaccess.repositories.BadgeRepository;
-import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardConfiguration;
+import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardCacheConfiguration;
 import com.playground.gamification_manager.game.service.impl.leaderboard.LeaderBoardServiceImpl;
+import com.playground.gamification_manager.game.service.interfaces.AliasService;
 import com.playground.gamification_manager.game.service.model.LeaderBoardItem;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 
-import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,7 +37,10 @@ class LeaderBoardServiceImplTest {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
-    private LeaderBoardConfiguration leaderBoardConfiguration;
+    private LeaderBoardCacheConfiguration leaderBoardCacheConfiguration;
+
+    @Mock
+    private AliasService aliasService;
 
     @Mock
     private ZSetOperations<String, Object> zSetOperations;
@@ -48,8 +52,11 @@ class LeaderBoardServiceImplTest {
     void shouldGetLeaderBoard() {
         //given
         var firstUserId = UUID.randomUUID();
+        var firstUserAlias = "player1";
         var secondUserId = UUID.randomUUID();
+        var secondUserAlias = "player2";
         var thirdUserId = UUID.randomUUID();
+        var thirdUserAlias = "player3";
         var firstTotalScore = 750;
         var secondTotalScore = 500;
         var thirdTotalScore = 250;
@@ -57,36 +64,38 @@ class LeaderBoardServiceImplTest {
         var secondBadges = Set.of(BadgeType.FIRST_WON, BadgeType.BRONZE, BadgeType.SILVER);
         var thirdBadges = Set.of(BadgeType.FIRST_WON, BadgeType.BRONZE);
         var first = LeaderBoardItem.builder()
-                .userId(firstUserId)
+                .alias(firstUserAlias)
                 .totalScore(firstTotalScore)
                 .badges(firstBadges)
                 .build();
         var second = LeaderBoardItem.builder()
-                .userId(secondUserId)
+                .alias(secondUserAlias)
                 .totalScore(secondTotalScore)
                 .badges(secondBadges)
                 .build();
         var third = LeaderBoardItem.builder()
-                .userId(thirdUserId)
+                .alias(thirdUserAlias)
                 .totalScore(thirdTotalScore)
                 .badges(thirdBadges)
                 .build();
-        var firstFirstWonBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.FIRST_WON, ZonedDateTime.now());
-        var firstBronzeBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.BRONZE, ZonedDateTime.now());
-        var firstSilverBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.SILVER, ZonedDateTime.now());
-        var firstGoldBadge = new BadgeEntity(UUID.randomUUID(), firstUserId, BadgeType.GOLD, ZonedDateTime.now());
-        var secondFirstWonBadge = new BadgeEntity(UUID.randomUUID(), secondUserId, BadgeType.FIRST_WON, ZonedDateTime.now());
-        var secondBronzeBadge = new BadgeEntity(UUID.randomUUID(), secondUserId, BadgeType.BRONZE, ZonedDateTime.now());
-        var secondSilverBadge = new BadgeEntity(UUID.randomUUID(), secondUserId, BadgeType.SILVER, ZonedDateTime.now());
-        var thirdFirstWonBadge = new BadgeEntity(UUID.randomUUID(), thirdUserId, BadgeType.FIRST_WON, ZonedDateTime.now());
-        var thirdBronzeBadge = new BadgeEntity(UUID.randomUUID(), thirdUserId, BadgeType.BRONZE, ZonedDateTime.now());
+        var firstFirstWonBadge = BadgeEntity.create(firstUserId, BadgeType.FIRST_WON);
+        var firstBronzeBadge = BadgeEntity.create(firstUserId, BadgeType.BRONZE);
+        var firstSilverBadge = BadgeEntity.create(firstUserId, BadgeType.SILVER);
+        var firstGoldBadge = BadgeEntity.create(firstUserId, BadgeType.GOLD);
+        var secondFirstWonBadge = BadgeEntity.create(secondUserId, BadgeType.FIRST_WON);
+        var secondBronzeBadge = BadgeEntity.create(secondUserId, BadgeType.BRONZE);
+        var secondSilverBadge = BadgeEntity.create(secondUserId, BadgeType.SILVER);
+        var thirdFirstWonBadge = BadgeEntity.create(thirdUserId, BadgeType.FIRST_WON);
+        var thirdBronzeBadge = BadgeEntity.create(thirdUserId, BadgeType.BRONZE);
+
+        when(leaderBoardCacheConfiguration.getKey()).thenReturn("leaderboard");
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(aliasService.getAlias(Set.of(firstUserId, secondUserId, thirdUserId))).thenReturn(Map.of(firstUserId.toString(), firstUserAlias, secondUserId.toString(), secondUserAlias, thirdUserId.toString(), thirdUserAlias));
 
         when(badgeRepository.findAllByUserId(firstUserId)).thenReturn(List.of(firstFirstWonBadge, firstBronzeBadge, firstSilverBadge, firstGoldBadge));
         when(badgeRepository.findAllByUserId(secondUserId)).thenReturn(List.of(secondFirstWonBadge, secondBronzeBadge, secondSilverBadge));
         when(badgeRepository.findAllByUserId(thirdUserId)).thenReturn(List.of(thirdFirstWonBadge, thirdBronzeBadge));
-        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
-        when(leaderBoardConfiguration.getKey()).thenReturn("leaderboard");
-        when(leaderBoardConfiguration.getSize()).thenReturn(10);
+        when(leaderBoardCacheConfiguration.getSize()).thenReturn(10);
 
         var tuple1 = mock(ZSetOperations.TypedTuple.class);
         when(tuple1.getValue()).thenReturn(firstUserId);
@@ -120,5 +129,6 @@ class LeaderBoardServiceImplTest {
         verify(badgeRepository).findAllByUserId(firstUserId);
         verify(badgeRepository).findAllByUserId(secondUserId);
         verify(badgeRepository).findAllByUserId(thirdUserId);
+        verify(aliasService).getAlias(Set.of(firstUserId, secondUserId, thirdUserId));
     }
 }
