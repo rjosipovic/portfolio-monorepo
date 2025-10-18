@@ -25,7 +25,7 @@ services:
       - portfolio-network
 
   neo4j-analytics:
-    image: neo4j:2025.05.0
+    image: neo4j:2025.09.0
     restart: always
     environment:
       - NEO4J_AUTH=${NEO4J_ANALYTICS_USER}/${NEO4J_ANALYTICS_PASSWORD}
