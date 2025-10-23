@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: challenge-route
+              uri: ${CHALLENGE_MANAGER_URL:http://localhost:8080}
+              predicates:
+                - Path=/challenges/random, /attempts
+
+            - id: user-manager-route
+              uri: ${USER_MANAGER_URL:http://localhost:8081}
+              predicates:
+                - Path=/auth/**, /users/**
+
+            - id: gamification-manager-route
+              uri: ${GAMIFICATION_MANAGER_URL:http://localhost:8082}
+              predicates:
+                - Path=/leaders/**
+
+            - id: notification-manager-route
+              uri: ${NOTIFICATION_MANAGER_URL:http://localhost:8083}
+              predicates:
+                - Path=/notifications/**
+
+            - id: analytics-manager-route
+              uri: ${ANALYTICS_MANAGER_URL:http://localhost:8084}
+              predicates:
+                - Path=/analytics/attempts/**, /analytics/statistics/**
+
+server:
+  port: 8000
+
+logging:
+  level:
+    root: INFO
+    # Log routing decisions and predicate matching from the MVC Gateway
+    org.springframework.cloud.gateway.server.mvc: DEBUG
+    # Log overall request processing in the MVC dispatcher
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    # Log 404 Not Found errors clearly
+    org.springframework.web.servlet.PageNotFound: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
+
+app:
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://127.0.0.1:3000}
+    allowed-methods: GET,POST,PUT,DELETE
+    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin

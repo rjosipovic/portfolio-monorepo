@@ -1,6 +1,5 @@
 package com.playground.analytics_manager.outbound.api.controllers;
 
-import com.playground.analytics_manager.config.CorsConfig;
 import com.playground.analytics_manager.config.SecurityConfig;
 import com.playground.analytics_manager.outbound.api.dto.UserSuccessRate;
 import com.playground.analytics_manager.outbound.auth.AuthConfig;
@@ -29,7 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @AutoConfigureJsonTesters
 @WebMvcTest(StatisticsController.class)
-@Import({SecurityConfig.class, CorsConfig.class})
+@Import({SecurityConfig.class})
 class StatisticsControllerTest {
 
     @Autowired
@@ -54,7 +53,7 @@ class StatisticsControllerTest {
         var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
         //when
-        var response = mockMvc.perform(get("/statistics/user")
+        var response = mockMvc.perform(get("/analytics/statistics")
                 .with(authentication(auth))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonUserSuccessRate.write(userSuccessRate).getJson()))
@@ -79,7 +78,7 @@ class StatisticsControllerTest {
         var auth = new UsernamePasswordAuthenticationToken(principal, null, List.of());
 
         //when
-        var response = mockMvc.perform(get("/statistics/user")
+        var response = mockMvc.perform(get("/analytics/statistics")
                 .with(authentication(auth))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn().getResponse();

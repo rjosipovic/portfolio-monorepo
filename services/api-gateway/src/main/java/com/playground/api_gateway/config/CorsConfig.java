@@ -1,4 +1,4 @@
-package com.playground.challenge_manager.config;
+package com.playground.api_gateway.config;
 
 import lombok.Getter;
 import lombok.Setter;
