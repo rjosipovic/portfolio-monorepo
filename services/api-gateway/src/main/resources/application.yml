@@ -34,6 +34,21 @@ spring:
 server:
   port: 8000
 
+management:
+  server:
+    port: 9000
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+      base-path: /
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    build:
+      enabled: true
+
 logging:
   level:
     root: INFO
