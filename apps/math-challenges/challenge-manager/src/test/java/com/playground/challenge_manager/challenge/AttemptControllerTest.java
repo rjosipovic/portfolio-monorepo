@@ -6,6 +6,7 @@ import com.playground.challenge_manager.challenge.api.controllers.AttemptControl
 import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
 import com.playground.challenge_manager.challenge.api.dto.ChallengeResultDTO;
 import com.playground.challenge_manager.challenge.services.interfaces.AttemptService;
+import com.playground.challenge_manager.config.ManagementConfig;
 import com.playground.challenge_manager.config.SecurityConfig;
 import com.playground.challenge_manager.errors.custom.ChallengeManagerError;
 import com.playground.challenge_manager.errors.exceptions.enums.ErrorCode;
@@ -35,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @AutoConfigureJsonTesters
 @WebMvcTest(AttemptController.class)
-@Import({SecurityConfig.class})
+@Import({SecurityConfig.class, ManagementConfig.class})
 class AttemptControllerTest {
 
     @Autowired

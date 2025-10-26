@@ -26,6 +26,21 @@ server:
     include-message: always
     include-binding-errors: always
 
+management:
+  server:
+    port: 9080
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+      base-path: /
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    build:
+      enabled: true
+
 app:
   auth:
     secret: ${AUTH_SECRET:}
