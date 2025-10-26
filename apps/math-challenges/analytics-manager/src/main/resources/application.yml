@@ -23,6 +23,22 @@ spring:
       database: ${NEO4J_DATABASE:neo4j}
 server:
   port: 8084
+
+management:
+  server:
+    port: 9084
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+      base-path: /
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    build:
+      enabled: true
+
 logging:
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
