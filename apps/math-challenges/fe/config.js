@@ -3,7 +3,7 @@ const HOST = 'localhost';
 
 const API_ENDPOINTS = {
     // Base URLs
-    BASE_URL: `${PROTOCOL}://${HOST}:8000/`,
+    BASE_URL: `${PROTOCOL}://${HOST}:8080/`,
 
     // Specific Paths
     get CHALLENGE_API() { return this.BASE_URL + 'challenges'; },

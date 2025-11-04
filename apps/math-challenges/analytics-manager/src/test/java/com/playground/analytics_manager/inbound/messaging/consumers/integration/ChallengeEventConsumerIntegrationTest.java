@@ -31,7 +31,10 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Testcontainers
-@TestPropertySource(properties = { "app.auth.secret=some-dummy-secret-for-testing" })
+@TestPropertySource(properties = {
+        "app.auth.secret=some-dummy-secret-for-testing",
+        "spring.cloud.discovery.enabled=false"
+})
 @Import(ChallengeEventConsumerIntegrationTest.TestConfig.class)
 @EnableAutoConfiguration(exclude = { MigrationsAutoConfiguration.class })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

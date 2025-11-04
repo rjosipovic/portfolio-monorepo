@@ -29,12 +29,23 @@ spring:
           multiplier: 4
           max-interval: 3600000
         default-requeue-rejected: false
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+
 server:
-  port: 8082
+  port: ${SERVICE_PORT:8080}
 
 management:
   server:
-    port: 9082
+    port: ${MANAGEMENT_PORT:9090}
   endpoints:
     web:
       exposure:
@@ -82,10 +93,7 @@ app:
     size: 10
   clients:
     user-manager:
-      scheme: ${USER_MANAGER_SCHEMA:http}
-      host: ${USER_MANAGER_HOST:localhost}
-      port: ${USER_MANAGER_PORT:8081}
-      base-path: /users
+      service-name: user-manager
       retry:
         max-attempts: 3
         wait-duration: 500ms

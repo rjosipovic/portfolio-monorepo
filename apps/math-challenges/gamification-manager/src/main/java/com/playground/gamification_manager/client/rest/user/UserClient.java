@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,35 +19,39 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserClient {
 
-    private final UserManagerClientConfig userManagerClientConfig;
     private final WebClient webClient;
+    private final UserManagerClientConfig userManagerClientConfig;
 
-    public UserClient(UserManagerClientConfig userManagerClientConfig) {
+    public UserClient(UserManagerClientConfig userManagerClientConfig, WebClient.Builder loadBalancedWebClientBuilder) {
         this.userManagerClientConfig = userManagerClientConfig;
-        this.webClient = WebClient.builder()
-                .baseUrl(userManagerClientConfig.getBaseUrl())
+        var baseUrl = String.format("http://%s/users", userManagerClientConfig.getServiceName());
+        this.webClient = loadBalancedWebClientBuilder
+                .baseUrl(baseUrl)
                 .filter(logRequest())
                 .filter(logResponse())
                 .build();
     }
 
     public List<UserAlias> getUserAlias(Set<UUID> userIds) {
-        final var basepath = userManagerClientConfig.getBasePath();
         final var userIdsParam = userIds.stream()
                 .map(UUID::toString)
                 .collect(Collectors.joining(","));
 
         final var token = extractToken();
 
+        var retrySpec = Retry.backoff(
+                userManagerClientConfig.getRetry().getMaxAttempts(),
+                userManagerClientConfig.getRetry().getWaitDuration()
+        ).jitter(0.75);
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path(basepath)
                         .queryParam("ids", userIdsParam)
                         .build())
                 .headers(headers -> headers.setBearerAuth(token))
                 .retrieve()
                 .bodyToFlux(UserAlias.class)
                 .collectList()
+                .retryWhen(retrySpec)
                 .block();
     }
 

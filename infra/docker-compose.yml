@@ -64,7 +64,7 @@ services:
       - portfolio-network
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3.13-management
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
@@ -80,7 +80,7 @@ services:
       - portfolio-network
 
   redis:
-    image: redis/redis-stack:latest
+    image: redis/redis-stack:7.2.0-v10
     environment:
       - REDIS_USER=${REDIS_USER}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -92,6 +92,20 @@ services:
     ports:
       - "6379:6379"
       - "5540:8001"
+    networks:
+      - portfolio-network
+
+  consul:
+    image: hashicorp/consul:1.18.0
+    command: agent -dev -client 0.0.0.0 -ui
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8500/v1/status/leader" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
     networks:
       - portfolio-network
 
@@ -112,10 +126,17 @@ services:
       - REDIS_PORT=6379
       - REDIS_USER=${REDIS_USER}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      consul:
         condition: service_healthy
       postgres-migrations:
         condition: service_completed_successfully
@@ -140,10 +161,17 @@ services:
       - REDIS_PORT=6379
       - REDIS_USER=${REDIS_USER}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      consul:
         condition: service_healthy
       postgres-migrations:
         condition: service_completed_successfully
@@ -170,12 +198,19 @@ services:
       - AUTH_SECRET=${AUTH_SECRET}
       - USER_MANAGER_HOST=user-manager
       - USER_MANAGER_PORT=8081
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      consul:
         condition: service_healthy
       postgres-migrations:
         condition: service_completed_successfully
@@ -198,8 +233,15 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - DEFAULT_MAIL_TO=${DEFAULT_MAIL_TO}
       - DEFAULT_MAIL_FROM=${DEFAULT_MAIL_FROM}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      consul:
         condition: service_healthy
     networks:
       - portfolio-network
@@ -217,10 +259,17 @@ services:
       - NEO4J_URI=bolt://neo4j-analytics:7687
       - NEO4J_USER=${NEO4J_ANALYTICS_USER}
       - NEO4J_PASSWORD=${NEO4J_ANALYTICS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       rabbitmq:
         condition: service_healthy
       neo4j-analytics:
+        condition: service_healthy
+      consul:
         condition: service_healthy
     networks:
       - portfolio-network
@@ -232,7 +281,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
     networks:
       - portfolio-network
     restart: unless-stopped
@@ -244,18 +294,25 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - CHALLENGE_MANAGER_URL=http://challenge-manager:8080
-      - USER_MANAGER_URL=http://user-manager:8081
-      - GAMIFICATION_MANAGER_URL=http://gamification-manager:8082
-      - NOTIFICATION_MANAGER_URL=http://notification-manager:8083
-      - ANALYTICS_MANAGER_URL=http://analytics-manager:8084
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
-      - analytics-manager
-      - notification-manager
-      - gamification-manager
-      - challenge-manager
-      - user-manager
+      analytics-manager:
+        condition: service_healthy
+      notification-manager:
+        condition: service_healthy
+      gamification-manager:
+        condition: service_healthy
+      challenge-manager:
+        condition: service_healthy
+      user-manager:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
     networks:
       - portfolio-network
 

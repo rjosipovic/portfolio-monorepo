@@ -15,23 +15,15 @@ import java.time.Duration;
 @Validated
 public class UserManagerClientConfig {
 
-    private String scheme = "http";
-    private String host = "localhost";
-    private int port = 8081;
-    private String basePath = "/users";
+    private String serviceName;
 
-    // Nested class for the retry properties
-    private RetryConfig retry = new RetryConfig();
+    private RetryConfig retry;
 
     @Getter
     @Setter
     public static class RetryConfig {
-        private int maxAttempts = 3;
-        private Duration waitDuration = Duration.ofMillis(500);
-        private double exponentialBackoff = 1.5;
-    }
-
-    public String getBaseUrl() {
-        return String.format("%s://%s:%d", scheme, host, port);
+        private int maxAttempts;
+        private Duration waitDuration;
+        private double exponentialBackoff;
     }
 }

@@ -7,36 +7,53 @@ spring:
         webmvc:
           routes:
             - id: challenge-route
-              uri: ${CHALLENGE_MANAGER_URL:http://localhost:8080}
+              uri: lb://challenge-manager/
               predicates:
                 - Path=/challenges/random, /attempts
 
             - id: user-manager-route
-              uri: ${USER_MANAGER_URL:http://localhost:8081}
+              uri: lb://user-manager/
               predicates:
                 - Path=/auth/**, /users/**
+              strip-prefix: 0
 
             - id: gamification-manager-route
-              uri: ${GAMIFICATION_MANAGER_URL:http://localhost:8082}
+              uri: lb://gamification-manager/
               predicates:
                 - Path=/leaders/**
 
             - id: notification-manager-route
-              uri: ${NOTIFICATION_MANAGER_URL:http://localhost:8083}
+              uri: lb://notification-manager/
               predicates:
                 - Path=/notifications/**
 
-            - id: analytics-manager-route
-              uri: ${ANALYTICS_MANAGER_URL:http://localhost:8084}
+            - id: analytics-manager-route/
+              uri: lb://analytics-manager
               predicates:
                 - Path=/analytics/attempts/**, /analytics/statistics/**
+    consul:
+      enabled: true
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${management.server.port}
+        query-passing: true
+    default-filters:
+      - name: Retry
+        args:
+          retries: 3
+          methods: GET, POST
 
 server:
-  port: 8000
+  port: ${SERVICE_PORT:8080}
 
 management:
   server:
-    port: 9000
+    port: ${MANAGEMENT_PORT:9090}
   endpoints:
     web:
       exposure:

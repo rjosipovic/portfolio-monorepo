@@ -17,12 +17,23 @@ spring:
           auth: true
           starttls:
             enable: true
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+
 server:
-  port: 8083
+  port: ${SERVICE_PORT:8080}
 
 management:
   server:
-    port: 9083
+    port: ${MANAGEMENT_PORT:9090}
   endpoints:
     web:
       exposure:

@@ -21,12 +21,23 @@ spring:
         username: ${NEO4J_USER:neo4j}
         password: ${NEO4J_PASSWORD:neo4jlocal}
       database: ${NEO4J_DATABASE:neo4j}
+    cloud:
+      consul:
+        host: ${CONSUL_HOST:consul}
+        port: 8500
+        discovery:
+          service-name: ${spring.application.name}
+          health-check-path: /health
+          health-check-interval: 15s
+          scheme: http
+          port: ${server.port}
+
 server:
-  port: 8084
+  port: ${SERVICE_PORT:8080}
 
 management:
   server:
-    port: 9084
+    port: ${MANAGEMENT_PORT:9090}
   endpoints:
     web:
       exposure:
