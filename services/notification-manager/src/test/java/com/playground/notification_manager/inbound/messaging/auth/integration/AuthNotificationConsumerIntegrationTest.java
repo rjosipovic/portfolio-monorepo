@@ -30,7 +30,12 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest
 @Testcontainers
 @TestPropertySource(properties = {
-        "spring.cloud.discovery.enabled=false"
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.config.import-check.enabled=false",
+        "spring.cloud.consul.config.enabled=false",
+        "spring.cloud.consul.discovery.enabled=false"
 })
 @Import(AuthNotificationConsumerIntegrationTest.TestConfig.class)
 class AuthNotificationConsumerIntegrationTest {

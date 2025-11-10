@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: notification-manager
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:""}
+    password: ${MAIL_PASSWORD:""}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+
+server:
+  port: ${SERVICE_PORT:8080}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+      base-path: /
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    build:
+      enabled: true
+
+logging:
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
+
+app:
+  messaging:
+    dead-letter:
+      exchange: dead-letter-exchange
+      binding-key: dead-letter
+      queue: dead-letter-queue
+    notifications:
+      exchange: notifications-exchange
+      notifications-binding-key: notifications.auth
+      queue: auth-notifications-queue
+  email:
+    default-from: ${DEFAULT_MAIL_FROM:no-reply@challenges.com}
+    default-to: ${DEFAULT_MAIL_TO}

@@ -1,72 +1,28 @@
+# Most configuration is now loaded from the Consul KV store.
+# This file can be used for properties that should NOT be in source control
+# or for properties specific to a local, non-Docker environment.
 spring:
-    application:
-        name: analytics-manager
-    rabbitmq:
-      host: ${RABBITMQ_HOST:localhost}
-      port: ${RABBITMQ_PORT:5672}
-      username: ${RABBITMQ_USER:guest}
-      password: ${RABBITMQ_PASSWORD:guest}
-      listener:
-        simple:
-          retry:
-            enabled: true
-            max-attempts: 10
-            initial-interval: 1000
-            multiplier: 4
-            max-interval: 3600000
-          default-requeue-rejected: false
-    neo4j:
-      uri: ${NEO4J_URI:bolt://localhost:7687}
-      authentication:
-        username: ${NEO4J_USER:neo4j}
-        password: ${NEO4J_PASSWORD:neo4jlocal}
-      database: ${NEO4J_DATABASE:neo4j}
-    cloud:
-      consul:
-        host: ${CONSUL_HOST:consul}
-        port: 8500
-        discovery:
-          service-name: ${spring.application.name}
-          health-check-path: /health
-          health-check-interval: 15s
-          scheme: http
-          port: ${server.port}
+  application:
+    name: analytics-manager
+  config:
+    import: "optional:consul:"
+  # These properties tell the application HOW to connect to Consul.
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+      config:
+        # We still need to tell it the format of the data in the KV store.
+        format: YAML
+        data-key: data
 
-server:
-  port: ${SERVICE_PORT:8080}
-
-management:
-  server:
-    port: ${MANAGEMENT_PORT:9090}
-  endpoints:
-    web:
-      exposure:
-        include: health, info, prometheus
-      base-path: /
-  endpoint:
-    health:
-      show-details: when-authorized
-  info:
-    build:
-      enabled: true
-
+# We keep the logging level here as it's often useful to have a local default.
 logging:
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
-app:
-  auth:
-    secret: ${AUTH_SECRET:}
-    expiration-time: "PT6H"
-  messaging:
-    dead-letter:
-      exchange: dead-letter-exchange
-      binding-key: dead-letter
-      queue: dead-letter-queue
-    user:
-      exchange: user-exchange
-      binding-key: user.*
-      queue: user-queue
-    challenge:
-      exchange: challenge-exchange
-      binding-key: challenge-solved.*
-      queue: challenges-queue

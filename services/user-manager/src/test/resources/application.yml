@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: user-manager
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/user-manager-db}
+    username: user-manager-user
+    password: secret
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jpa:
+    show-sql: true
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    username: ${REDIS_USER:default}
+    password: ${REDIS_PASSWORD}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    publisher-confirm-type: correlated
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+
+server:
+   port: ${SERVICE_PORT:8080}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+      base-path: /
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    build:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.security.web.FilterChainProxy: DEBUG
+
+app:
+  auth:
+    secret: ${AUTH_SECRET:}
+    expiration-time: "PT10M"
+  code-generation:
+    subject: "Challenges Access Code"
+    notification-message-template: "Your access code is: %s"
+    key-prefix: "auth_code:"
+    code-expiration-time: "PT10M"
+  messaging:
+    user:
+      exchange: user-exchange
+      user-created-routing-key: user.created
+    auth:
+      exchange: notifications-exchange
+      auth-code-routing-key: notifications.auth
+    dead-letter:
+      exchange: dead-letter-exchange
+      routing-key: dead-letter
+      queue: dead-letter-queue

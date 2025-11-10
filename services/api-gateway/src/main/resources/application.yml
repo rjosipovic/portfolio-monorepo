@@ -1,38 +1,14 @@
+# Most configuration is now loaded from the Consul KV store.
+# This file can be used for properties that should NOT be in source control
+# or for properties specific to a local, non-Docker environment.
 spring:
   application:
     name: api-gateway
+  config:
+    import: "optional:consul:"
+  # These properties tell the application HOW to connect to Consul.
   cloud:
-    gateway:
-      server:
-        webmvc:
-          routes:
-            - id: challenge-route
-              uri: lb://challenge-manager/
-              predicates:
-                - Path=/challenges/random, /attempts
-
-            - id: user-manager-route
-              uri: lb://user-manager/
-              predicates:
-                - Path=/auth/**, /users/**
-              strip-prefix: 0
-
-            - id: gamification-manager-route
-              uri: lb://gamification-manager/
-              predicates:
-                - Path=/leaders/**
-
-            - id: notification-manager-route
-              uri: lb://notification-manager/
-              predicates:
-                - Path=/notifications/**
-
-            - id: analytics-manager-route/
-              uri: lb://analytics-manager
-              predicates:
-                - Path=/analytics/attempts/**, /analytics/statistics/**
     consul:
-      enabled: true
       host: ${CONSUL_HOST:consul}
       port: 8500
       discovery:
@@ -40,32 +16,13 @@ spring:
         health-check-path: /health
         health-check-interval: 15s
         scheme: http
-        port: ${management.server.port}
-        query-passing: true
-    default-filters:
-      - name: Retry
-        args:
-          retries: 3
-          methods: GET, POST
+        port: ${server.port}
+      config:
+        # We still need to tell it the format of the data in the KV store.
+        format: YAML
+        data-key: data
 
-server:
-  port: ${SERVICE_PORT:8080}
-
-management:
-  server:
-    port: ${MANAGEMENT_PORT:9090}
-  endpoints:
-    web:
-      exposure:
-        include: health, info, prometheus
-      base-path: /
-  endpoint:
-    health:
-      show-details: when-authorized
-  info:
-    build:
-      enabled: true
-
+# We keep the logging level here as it's often useful to have a local default.
 logging:
   level:
     root: INFO
@@ -77,9 +34,3 @@ logging:
     org.springframework.web.servlet.PageNotFound: INFO
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
-
-app:
-  cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://127.0.0.1:3000}
-    allowed-methods: GET,POST,PUT,DELETE
-    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin

@@ -1,0 +1,109 @@
+spring:
+  application:
+      name: gamification-manager
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/gamification-manager-db}
+    username: gamification-manager-user
+    password: secret
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+  jpa:
+    show-sql: true
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    username: ${REDIS_USER:default}
+    password: ${REDIS_PASSWORD}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 10
+          initial-interval: 1000
+          multiplier: 4
+          max-interval: 3600000
+        default-requeue-rejected: false
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+
+server:
+  port: ${SERVICE_PORT:8080}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+      base-path: /
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    build:
+      enabled: true
+
+app:
+  auth:
+    secret: ${AUTH_SECRET:}
+    expiration-time: "PT6H"
+  difficulty-levels:
+    - level: easy
+      digits: 1
+      score: 10
+    - level: medium
+      digits: 2
+      score: 20
+    - level: hard
+      digits: 3
+      score: 30
+    - level: expert
+      digits: 4
+      score: 40
+  badges:
+    - badge-type: FIRST_WON
+    - badge-type: BRONZE
+      score_threshold: 100
+    - badge-type: SILVER
+      score_threshold: 250
+    - badge-type: GOLD
+      score_threshold: 500
+    - badge-type: LUCKY_NUMBER
+      lucky_number: 42
+  alias-cache:
+    key: user_aliases
+    duration: PT1H
+  leaderboard-cache:
+    key: leaderboard
+    size: 10
+  clients:
+    user-manager:
+      service-name: user-manager
+      retry:
+        max-attempts: 3
+        wait-duration: 500ms
+        exponential-backoff: 1.5
+  messaging:
+    dead-letter:
+      exchange: dead-letter-exchange
+      binding-key: dead-letter
+      queue: dead-letter-queue
+    challenge:
+      exchange: challenge-exchange
+      challenge-correct-binding-key: challenge-solved.correct
+      queue: challenge-solved.correct.queue
