@@ -111,6 +111,59 @@ services:
     volumes:
       - consul-data:/consul/data
 
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules.yml:/etc/prometheus/rules.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9091:9090"
+    networks:
+      - portfolio-network
+    depends_on:
+      consul:
+        condition: service_healthy
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    environment:
+      - SMTP_HOST=${AM_SMTP_HOST}
+      - SMTP_PORT=${AM_SMTP_PORT}
+      - SMTP_USER=${AM_SMTP_USER}
+      - SMTP_PASSWORD=${AM_SMTP_PASSWORD}
+      - SMTP_FROM=${AM_SMTP_FROM}
+      - SMTP_TO=${AM_SMTP_TO}
+    volumes:
+      - ./alertmanager/alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template
+      - ./alertmanager/entrypoint.sh:/entrypoint.sh
+    entrypoint: /bin/sh -c "chmod +x /entrypoint.sh && /entrypoint.sh"
+    ports:
+      - "9093:9093"
+    networks:
+      - portfolio-network
+    depends_on:
+      prometheus:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - grafana-data:/var/lib/grafana
+    networks:
+      - portfolio-network
+    depends_on:
+      prometheus:
+        condition: service_started # Prometheus doesn't have a health check, so we wait for it to start
+
   user-manager:
     build:
       context: ../services/user-manager
@@ -322,3 +375,4 @@ volumes:
   postgres-data:
   neo4j-data:
   consul-data:
+  grafana-data:

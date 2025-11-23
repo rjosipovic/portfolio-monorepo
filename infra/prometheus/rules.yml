@@ -1,0 +1,27 @@
+# rules.yml
+groups:
+  - name: service_alerts
+    rules:
+      # --- Rule 1: Instance Down ---
+      # This alert fires if any service discovered by Prometheus has been
+      # unreachable for more than one minute.
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.job }} instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      # --- Rule 2: High 95th Percentile Latency ---
+      # This alert fires if the 95th percentile latency for any job
+      # is greater than 500ms for the last 5 minutes.
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency on {{ $labels.job }}"
+          description: "The 95th percentile latency for {{ $labels.job }} is over 500ms."

@@ -17,6 +17,9 @@ spring:
         health-check-interval: 15s
         scheme: http
         port: ${server.port}
+        query-passing: true
+        register-management-service: false
+        deregister-critical-service-after: 90m # Do not de-register on failure
       config:
         # We still need to tell it the format of the data in the KV store.
         format: YAML
