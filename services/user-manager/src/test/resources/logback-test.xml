@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 
+        This is the standard, default Spring Boot console logging configuration.
+        It will be used ONLY during test execution. It does not contain the
+        Logstash TCP appender, so it will not try to connect to Logstash.
+    -->
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+</configuration>
