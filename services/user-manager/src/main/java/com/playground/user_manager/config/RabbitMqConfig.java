@@ -1,5 +1,7 @@
 package com.playground.user_manager.config;
 
+import brave.Tracing;
+import brave.spring.rabbit.SpringRabbitTracing;
 import com.playground.user_manager.auth.messaging.AuthMessagingConfiguration;
 import com.playground.user_manager.messaging.callback.CallbackManager;
 import com.playground.user_manager.messaging.callback.DlxMessagingConfiguration;
@@ -26,6 +28,7 @@ public class RabbitMqConfig {
     private final UserMessagingConfiguration userMessagingConfiguration;
     private final AuthMessagingConfiguration authMessagingConfiguration;
     private final DlxMessagingConfiguration dlxMessagingConfiguration;
+    private final Tracing tracing;
 
     @Bean
     public Queue dlq() {
@@ -63,10 +66,15 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, Jackson2JsonMessageConverter messageConverter) {
+    public SpringRabbitTracing springRabbitTracing() {
+        return SpringRabbitTracing.newBuilder(this.tracing).build();
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, Jackson2JsonMessageConverter messageConverter, SpringRabbitTracing springRabbitTracing) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
         template.setConfirmCallback((correlationData, ack, cause) -> callbackManager.processCallback(correlationData, ack));
-        return template;
+        return springRabbitTracing.decorateRabbitTemplate(template);
     }
 }
