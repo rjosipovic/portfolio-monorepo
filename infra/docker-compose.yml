@@ -111,6 +111,20 @@ services:
     volumes:
       - consul-data:/consul/data
 
+  consul-config-loader:
+    image: hashicorp/consul:1.18.0
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+    depends_on:
+      consul:
+        condition: service_healthy
+    volumes:
+      - ./consul/kv_config:/consul/kv_config
+      - ./consul/import-kv.sh:/consul/import-kv.sh
+    command: sh /consul/import-kv.sh
+    networks:
+      - portfolio-network
+
   prometheus:
     image: prom/prometheus:v2.51.2
     volumes:
