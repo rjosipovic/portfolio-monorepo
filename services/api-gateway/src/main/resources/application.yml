@@ -1,0 +1,39 @@
+# Most configuration is now loaded from the Consul KV store.
+# This file can be used for properties that should NOT be in source control
+# or for properties specific to a local, non-Docker environment.
+spring:
+  application:
+    name: api-gateway
+  config:
+    import: "optional:consul:"
+  # These properties tell the application HOW to connect to Consul.
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+        query-passing: true
+        register-management-service: false
+        deregister-critical-service-after: 90m # Do not de-register on failure
+      config:
+        # We still need to tell it the format of the data in the KV store.
+        format: YAML
+        data-key: data
+
+# We keep the logging level here as it's often useful to have a local default.
+logging:
+  level:
+    root: INFO
+    # Log routing decisions and predicate matching from the MVC Gateway
+    org.springframework.cloud.gateway.server.mvc: DEBUG
+    # Log overall request processing in the MVC dispatcher
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    # Log 404 Not Found errors clearly
+    org.springframework.web.servlet.PageNotFound: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'

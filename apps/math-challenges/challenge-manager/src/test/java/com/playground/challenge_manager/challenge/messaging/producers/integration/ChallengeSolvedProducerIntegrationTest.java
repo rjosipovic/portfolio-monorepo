@@ -40,7 +40,13 @@ import static org.mockito.Mockito.mock;
 
 @SpringBootTest
 @Testcontainers
-@TestPropertySource(properties = { "app.auth.secret=some-dummy-secret-for-testing" })
+@TestPropertySource(properties = {
+        "app.auth.secret=some-dummy-secret-for-testing",
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.config.import-check.enabled=false",
+        "spring.cloud.consul.config.enabled=false",
+        "spring.cloud.consul.discovery.enabled=false"
+})
 @Import(ChallengeSolvedProducerIntegrationTest.RabbitTestConfig.class)
 @EnableAutoConfiguration(exclude = {JpaRepositoriesAutoConfiguration.class, HibernateJpaAutoConfiguration.class, LiquibaseAutoConfiguration.class })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

@@ -3,23 +3,19 @@ const HOST = 'localhost';
 
 const API_ENDPOINTS = {
     // Base URLs
-    CHALLENGE_MANAGER: `${PROTOCOL}://${HOST}:8080/`,
-    USER_MANAGER: `${PROTOCOL}://${HOST}:8081/`,
-    GAMIFICATION_MANAGER: `${PROTOCOL}://${HOST}:8082/`,
-    NOTIFICATION_MANAGER: `${PROTOCOL}://${HOST}:8083/`,
-    ANALYTICS_MANAGER: `${PROTOCOL}://${HOST}:8084/`,
+    BASE_URL: `${PROTOCOL}://${HOST}:8080/`,
 
     // Specific Paths
-    get CHALLENGE_API() { return this.CHALLENGE_MANAGER + 'challenges'; },
-    get ATTEMPT_API() { return this.CHALLENGE_MANAGER + 'attempts'; },
+    get CHALLENGE_API() { return this.BASE_URL + 'challenges'; },
+    get ATTEMPT_API() { return this.BASE_URL + 'attempts'; },
 
-    get AUTH_API() { return this.USER_MANAGER + 'auth'; },
-    get USERS_API() { return this.USER_MANAGER + 'users'; },
+    get AUTH_API() { return this.BASE_URL + 'auth'; },
+    get USERS_API() { return this.BASE_URL + 'users'; },
 
-    get LEADERBOARD_API() { return this.GAMIFICATION_MANAGER + 'leaders'; },
+    get LEADERBOARD_API() { return this.BASE_URL + 'leaders'; },
 
-    get CONTACT_API() { return this.NOTIFICATION_MANAGER + 'notifications'; },
+    get CONTACT_API() { return this.BASE_URL + 'notifications'; },
 
-    get STATS_API() { return this.ANALYTICS_MANAGER + 'statistics/user'; },
-    get HISTORY_API() { return this.ANALYTICS_MANAGER + 'attempts'; }
+    get STATS_API() { return this.BASE_URL + 'analytics/statistics'; },
+    get HISTORY_API() { return this.BASE_URL + 'analytics/attempts'; }
 };

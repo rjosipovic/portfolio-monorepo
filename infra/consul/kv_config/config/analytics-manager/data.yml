@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: analytics-manager
+  rabbitmq:
+    listener:
+      retry:
+        enabled: true
+        max-attempts: 10
+        initial-interval: 1000
+        multiplier: 4
+        max-interval: 3600000
+      default-requeue-rejected: false
+  neo4j:
+    uri: ${NEO4J_URI}
+    authentication:
+      username: ${NEO4J_USER}
+      password: ${NEO4J_PASSWORD}
+    database: ${NEO4J_DATABASE:neo4j}
+
+app:
+  auth:
+    secret: ${AUTH_SECRET:}
+    expiration-time: "PT6H"
+  messaging:
+    dead-letter:
+      exchange: dead-letter-exchange
+      binding-key: dead-letter
+      queue: dead-letter-queue
+    user:
+      exchange: user-exchange
+      binding-key: user.*
+      queue: user-queue
+    challenge:
+      exchange: challenge-exchange
+      binding-key: challenge-solved.*
+      queue: challenges-queue

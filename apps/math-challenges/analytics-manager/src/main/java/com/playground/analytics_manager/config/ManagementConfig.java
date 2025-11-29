@@ -5,13 +5,16 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-@ConfigurationProperties(prefix = "app.cors")
-@Configuration
+@ConfigurationProperties(prefix = "management")
 @Getter
 @Setter
-public class CorsConfig {
+@Configuration
+public class ManagementConfig {
 
-    private String[] allowedOrigins;
-    private String[] allowedMethods;
-    private String[] allowedHeaders;
+    private Server server;
+
+    @Getter @Setter
+    public static class Server {
+        private int port;
+    }
 }

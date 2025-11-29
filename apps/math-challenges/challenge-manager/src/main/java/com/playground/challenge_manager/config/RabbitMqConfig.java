@@ -1,5 +1,7 @@
 package com.playground.challenge_manager.config;
 
+import brave.Tracing;
+import brave.spring.rabbit.SpringRabbitTracing;
 import com.playground.challenge_manager.challenge.messaging.MessagingConfiguration;
 import com.playground.challenge_manager.messaging.callback.CallbackManager;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class RabbitMqConfig {
 
     private final MessagingConfiguration messagingConfiguration;
     private final CallbackManager callbackManager;
+    private final Tracing tracing;
 
     @Bean
     public Queue dlq() {
@@ -53,10 +56,15 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, Jackson2JsonMessageConverter messageConverter) {
+    public SpringRabbitTracing springRabbitTracing() {
+        return SpringRabbitTracing.newBuilder(this.tracing).build();
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, Jackson2JsonMessageConverter messageConverter, SpringRabbitTracing springRabbitTracing) {
         var template = new RabbitTemplate(connectionFactory);
         template.setMessageConverter(messageConverter);
         template.setConfirmCallback((correlationData, ack, cause) -> callbackManager.processCallback(correlationData, ack));
-        return template;
+        return springRabbitTracing.decorateRabbitTemplate(template);
     }
 }

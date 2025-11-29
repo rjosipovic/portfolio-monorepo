@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: user-manager
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  jpa:
+    show-sql: true
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    username: ${REDIS_USER}
+    password: ${REDIS_PASSWORD}
+  rabbitmq:
+    publisher-confirm-type: correlated
+
+app:
+  auth:
+    secret: ${AUTH_SECRET}
+    expiration-time: "PT10M"
+  code-generation:
+    subject: "Challenges Access Code"
+    notification-message-template: "Your access code is: %s"
+    key-prefix: "auth_code:"
+    code-expiration-time: "PT10M"
+  messaging:
+    user:
+      exchange: user-exchange
+      user-created-routing-key: user.created
+    auth:
+      exchange: notifications-exchange
+      auth-code-routing-key: notifications.auth
+    dead-letter:
+      exchange: dead-letter-exchange
+      routing-key: dead-letter
+      queue: dead-letter-queue

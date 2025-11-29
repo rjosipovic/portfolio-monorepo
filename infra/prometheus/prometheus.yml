@@ -1,0 +1,47 @@
+# prometheus.yml
+
+global:
+  scrape_interval: 15s # How frequently to scrape targets.
+
+# Load rule files and evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+  # This job discovers targets using Consul's service discovery capabilities.
+  - job_name: 'consul-spring-services'
+    consul_sd_configs:
+      - server: 'consul:8500' # The address of the Consul server.
+        tags:
+          - "management" # Only discover services that have the "management" tag.
+    relabel_configs:
+      # --- Step 1: Filter targets by tag ---
+      # Keep only the targets that have the "management" tag.
+      - source_labels: [__meta_consul_tags]
+        regex: .*management.*  # Keep if 'management' is in the list of tags.
+        action: keep
+
+      # --- Step 2: Set the correct scrape path ---
+      # The default scrape path is /metrics. We need to change it to /prometheus.
+      - source_labels: [] # Not needed, we are providing a static replacement
+        target_label: __metrics_path__
+        replacement: /prometheus # The correct path for Spring Boot's Prometheus endpoint.
+        action: replace
+
+      # --- Step 3: Clean up labels for readability ---
+      # Use the original service name (e.g., "user-manager") as the job label.
+      - source_labels: [__meta_consul_service]
+        target_label: job
+
+      # Create a more readable instance label, e.g., "user-manager-192.168.10.5:9090"
+      - source_labels: [__meta_consul_service, __address__]
+        separator: '-'
+        target_label: instance
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 'alertmanager:9093'

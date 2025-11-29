@@ -1,54 +1,31 @@
+# Most configuration is now loaded from the Consul KV store.
+# This file can be used for properties that should NOT be in source control
+# or for properties specific to a local, non-Docker environment.
 spring:
   application:
     name: user-manager
-  datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/user-manager-db}
-    username: user-manager-user
-    password: secret
-  liquibase:
-    enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-  jpa:
-    show-sql: true
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    username: ${REDIS_USER:default}
-    password: ${REDIS_PASSWORD}
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
-    publisher-confirm-type: correlated
-server:
-   port: 8081
+  config:
+    import: "optional:consul:"
+  # These properties tell the application HOW to connect to Consul.
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+        query-passing: true
+        register-management-service: false
+        deregister-critical-service-after: 90m # Do not de-register on failure
+      config:
+        # We still need to tell it the format of the data in the KV store.
+        format: YAML
+        data-key: data
 
+# We keep the logging level here as it's often useful to have a local default.
 logging:
-  level:
-    org.springframework.security.web.FilterChainProxy: DEBUG
-
-app:
-  cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://127.0.0.1:3000}
-    allowed-methods: GET,POST,PUT,DELETE
-    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin
-  auth:
-    secret: ${AUTH_SECRET:}
-    expiration-time: "PT10M"
-  code-generation:
-    subject: "Challenges Access Code"
-    notification-message-template: "Your access code is: %s"
-    key-prefix: "auth_code:"
-    code-expiration-time: "PT10M"
-  messaging:
-    user:
-      exchange: user-exchange
-      user-created-routing-key: user.created
-    auth:
-      exchange: notifications-exchange
-      auth-code-routing-key: notifications.auth
-    dead-letter:
-      exchange: dead-letter-exchange
-      routing-key: dead-letter
-      queue: dead-letter-queue
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'

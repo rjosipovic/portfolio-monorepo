@@ -6,7 +6,7 @@ import com.playground.challenge_manager.challenge.api.controllers.AttemptControl
 import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
 import com.playground.challenge_manager.challenge.api.dto.ChallengeResultDTO;
 import com.playground.challenge_manager.challenge.services.interfaces.AttemptService;
-import com.playground.challenge_manager.config.CorsConfig;
+import com.playground.challenge_manager.config.ManagementConfig;
 import com.playground.challenge_manager.config.SecurityConfig;
 import com.playground.challenge_manager.errors.custom.ChallengeManagerError;
 import com.playground.challenge_manager.errors.exceptions.enums.ErrorCode;
@@ -21,6 +21,7 @@ import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -36,7 +37,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 @AutoConfigureJsonTesters
 @WebMvcTest(AttemptController.class)
-@Import({SecurityConfig.class, CorsConfig.class})
+@TestPropertySource(properties = {
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.config.import-check.enabled=false",
+        "spring.cloud.consul.config.enabled=false",
+        "spring.cloud.consul.discovery.enabled=false"
+})
+@Import({SecurityConfig.class, ManagementConfig.class})
 class AttemptControllerTest {
 
     @Autowired

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -28,6 +29,14 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @Testcontainers
+@TestPropertySource(properties = {
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.config.import-check.enabled=false",
+        "spring.cloud.consul.config.enabled=false",
+        "spring.cloud.consul.discovery.enabled=false"
+})
 @Import(AuthNotificationConsumerIntegrationTest.TestConfig.class)
 class AuthNotificationConsumerIntegrationTest {
 

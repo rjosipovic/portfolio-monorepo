@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
-@RequestMapping("/statistics")
+@RequestMapping("/analytics/statistics")
 public class StatisticsController {
 
     private final UserStatisticsService userStatisticsService;
@@ -26,7 +26,7 @@ public class StatisticsController {
         this.userStatisticsService = userStatisticsService;
     }
 
-    @GetMapping("/user")
+    @GetMapping
     public ResponseEntity<UserSuccessRate> get(Authentication authentication) {
         var principal = (JwtUserPrincipal) authentication.getPrincipal();
         var userId = principal.getClaims().get("userId").toString();
@@ -34,7 +34,7 @@ public class StatisticsController {
         return ResponseEntity.ok(userStatistics);
     }
 
-    @GetMapping("/user/subscribe")
+    @GetMapping("/subscribe")
     public SseEmitter emmit(Authentication authentication) {
         var principal = (JwtUserPrincipal) authentication.getPrincipal();
         var userId = principal.getClaims().get("userId").toString();

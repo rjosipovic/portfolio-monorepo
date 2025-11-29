@@ -1,59 +1,31 @@
+# Most configuration is now loaded from the Consul KV store.
+# This file can be used for properties that should NOT be in source control
+# or for properties specific to a local, non-Docker environment.
 spring:
   application:
     name: challenge-manager
-  datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/challenge-manager-db}
-    username: challenge-manager-user
-    password: secret
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-    enabled: true
-  jpa:
-    show-sql: true
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
-    publisher-confirm-type: CORRELATED
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    username: ${REDIS_USER:default}
-    password: ${REDIS_PASSWORD}
-server:
-  error:
-    include-message: always
-    include-binding-errors: always
+  config:
+    import: "optional:consul:"
+  # These properties tell the application HOW to connect to Consul.
+  cloud:
+    consul:
+      host: ${CONSUL_HOST:consul}
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /health
+        health-check-interval: 15s
+        scheme: http
+        port: ${server.port}
+        query-passing: true
+        register-management-service: false
+        deregister-critical-service-after: 90m # Do not de-register on failure
+      config:
+        # We still need to tell it the format of the data in the KV store.
+        format: YAML
+        data-key: data
 
-app:
-  cors:
-    allowed-origins: ${ALLOWED_ORIGINS:http://127.0.0.1:3000}
-    allowed-methods: GET,POST,PUT,DELETE
-    allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin
-  auth:
-    secret: ${AUTH_SECRET:}
-    expiration-time: "PT6H"
-  challenge-generator:
-    difficulty-levels:
-      - level: easy
-        min: 1
-        max: 9
-      - level: medium
-        min: 10
-        max: 99
-      - level: hard
-        min: 100
-        max: 999
-      - level: expert
-        min: 1000
-        max: 9999
-  messaging:
-    dead-letter:
-      exchange: dead-letter-exchange
-      routing-key: dead-letter
-      queue: dead-letter-queue
-    challenge:
-      exchange: challenge-exchange
-      challenge-correct-routing-key: challenge-solved.correct
-      challenge-failed-routing-key: challenge-solved.incorrect
+# We keep the logging level here as it's often useful to have a local default.
+logging:
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'

@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.data.neo4j.DataNeo4jTest;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -25,6 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataNeo4jTest
 @Testcontainers
+@TestPropertySource(properties = {
+        "spring.cloud.discovery.enabled=false",
+        "spring.cloud.config.import-check.enabled=false",
+        "spring.cloud.consul.config.enabled=false",
+        "spring.cloud.consul.discovery.enabled=false"
+})
 class ChallengeRepositoryTest {
 
     @Container

@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: notification-manager
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  messaging:
+    dead-letter:
+      exchange: dead-letter-exchange
+      binding-key: dead-letter
+      queue: dead-letter-queue
+    notifications:
+      exchange: notifications-exchange
+      notifications-binding-key: notifications.auth
+      queue: auth-notifications-queue
+  email:
+    default-from: ${DEFAULT_MAIL_FROM:no-reply@challenges.com}
+    default-to: ${DEFAULT_MAIL_TO}

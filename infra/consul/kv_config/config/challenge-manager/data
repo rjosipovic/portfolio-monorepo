@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: challenge-manager
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+  jpa:
+    show-sql: true
+  rabbitmq:
+    publisher-confirm-type: CORRELATED
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+    username: ${REDIS_USER}
+    password: ${REDIS_PASSWORD}
+
+app:
+  auth:
+    secret: ${AUTH_SECRET}
+    expiration-time: "PT6H"
+  challenge-generator:
+    difficulty-levels:
+      - level: easy
+        min: 1
+        max: 9
+      - level: medium
+        min: 10
+        max: 99
+      - level: hard
+        min: 100
+        max: 999
+      - level: expert
+        min: 1000
+        max: 9999
+  messaging:
+    dead-letter:
+      exchange: dead-letter-exchange
+      routing-key: dead-letter
+      queue: dead-letter-queue
+    challenge:
+      exchange: challenge-exchange
+      challenge-correct-routing-key: challenge-solved.correct
+      challenge-failed-routing-key: challenge-solved.incorrect
