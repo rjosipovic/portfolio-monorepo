@@ -25,15 +25,19 @@ app:
   challenge-generator:
     difficulty-levels:
       - level: easy
+        digits: 1
         min: 1
         max: 9
       - level: medium
+        digits: 2
         min: 10
         max: 99
       - level: hard
+        digits: 3
         min: 100
         max: 999
       - level: expert
+        digits: 4
         min: 1000
         max: 9999
   messaging:
@@ -45,3 +49,5 @@ app:
       exchange: challenge-exchange
       challenge-correct-routing-key: challenge-solved.correct
       challenge-failed-routing-key: challenge-solved.incorrect
+    challengeUpdate:
+      fanout-exchange: challenge-update-exchange

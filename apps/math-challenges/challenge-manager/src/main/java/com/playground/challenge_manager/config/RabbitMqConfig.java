@@ -5,10 +5,12 @@ import brave.spring.rabbit.SpringRabbitTracing;
 import com.playground.challenge_manager.challenge.messaging.MessagingConfiguration;
 import com.playground.challenge_manager.messaging.callback.CallbackManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.AnonymousQueue;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.FanoutExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
@@ -48,6 +50,22 @@ public class RabbitMqConfig {
     public TopicExchange challengeExchange() {
         var exchangeName = messagingConfiguration.getChallenge().getExchange();
         return ExchangeBuilder.topicExchange(exchangeName).durable(true).build();
+    }
+
+    @Bean
+    public FanoutExchange challengeUpdateExchange() {
+        var exchangeName = messagingConfiguration.getChallengeUpdate().getFanoutExchange();
+        return ExchangeBuilder.fanoutExchange(exchangeName).durable(false).build(); // Transient exchange
+    }
+
+    @Bean
+    public Queue challengeUpdateQueue() {
+        return new AnonymousQueue(); // Temporary, exclusive, auto-delete queue
+    }
+
+    @Bean
+    public Binding challengeUpdateBinding() {
+        return BindingBuilder.bind(challengeUpdateQueue()).to(challengeUpdateExchange());
     }
 
     @Bean

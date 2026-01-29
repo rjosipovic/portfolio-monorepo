@@ -1,41 +1,42 @@
 package com.playground.challenge_manager.challenge.services.config;
 
-import com.playground.challenge_manager.challenge.services.impl.ChallengeGeneratorServiceImpl;
-import com.playground.challenge_manager.challenge.services.interfaces.ChallengeGeneratorService;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.playground.challenge_manager.challenge.services.model.DifficultyLevel;
+import jakarta.annotation.PostConstruct;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.util.Pair;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 
 @Configuration
 @ConfigurationProperties(prefix = "app.challenge-generator")
-@Getter
-@Setter
+@Data
+@Slf4j
 public class ChallengeConfig {
 
-    private List<DifficultyLevel> difficultyLevels;
+    private List<DifficultyLevelConfig> difficultyLevels;
 
-    @Bean
-    public ChallengeGeneratorService challengeGeneratorService() {
-        var difficultyRangeMap = new HashMap<String, Pair<Integer, Integer>>();
-        difficultyLevels.forEach(difficulty -> difficultyRangeMap.put(difficulty.getLevel(), Pair.of(difficulty.getMin(), difficulty.getMax())));
-        return new ChallengeGeneratorServiceImpl(new Random(), difficultyRangeMap);
+    @PostConstruct
+    public void init() {
+        if (difficultyLevels != null) {
+            for (DifficultyLevelConfig config : difficultyLevels) {
+                try {
+                    // Find the matching Enum constant
+                    DifficultyLevel level = DifficultyLevel.valueOf(config.getLevel().toUpperCase());
+                    // Update its configuration
+                    level.configure(config.getDigits(), config.getMin(), config.getMax());
+                } catch (IllegalArgumentException e) {
+                    log.warn("Uname to find matching difficulty level: {}", config.getLevel(), e);
+                }
+            }
+        }
     }
 
-    @Setter
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class DifficultyLevel {
+    @Data
+    public static class DifficultyLevelConfig {
         private String level;
+        private int digits;
         private int min;
         private int max;
     }

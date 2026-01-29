@@ -27,5 +27,7 @@ spring:
 
 # We keep the logging level here as it's often useful to have a local default.
 logging:
+  logstash:
+    host: ${LOGSTASH_HOST:logstash}
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'

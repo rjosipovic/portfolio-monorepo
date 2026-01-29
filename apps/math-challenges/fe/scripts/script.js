@@ -73,6 +73,7 @@ const submitAnswerBtn = document.getElementById('submit-answer-btn');
 const feedbackMessage = document.getElementById('feedback-message');
 const nextProblemBtn = document.getElementById('next-problem-btn');
 const endGameBtn = document.getElementById('end-game-btn');
+const gameTimer = document.getElementById('game-timer');
 
 // Statistics elements for dynamic rendering
 const statsByOperationDiv = document.getElementById('stats-by-operation');
@@ -103,6 +104,9 @@ let num2 = 0;
 let selectedOperation = 'addition';
 let selectedDifficulty = 'easy';
 let gameActive = false;
+let currentChallengeId = null; // ID of the current challenge being attempted
+let challengeEventSource = null; // Holds the Server-Sent Events connection
+let timerInterval = null;
 
 async function callApi(apiUrl, method, body = null, token = null) {
     let headers = {
@@ -135,8 +139,9 @@ async function callApi(apiUrl, method, body = null, token = null) {
             alertMessage("You do not have permission to access this resource.", "text-yellow-500");
         } else {
             const errorText = await response.text();
-            const errorData = errorText ? JSON.parse(errorText) : { message: `Request failed with status: ${response.status}` };
+            const errorData = errorText ? JSON.parse(errorText) : { detail: `Request failed with status: ${response.status}` };
             console.error('API Error:', errorData);
+            errorData.status = response.status; // Attach status code for better error handling
             return Promise.reject(errorData); // Reject the promise with error info
         }
     } catch (error) {
@@ -147,24 +152,107 @@ async function callApi(apiUrl, method, body = null, token = null) {
 }
 
 async function generateProblem() {
-
     const difficultyValue = difficultySelect.value;
-    console.log("Retrieving challenge with difficulty: ", difficultyValue);
-    const apiUrl = API_ENDPOINTS.CHALLENGE_API + '/random?difficulty=' + difficultyValue;
+    const operationValue = mathOperationSelect.value;
+    console.log(`Initiating challenge: ${operationValue} (${difficultyValue})`);
+
+    const queryParams = new URLSearchParams({
+        difficulty: difficultyValue.toUpperCase(),
+        operation: operationValue.toUpperCase()
+    }).toString();
+
+    const apiUrl = `${API_ENDPOINTS.CHALLENGE_API}?${queryParams}`;
     const token = localStorage.getItem("token");
 
     try {
-        const data = await callApi(apiUrl, 'GET', null, token);
-        if (data) {
-            num1 = data.firstNumber;
-            num2 = data.secondNumber;
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status === 202) {
+            const locationHeader = response.headers.get('Location');
+            if (locationHeader) {
+                const challengeId = locationHeader.split('/').pop();
+                console.log(`Challenge creation initiated. ID: ${challengeId}. Subscribing for readiness...`);
+                problemDisplay.textContent = 'Generating...'; // Give user feedback
+                subscribeToChallenge(challengeId);
+            } else {
+                // Debugging: Log available headers to see what is actually exposed
+                console.log("Available headers:", [...response.headers.keys()]);
+                console.error("Could not retrieve 'Location' header. Check the server's CORS configuration (Access-Control-Expose-Headers).");
+                alertMessage('Failed to start challenge: Could not read response location.');
+            }
+        } else if (response.status === 401 || response.status === 403) {
+            alertMessage("Please log in again.", "text-red-500");
+            loginReset();
+        } else {
+            const errorData = await response.json();
+            console.error('Challenge creation failed:', response.status, errorData);
+            alertMessage(`Failed to start challenge: ${errorData.detail || 'Please try again.'}`);
         }
     } catch (error) {
-        alertMessage('Failed to get a new challenge. Please try again.');
-        console.error('Error getting challenge:', error);
+        console.error('Error initiating challenge:', error);
+        alertMessage('A network error occurred while starting the challenge.');
+    }
+}
+
+function subscribeToChallenge(challengeId) {
+    if (challengeEventSource) {
+        challengeEventSource.close();
     }
 
+    const token = localStorage.getItem("token");
+    const sseUrl = `${API_ENDPOINTS.CHALLENGE_API}/${challengeId}/stream?token=${token}`;
 
+    challengeEventSource = new EventSource(sseUrl);
+
+    challengeEventSource.onopen = () => {
+        console.log(`SSE connection opened for challenge ${challengeId}. Waiting for challenge-ready event.`);
+    };
+
+    challengeEventSource.addEventListener('challenge-ready', (event) => {
+        console.log(`Challenge ${challengeId} is ready!`);
+        const challengeDetails = JSON.parse(event.data);
+        setupGameRound(challengeDetails);
+        challengeEventSource.close();
+        challengeEventSource = null;
+        console.log(`SSE connection closed for challenge ${challengeId}.`);
+    });
+
+    challengeEventSource.onerror = async (error) => {
+        console.error(`SSE error for challenge ${challengeId}:`, error);
+        
+        if (challengeEventSource) {
+            challengeEventSource.close();
+            challengeEventSource = null;
+        }
+
+        // Attempt to diagnose if the error is due to unauthorized access
+        try {
+            const checkResponse = await fetch(sseUrl);
+            if (checkResponse.status === 401 || checkResponse.status === 403) {
+                alertMessage("Session expired. Please log in again.", "text-red-500");
+                loginReset();
+                return;
+            }
+        } catch (e) {
+            // Ignore network errors during check, fall through to generic message
+        }
+
+        alertMessage("Failed to get challenge details. The connection was lost. Please try starting a new game.", "text-red-500");
+        endGame(); // Reset game state
+    };
+}
+
+function setupGameRound(data) {
+    currentChallengeId = data.id;
+    num1 = data.operands[0];
+    num2 = data.operands[1];
+    
     let problemString = '';
 
     switch (selectedOperation) {
@@ -192,6 +280,42 @@ async function generateProblem() {
     nextProblemBtn.classList.add('hidden');
     submitAnswerBtn.classList.remove('hidden');
     answerInput.disabled = false;
+    
+    startTimer(data.expiresAt);
+}
+
+function startTimer(expiresAt) {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    const endTime = new Date(expiresAt).getTime();
+    
+    function updateTimer() {
+        const now = new Date().getTime();
+        const distance = endTime - now;
+        
+        if (distance < 0) {
+            clearInterval(timerInterval);
+            gameTimer.textContent = "00:00";
+            handleTimeExpired();
+            return;
+        }
+        
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        gameTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    updateTimer(); // Run immediately
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+function handleTimeExpired() {
+    answerInput.disabled = true;
+    submitAnswerBtn.classList.add('hidden');
+    feedbackMessage.textContent = "Time's up!";
+    feedbackMessage.className = "text-lg mt-4 text-red-500";
+    nextProblemBtn.classList.remove('hidden');
 }
 
 function calculateAccuracy(total, correct) {
@@ -404,41 +528,50 @@ function startGame() {
 
 async function submitAnswer() {
     console.log("About to submit answer.");
-    const userAnswer = parseFloat(answerInput.value);
+    const userAnswer = answerInput.value;
 
-    if (isNaN(userAnswer)) {
-        alertMessage("Please enter a valid number.", "text-yellow-500");
+    if (!userAnswer) {
+        alertMessage("Please enter an answer.", "text-yellow-500");
         return;
     }
+    
     const data = {
-        "firstNumber": num1,
-        "secondNumber": num2,
-        "guess": userAnswer,
-        "game": selectedOperation
+        "guess": parseInt(userAnswer, 10)
     };
     const token = localStorage.getItem("token");
     let isCorrect;
-    let correctAnswer;
 
-    const apiUrl = API_ENDPOINTS.ATTEMPT_API;
+    const apiUrl = `${API_ENDPOINTS.CHALLENGE_API}/${currentChallengeId}/attempt`;
     const body = JSON.stringify(data);
 
     try {
         const result = await callApi(apiUrl, 'POST', body, token);
         if (result) {
             isCorrect = result.correct;
-            correctAnswer = result.correctResult;
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
+        if (error.status === 409) {
+            alertMessage("This challenge has already been answered or has expired.", "text-yellow-500");
+        } else {
+            alertMessage(`Failed to submit answer: ${error.detail || 'Please try again.'}`, "text-red-500");
+        }
+        // Don't proceed to update UI if submission failed
+        return;
     }
+
+    clearInterval(timerInterval); // Stop the timer
 
     if (isCorrect) {
         feedbackMessage.textContent = "Correct! 🎉";
         feedbackMessage.className = "text-lg mt-4 text-green-400";
-    } else {
-        feedbackMessage.textContent = `Incorrect. The answer was ${correctAnswer}. 😔`;
+    } else if (isCorrect === false) {
+        // API no longer provides the correct answer, so just show "Incorrect"
+        feedbackMessage.textContent = `Incorrect. 😔`;
         feedbackMessage.className = "text-lg mt-4 text-red-400";
+    } else {
+        feedbackMessage.textContent = `Something went wrong with the validation.`;
+        feedbackMessage.className = "text-lg mt-4 text-yellow-400";
     }
 
     answerInput.disabled = true;
@@ -460,6 +593,12 @@ function endGame() {
     nextProblemBtn.classList.add('hidden');
     submitAnswerBtn.classList.remove('hidden');
     answerInput.disabled = false;
+    if (timerInterval) clearInterval(timerInterval);
+    // Close any pending SSE connection if the user ends the game manually
+    if (challengeEventSource) {
+        challengeEventSource.close();
+        challengeEventSource = null;
+    }
     alertMessage("Game Over! Check your statistics and history.", "text-blue-400");
 }
 

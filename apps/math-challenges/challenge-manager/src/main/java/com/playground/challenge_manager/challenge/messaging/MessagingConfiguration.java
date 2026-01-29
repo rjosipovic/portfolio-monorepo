@@ -16,6 +16,9 @@ public class MessagingConfiguration {
     @Getter @Setter
     private ChallengeConfiguration challenge;
 
+    @Getter @Setter
+    private ChallengeUpdateConfiguration challengeUpdate;
+
     @NoArgsConstructor
     @Getter @Setter
     public static class DeadLetterConfiguration {
@@ -30,5 +33,11 @@ public class MessagingConfiguration {
         private String exchange;
         private String challengeCorrectRoutingKey;
         private String challengeFailedRoutingKey;
+    }
+
+    @NoArgsConstructor
+    @Getter @Setter
+    public static class ChallengeUpdateConfiguration {
+        private String fanoutExchange;
     }
 }

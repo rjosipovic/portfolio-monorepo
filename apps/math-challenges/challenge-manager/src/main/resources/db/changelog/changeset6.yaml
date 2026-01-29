@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6
+      author: roman
+      changes:
+        - createTable:
+            tableName: challenge
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: uuid
+                  constraints:
+                    notNull: true
+              - column:
+                  name: operation
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: difficulty
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: operands
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: correct_answer
+                  type: INT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: true

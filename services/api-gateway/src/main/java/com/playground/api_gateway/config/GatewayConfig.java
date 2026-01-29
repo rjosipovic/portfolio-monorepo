@@ -21,6 +21,7 @@ public class GatewayConfig {
                         .allowedOrigins(corsConfig.getAllowedOrigins())
                         .allowedMethods(corsConfig.getAllowedMethods())
                         .allowedHeaders(corsConfig.getAllowedHeaders())
+                        .exposedHeaders(corsConfig.getExposedHeaders())
                         .allowCredentials(false);
             }
         };

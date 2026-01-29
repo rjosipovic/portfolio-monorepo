@@ -34,9 +34,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        var header = request.getHeader("Authorization");
-        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
-            var token = header.substring(7);
+        var token = resolveToken(request);
+        if (StringUtils.hasText(token)) {
             try {
                 var signedJwt = SignedJWT.parse(token);
                 var valid = signedJwt.verify(new MACVerifier(secret));
@@ -51,6 +50,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        var header = request.getHeader("Authorization");
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        
+        // Fallback to query parameter for SSE
+        var tokenParam = request.getParameter("token");
+        if (StringUtils.hasText(tokenParam)) {
+            return tokenParam;
+        }
+        
+        return null;
     }
 
     private static boolean notExpired(SignedJWT signedJwt) throws ParseException {
