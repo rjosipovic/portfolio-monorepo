@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 8
+      author: roman
+      changes:
+        - dropTable:
+            tableName: challenge_attempts
