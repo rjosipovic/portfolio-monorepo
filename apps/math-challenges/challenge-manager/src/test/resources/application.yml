@@ -83,3 +83,5 @@ app:
       exchange: challenge-exchange
       challenge-correct-routing-key: challenge-solved.correct
       challenge-failed-routing-key: challenge-solved.incorrect
+    challengeUpdate:
+      fanout-exchange: challenge-update-exchange

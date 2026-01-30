@@ -14,4 +14,5 @@ public class CorsConfig {
     private String[] allowedOrigins;
     private String[] allowedMethods;
     private String[] allowedHeaders;
+    private String[] exposedHeaders;
 }

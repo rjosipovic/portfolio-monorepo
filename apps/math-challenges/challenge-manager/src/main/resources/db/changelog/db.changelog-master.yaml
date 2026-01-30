@@ -9,3 +9,9 @@ databaseChangeLog:
       file: db/changelog/changeset4.yaml
   - include:
       file: db/changelog/changeset5.yaml
+  - include:
+      file: db/changelog/changeset6.yaml
+  - include:
+      file: db/changelog/changeset7.yaml
+  - include:
+      file: db/changelog/changeset8.yaml

@@ -1,5 +1,5 @@
 const PROTOCOL = 'http';
-const HOST = 'localhost';
+const HOST = '127.0.0.1';
 
 const API_ENDPOINTS = {
     // Base URLs

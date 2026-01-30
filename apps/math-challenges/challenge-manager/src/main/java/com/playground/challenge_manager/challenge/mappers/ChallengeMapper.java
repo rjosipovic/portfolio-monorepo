@@ -1,51 +1,31 @@
 package com.playground.challenge_manager.challenge.mappers;
 
-import com.playground.challenge_manager.challenge.api.dto.ChallengeAttemptDTO;
-import com.playground.challenge_manager.challenge.api.dto.ChallengeResultDTO;
-import com.playground.challenge_manager.challenge.dataaccess.entities.ChallengeAttemptEntity;
+import com.playground.challenge_manager.challenge.api.dto.AttemptResponse;
+import com.playground.challenge_manager.challenge.api.dto.ChallengeResponse;
+import com.playground.challenge_manager.challenge.dataaccess.entities.ChallengeEntity;
 import com.playground.challenge_manager.challenge.messaging.events.ChallengeSolvedEvent;
-import com.playground.challenge_manager.challenge.services.impl.challengeservice.chain.util.MathUtil;
-import com.playground.challenge_manager.challenge.services.model.ChallengeAttempt;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.ObjectFactory;
 
-@Mapper(componentModel = "spring", imports = { MathUtil.class })
+@Mapper(componentModel = "spring")
 public interface ChallengeMapper {
 
-    ChallengeAttemptEntity toEntity(ChallengeAttempt domain);
+    @Mapping(source = "entity.id", target = "challengeAttemptId")
+    @Mapping(source = "entity.userId", target = "userId")
+    @Mapping(target = "firstNumber", expression = "java(entity.getOperands() != null && entity.getOperands().size() > 0 ? entity.getOperands().get(0) : 0)")
+    @Mapping(target = "secondNumber", expression = "java(entity.getOperands() != null && entity.getOperands().size() > 1 ? entity.getOperands().get(1) : 0)")
+    @Mapping(source = "guess", target = "resultAttempt") // Map the user's guess
+    @Mapping(source = "correct", target = "correct")
+    @Mapping(target = "game", expression = "java(entity.getOperationType().name().toLowerCase())")
+    @Mapping(source = "entity.difficulty", target = "difficulty")
+    @Mapping(source = "entity.attemptedAt", target = "attemptDate")
+    ChallengeSolvedEvent toChallengeSolvedEvent(ChallengeEntity entity, Integer guess, Boolean correct);
 
-    ChallengeSolvedEvent toChallengeSolvedEvent(ChallengeAttempt domain);
+    @Mapping(source = "operationType", target = "operation")
+    ChallengeResponse toChallengeResponse(ChallengeEntity entity);
 
-    @Mapping(source = "guess", target = "resultAttempt")
-    @Mapping(target = "correct", ignore = true)
-    @Mapping(target = "difficulty", ignore = true)
-    ChallengeAttempt toChallengeAttempt(ChallengeAttemptDTO dto);
+    @Mapping(source = "entity.id", target = "challengeId")
+    @Mapping(source = "correct", target = "correct")
+    AttemptResponse toAttemptResponse(ChallengeEntity entity, Boolean correct);
 
-    @Mapping(source = "resultAttempt", target = "guess")
-    @Mapping(target = "correctResult", ignore = true)
-    ChallengeResultDTO toResultDto(ChallengeAttemptEntity entity);
-
-    @Mapping(source = "resultAttempt", target = "guess")
-    @Mapping(target = "correctResult", ignore = true)
-    ChallengeResultDTO toResultDto(ChallengeAttempt attempt);
-
-    /**
-     * This method is a custom object factory for creating ChallengeAttemptEntity instances.
-     * MapStruct will use this method instead of a default constructor whenever it needs to
-     * create an entity from a ChallengeAttempt domain object.
-     * This allows us to enforce the use of our static factory method on the entity.
-     */
-    @ObjectFactory
-    default ChallengeAttemptEntity createEntity(ChallengeAttempt domain) {
-        return ChallengeAttemptEntity.create(
-                domain.getUserId(),
-                domain.getFirstNumber(),
-                domain.getSecondNumber(),
-                domain.getResultAttempt(),
-                domain.getCorrect(),
-                domain.getGame(),
-                domain.getDifficulty()
-        );
-    }
 }

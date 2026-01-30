@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 7
+      author: roman
+      changes:
+        - addColumn:
+            tableName: challenge
+            columns:
+              - column:
+                  name: attempted_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: true

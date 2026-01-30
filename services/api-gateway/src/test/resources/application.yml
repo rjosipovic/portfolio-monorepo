@@ -7,3 +7,11 @@ app:
     allowed-origins: ${ALLOWED_ORIGINS:http://127.0.0.1:3000}
     allowed-methods: GET,POST,PUT,DELETE
     allowed-headers: Authorization,Content-Type,X-Requested-With,Accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,Access-Control-Allow-Origin
+    exposed-headers: Location
+
+# We keep the logging level here as it's often useful to have a local default.
+logging:
+  logstash:
+    host: ${LOGSTASH_HOST:logstash}
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'
