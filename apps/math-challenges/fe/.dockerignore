@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Node dependencies
+node_modules
+
+# IDEs
+.idea
+.vscode
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+README.md

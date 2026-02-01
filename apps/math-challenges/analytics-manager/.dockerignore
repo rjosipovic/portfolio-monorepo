@@ -1,0 +1,38 @@
+# Ignore Git history and metadata
+.git
+.gitignore
+
+# Ignore build artifacts (target directory)
+target/
+
+# Ignore IDE configuration files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Ignore CI/CD configs
+.github/
+.gitlab/
+jenkins/
+
+# Ignore documentation
+README.md
+docs/
