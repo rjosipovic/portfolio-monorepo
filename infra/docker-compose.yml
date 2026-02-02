@@ -267,6 +267,7 @@ services:
       - portfolio-network
 
   user-manager:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-common-user-manager:${TAG:-latest}
     build:
       context: ../services/user-manager
       dockerfile: Dockerfile
@@ -305,6 +306,7 @@ services:
     restart: unless-stopped
 
   challenge-manager:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-math-challenges-challenge-manager:${TAG:-latest}
     build:
       context: ../apps/math-challenges/challenge-manager
       dockerfile: Dockerfile
@@ -343,6 +345,7 @@ services:
     restart: unless-stopped
 
   gamification-manager:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-math-challenges-gamification-manager:${TAG:-latest}
     build:
       context: ../apps/math-challenges/gamification-manager
       dockerfile: Dockerfile
@@ -385,6 +388,7 @@ services:
     restart: unless-stopped
 
   notification-manager:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-common-notification-manager:${TAG:-latest}
     build:
       context: ../services/notification-manager
       dockerfile: Dockerfile
@@ -416,6 +420,7 @@ services:
       - portfolio-network
   
   analytics-manager:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-math-challenges-analytics-manager:${TAG:-latest}
     build:
       context: ../apps/math-challenges/analytics-manager
       dockerfile: Dockerfile
@@ -447,6 +452,7 @@ services:
       - portfolio-network
 
   frontend:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-math-challenges-frontend:${TAG:-latest}
     build:
       context: ../apps/math-challenges/fe
       dockerfile: Dockerfile
@@ -460,6 +466,7 @@ services:
     restart: unless-stopped
 
   api-gateway:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-common-api-gateway:${TAG:-latest}
     build:
       context: ../services/api-gateway
       dockerfile: Dockerfile

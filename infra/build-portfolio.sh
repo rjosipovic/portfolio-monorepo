@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# =================================================================================================
+# Script: build-portfolio.sh
+# Description: Builds the Docker images for the Portfolio Monorepo services locally.
+#              This is useful for local development to ensure all services compile and package correctly.
+#
+# Usage:
+#   ./build-portfolio.sh
+#
+# Examples:
+#   1. Build all services:
+#      ./build-portfolio.sh
+#
+# Notes:
+#   - This script uses 'docker compose build', which leverages Docker layer caching.
+#   - It does NOT push images to a registry. Use 'publish-portfolio.sh' for that.
+#   - It builds the services defined in the SERVICES variable within the script.
+# =================================================================================================
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
