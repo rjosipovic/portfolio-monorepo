@@ -1,0 +1,9 @@
+management:
+  tracing:
+    enabled: false # Disable tracing in K8s for now
+spring:
+  cloud:
+    consul:
+      enabled: false # Disable Consul entirely
+      discovery:
+        enabled: false

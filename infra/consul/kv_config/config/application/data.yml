@@ -1,18 +1,5 @@
-spring:
-  rabbitmq:
-    host: ${RABBITMQ_HOST}
-    port: ${RABBITMQ_PORT}
-    username: ${RABBITMQ_USER}
-    password: ${RABBITMQ_PASSWORD}
-    template:
-      observation-enabled: true
-    listener:
-      simple:
-        observation-enabled: true
-
 server:
   port: ${SERVICE_PORT:8080}
-
 management:
   server:
     port: ${MANAGEMENT_PORT:9090}
@@ -27,9 +14,14 @@ management:
   info:
     build:
       enabled: true
+
   zipkin:
     tracing:
       endpoint: http://${ZIPKIN_HOST:zipkin}:9411/api/v2/spans
   tracing:
     sampling:
       probability: 1.0
+
+logging:
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n'

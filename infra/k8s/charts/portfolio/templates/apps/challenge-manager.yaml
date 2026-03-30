@@ -1,0 +1,59 @@
+{{- if .Values.apps.challengeManager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: challenge-manager
+  labels:
+    app: challenge-manager
+spec:
+  replicas: {{ .Values.apps.challengeManager.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: challenge-manager
+  template:
+    metadata:
+      labels:
+        app: challenge-manager
+    spec:
+      containers:
+        - name: challenge-manager
+          image: {{ .Values.apps.challengeManager.image }}
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.apps.challengeManager.resources | nindent 12 }}
+          ports:
+            - name: http-api
+              containerPort: {{ .Values.global.servicePort | default 8080 }}
+            - name: management
+              containerPort: {{ .Values.global.managementPort | default 9090 }}
+          envFrom:
+            - configMapRef:
+                name: challenge-manager-config
+            - secretRef:
+                name: challenge-manager-secret
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: challenge-manager
+  labels:
+    app: challenge-manager
+spec:
+  selector:
+    app: challenge-manager
+  ports:
+    - port: {{ .Values.global.servicePort | default 8080 }}
+      targetPort: http-api
+  type: ClusterIP
+{{- end }}

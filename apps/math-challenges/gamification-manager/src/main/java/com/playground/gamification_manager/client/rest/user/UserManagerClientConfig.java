@@ -15,7 +15,7 @@ import java.time.Duration;
 @Validated
 public class UserManagerClientConfig {
 
-    private String serviceName;
+    private String usersEndpoint;
 
     private RetryConfig retry;
 

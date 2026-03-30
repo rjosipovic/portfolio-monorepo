@@ -1,0 +1,63 @@
+{{- if .Values.apps.analyticsManager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-manager
+  labels:
+    app: analytics-manager
+spec:
+  replicas: {{ .Values.apps.analyticsManager.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: analytics-manager
+  template:
+    metadata:
+      labels:
+        app: analytics-manager
+    spec:
+      initContainers:
+        - name: wait-for-neo4j
+          image: busybox
+          command: ['sh', '-c', 'until nc -z neo4j-analytics 7687; do echo waiting for neo4j-analytics; sleep 2; done']
+      containers:
+        - name: analytics-manager
+          image: {{ .Values.apps.analyticsManager.image }}
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.apps.analyticsManager.resources | nindent 12 }}
+          ports:
+            - name: http-api
+              containerPort: {{ .Values.global.servicePort | default 8080 }}
+            - name: management
+              containerPort: {{ .Values.global.managementPort | default 9090 }}
+          envFrom:
+            - configMapRef:
+                name: analytics-manager-config
+            - secretRef:
+                name: analytics-manager-secret
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-manager
+  labels:
+    app: analytics-manager
+spec:
+  selector:
+    app: analytics-manager
+  ports:
+    - port: {{ .Values.global.servicePort | default 8080 }}
+      targetPort: http-api
+  type: ClusterIP
+{{- end }}

@@ -1,0 +1,16 @@
+management:
+  tracing:
+    enabled: false # Disable tracing in K8s for now
+spring:
+  cloud:
+    consul:
+      enabled: false # Disable Consul entirely
+      discovery:
+        enabled: false
+    loadbalancer:
+      enabled: false # Disable LoadBalancer so gateway routes use plain HTTP with k8s DNS directly
+
+app:
+  clients:
+    user-manager:
+      load-balanced: false

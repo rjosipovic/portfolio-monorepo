@@ -1,6 +1,16 @@
 spring:
   application:
     name: notification-manager
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    template:
+      observation-enabled: true
+    listener:
+      simple:
+        observation-enabled: true
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}

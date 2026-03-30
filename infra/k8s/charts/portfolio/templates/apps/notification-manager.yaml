@@ -1,0 +1,59 @@
+{{- if .Values.apps.notificationManager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-manager
+  labels:
+    app: notification-manager
+spec:
+  replicas: {{ .Values.apps.notificationManager.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: notification-manager
+  template:
+    metadata:
+      labels:
+        app: notification-manager
+    spec:
+      containers:
+        - name: notification-manager
+          image: {{ .Values.apps.notificationManager.image }}
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.apps.notificationManager.resources | nindent 12 }}
+          ports:
+            - name: http-api
+              containerPort: {{ .Values.global.servicePort | default 8080 }}
+            - name: management
+              containerPort: {{ .Values.global.managementPort | default 9090 }}
+          envFrom:
+            - configMapRef:
+                name: notification-manager-config
+            - secretRef:
+                name: notification-manager-secret
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-manager
+  labels:
+    app: notification-manager
+spec:
+  selector:
+    app: notification-manager
+  ports:
+    - port: {{ .Values.global.servicePort | default 8080 }}
+      targetPort: http-api
+  type: ClusterIP
+{{- end }}

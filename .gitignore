@@ -34,3 +34,6 @@ build/
 
 ### Environment ###
 .env
+
+# HELM secrets
+infra/k8s/charts/portfolio/secrets.yaml

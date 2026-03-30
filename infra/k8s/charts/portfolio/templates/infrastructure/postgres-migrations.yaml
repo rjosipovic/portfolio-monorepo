@@ -1,0 +1,25 @@
+{{- if .Values.infrastructure.postgres.migrations.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-migrations
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      containers:
+        - name: migrations
+          image: {{ .Values.infrastructure.postgres.migrations.image | default "rjosipovic/portfolio-postgres-migrations:latest" }}
+          resources: {{- toYaml .Values.infrastructure.postgres.migrations.resources | nindent 12 }}
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: postgres-secret # For the root POSTGRES_PASSWORD
+            - secretRef:
+                name: postgres-migrations-secret # For the application user passwords
+      restartPolicy: OnFailure
+{{- end }}

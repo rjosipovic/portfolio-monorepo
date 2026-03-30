@@ -1,0 +1,27 @@
+{{- if .Values.apps.notificationManager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notification-manager-config
+  labels:
+    app: notification-manager
+data:
+  # --- Common Spring Boot Config ---
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.springProfilesActive | default "k8s" | quote }}
+
+  # --- Common Service Ports ---
+  SERVICE_PORT: {{ .Values.global.servicePort | default "8080" | quote }}
+  MANAGEMENT_PORT: {{ .Values.global.managementPort | default "9090" | quote }}
+
+  # --- Infrastructure Hosts & Ports ---
+  RABBITMQ_HOST: {{ .Values.infrastructure.rabbitmq.host | default "rabbitmq" | quote }}
+  RABBITMQ_PORT: {{ .Values.infrastructure.rabbitmq.port | default "5672" | quote }}
+
+  # --- Notification Manager Config ---
+  MAIL_HOST: {{ .Values.apps.notificationManager.mail.host | default "smtp.gmail.com" | quote }}
+  MAIL_PORT: {{ .Values.apps.notificationManager.mail.port | default "587" | quote }}
+
+  # --- Default Mail Addresses ---
+  DEFAULT_MAIL_FROM: {{ .Values.apps.notificationManager.mail.from | default "change-me@mail.com" | quote }}
+  DEFAULT_MAIL_TO: {{ .Values.apps.notificationManager.mail.to | default "rjosipovic@gmail.com" | quote }}
+{{- end }}

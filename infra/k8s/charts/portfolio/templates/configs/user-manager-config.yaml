@@ -1,0 +1,28 @@
+{{- if .Values.apps.userManager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-manager-config
+  labels:
+    app: user-manager
+data:
+  # --- Spring Boot Config ---
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.springProfilesActive | default "k8s" | quote }}
+
+  # --- Service Ports ---
+  SERVICE_PORT: {{ .Values.global.servicePort | default "8080" | quote }}
+  MANAGEMENT_PORT: {{ .Values.global.managementPort | default "9090" | quote }}
+
+  # --- Hosts & Ports ---
+  RABBITMQ_HOST: {{ .Values.infrastructure.rabbitmq.host | default "rabbitmq" | quote }}
+  RABBITMQ_PORT: {{ .Values.infrastructure.rabbitmq.port | default "5672" | quote }}
+
+  REDIS_HOST: {{ .Values.infrastructure.redis.host | default "redis" | quote }}
+  REDIS_PORT: {{ .Values.infrastructure.redis.port | default "6379" | quote }}
+
+  POSTGRES_HOST: {{ .Values.infrastructure.postgres.host | default "postgres" | quote }}
+  POSTGRES_PORT: {{ .Values.infrastructure.postgres.port | default "5432" | quote }}
+
+  # --- Spring Data Config ---
+  DATASOURCE_URL: {{ .Values.apps.userManager.db.url | quote }}
+{{- end }}

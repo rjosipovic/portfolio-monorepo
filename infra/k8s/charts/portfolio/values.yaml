@@ -1,0 +1,208 @@
+# Default values for portfolio.
+# Passwords are set via secrets file
+
+global:
+  springProfilesActive: "k8s"
+  servicePort: "8080"
+  managementPort: "9090"
+  authSecret: "" # Set via secrets file
+
+infrastructure:
+  rabbitmq:
+    enabled: true
+    host: "rabbitmq"
+    port: "5672"
+    user: "challenges-rabbitmq-user"
+    password: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        memory: "256Mi"
+    storage: "512Mi"
+  postgres:
+    enabled: true
+    host: "postgres"
+    port: "5432"
+    user: "postgres"
+    password: ""
+    migrations:
+      enabled: true
+      image: "rjosipovic/portfolio-postgres-migrations:latest"
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          memory: "128Mi"
+    accounts:
+      userManager:
+        user: "user-manager-user"
+        password: ""
+      challengeManager:
+        user: "challenge-manager-user"
+        password: ""
+      gamificationManager:
+        user: "gamification-manager-user"
+        password: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        memory: "256Mi"
+    storage: "1Gi"
+
+  pgadmin:
+    enabled: true
+    email: "admin@admin.com"
+    password: ""
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+      limits:
+        memory: "256Mi"
+
+  redis:
+    enabled: true
+    host: "redis"
+    port: "6379"
+    user: "challenges-redis-user"
+    password: ""
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+    storage: "512Mi"
+
+
+  neo4jAnalytics:
+    enabled: true
+    host: "neo4j-analytics"
+    user: "neo4j"
+    password: ""
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        memory: "1Gi"
+    storage: "2Gi"
+
+ingress:
+  enabled: true
+
+apps:
+  frontend:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-frontend:latest
+    replicas: 1
+    ingress:
+      host: "app.local" # Add to /etc/hosts pointing to minikube ip for local dev
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+
+  notificationManager:
+    enabled: true
+    image: rjosipovic/portfolio-common-notification-manager:latest
+    replicas: 1
+    mail:
+      host: "smtp.gmail.com"
+      port: "587"
+      username: "rjosipovic@gmail.com"
+      password: ""
+      from: "change-me@mail.com"
+      to: "rjosipovic@gmail.com"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  userManager:
+    enabled: true
+    image: rjosipovic/portfolio-common-user-manager:latest
+    replicas: 1
+    db:
+      url: "jdbc:postgresql://postgres:5432/user-manager-db"
+    service:
+      port: 8080 # The port the user-manager service listens on
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  apiGateway:
+    enabled: true
+    image: rjosipovic/portfolio-common-api-gateway:latest
+    replicas: 1
+    allowedOrigins: ""
+    ingress:
+      host: "api.local" # Add to /etc/hosts pointing to minikube ip for local dev
+    routes:
+      challengeManager: "http://challenge-manager:8080/"
+      userManager: "http://user-manager:8080/"
+      gamificationManager: "http://gamification-manager:8080/"
+      notificationManager: "http://notification-manager:8080/"
+      analyticsManager: "http://analytics-manager:8080/"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  challengeManager:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-challenge-manager:latest
+    replicas: 1
+    db:
+      url: "jdbc:postgresql://postgres:5432/challenge-manager-db"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  gamificationManager:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-gamification-manager:latest
+    replicas: 1
+    db:
+      url: "jdbc:postgresql://postgres:5432/gamification-manager-db"
+    clients:
+      userManager:
+        # The host is the Kubernetes service name, which is static.
+        host: "user-manager" 
+        # The port is now referenced from the userManager's own definition.
+        # This can be left blank as the template will handle it.
+        port: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  analyticsManager:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-analytics-manager:latest
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"

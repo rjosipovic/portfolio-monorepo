@@ -1,0 +1,59 @@
+{{- if .Values.apps.userManager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-manager
+  labels:
+    app: user-manager
+spec:
+  replicas: {{ .Values.apps.userManager.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: user-manager
+  template:
+    metadata:
+      labels:
+        app: user-manager
+    spec:
+      containers:
+        - name: user-manager
+          image: {{ .Values.apps.userManager.image }}
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.apps.userManager.resources | nindent 12 }}
+          ports:
+            - name: http-api
+              containerPort: {{ .Values.global.servicePort | default 8080 }}
+            - name: management
+              containerPort: {{ .Values.global.managementPort | default 9090 }}
+          envFrom:
+            - configMapRef:
+                name: user-manager-config
+            - secretRef:
+                name: user-manager-secret
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-manager
+  labels:
+    app: user-manager
+spec:
+  selector:
+    app: user-manager
+  ports:
+    - port: {{ .Values.global.servicePort | default 8080 }}
+      targetPort: http-api
+  type: ClusterIP
+{{- end }}

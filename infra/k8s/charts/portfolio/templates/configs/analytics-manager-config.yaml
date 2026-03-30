@@ -1,0 +1,22 @@
+{{- if .Values.apps.analyticsManager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-manager-config
+  labels:
+    app: analytics-manager
+data:
+  # --- Spring Boot Config ---
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.springProfilesActive | default "k8s" | quote }}
+
+  # --- Common Service Ports ---
+  SERVICE_PORT: {{ .Values.global.servicePort | default "8080" | quote }}
+  MANAGEMENT_PORT: {{ .Values.global.managementPort | default "9090" | quote }}
+
+  # --- RabbitMQ ---
+  RABBITMQ_HOST: {{ .Values.infrastructure.rabbitmq.host | default "rabbitmq" | quote }}
+  RABBITMQ_PORT: {{ .Values.infrastructure.rabbitmq.port | default "5672" | quote }}
+
+  # --- Neo4j ---
+  NEO4J_URI: {{ printf "bolt://%s:7687" .Values.infrastructure.neo4jAnalytics.host | quote }}
+{{- end }}

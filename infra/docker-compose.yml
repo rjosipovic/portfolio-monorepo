@@ -5,6 +5,7 @@ networks:
     driver: bridge
 
 services:
+  # --- Infrastructure Services ---
   postgres:
     image: postgres:12
     restart: always
@@ -24,6 +25,19 @@ services:
     networks:
       - portfolio-network
 
+  pgadmin:
+    image: dpage/pgadmin4:8.5
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@admin.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "15432:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - portfolio-network
+
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
     environment:
@@ -33,6 +47,22 @@ services:
         condition: service_healthy
     ports:
       - "9187:9187"
+    networks:
+      - portfolio-network
+
+  postgres-migrations:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-postgres-migrations:${TAG:-latest}
+    build:
+      context: ./postgres-migrations
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER_MANAGER_PASSWORD=${POSTGRES_USER_MANAGER_PASSWORD}
+      - POSTGRES_CHALLENGE_MANAGER_PASSWORD=${POSTGRES_CHALLENGE_MANAGER_PASSWORD}
+      - POSTGRES_GAMIFICATION_MANAGER_PASSWORD=${POSTGRES_GAMIFICATION_MANAGER_PASSWORD}
     networks:
       - portfolio-network
 
@@ -51,27 +81,6 @@ services:
       - "7687:7687"
     volumes:
       - neo4j-data:/data
-    networks:
-      - portfolio-network
-
-  postgres-migrations:
-    image: postgres:12
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./postgres-migrations:/postgres-migrations
-    command: > 
-      /bin/sh -c '
-      for file in /postgres-migrations/*.sql; do
-        PGPASSWORD=${POSTGRES_PASSWORD} psql -h postgres -U postgres -v ON_ERROR_STOP=1 \
-        -c "SET my.user_manager_password=\"${POSTGRES_USER_MANAGER_PASSWORD}\"" \
-        -c "SET my.challenge_manager_password=\"${POSTGRES_CHALLENGE_MANAGER_PASSWORD}\"" \
-        -c "SET my.gamification_manager_password=\"${POSTGRES_GAMIFICATION_MANAGER_PASSWORD}\"" \
-        -f "$$file"
-      done'
-    environment:
-      - PGPASSWORD=${POSTGRES_PASSWORD}
     networks:
       - portfolio-network
 
@@ -266,12 +275,24 @@ services:
     networks:
       - portfolio-network
 
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # UI
+    networks:
+      - portfolio-network
+
+  # --- Application Services ---
   user-manager:
     image: ${DOCKER_USER:-rjosipovic}/portfolio-common-user-manager:${TAG:-latest}
     build:
       context: ../services/user-manager
       dockerfile: Dockerfile
+    ports:
+      - "8180:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - DATASOURCE_URL=jdbc:postgresql://postgres:5432/user-manager-db
       - SPRING_DATASOURCE_USERNAME=user-manager-user
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_USER_MANAGER_PASSWORD}
@@ -310,7 +331,10 @@ services:
     build:
       context: ../apps/math-challenges/challenge-manager
       dockerfile: Dockerfile
+    ports:
+      - "8181:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - DATASOURCE_URL=jdbc:postgresql://postgres:5432/challenge-manager-db
       - SPRING_DATASOURCE_USERNAME=challenge-manager-user
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_CHALLENGE_MANAGER_PASSWORD}
@@ -349,7 +373,10 @@ services:
     build:
       context: ../apps/math-challenges/gamification-manager
       dockerfile: Dockerfile
+    ports:
+      - "8182:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - DATASOURCE_URL=jdbc:postgresql://postgres:5432/gamification-manager-db
       - SPRING_DATASOURCE_USERNAME=gamification-manager-user
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_GAMIFICATION_MANAGER_PASSWORD}
@@ -392,7 +419,10 @@ services:
     build:
       context: ../services/notification-manager
       dockerfile: Dockerfile
+    ports:
+      - "8280:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER}
@@ -424,7 +454,10 @@ services:
     build:
       context: ../apps/math-challenges/analytics-manager
       dockerfile: Dockerfile
+    ports:
+      - "8183:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER}
@@ -473,7 +506,13 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - CHALLENGE_MANAGER_URI=lb://challenge-manager/
+      - USER_MANAGER_URI=lb://user-manager/
+      - GAMIFICATION_MANAGER_URI=lb://gamification-manager/
+      - NOTIFICATION_MANAGER_URI=lb://notification-manager/
+      - ANALYTICS_MANAGER_URI=lb://analytics-manager/
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
       interval: 10s

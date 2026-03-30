@@ -1,0 +1,48 @@
+{{- if .Values.apps.frontend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: {{ .Values.apps.frontend.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: {{ .Values.apps.frontend.image }}
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.apps.frontend.resources | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: config-js
+              mountPath: /usr/share/nginx/html/config.js
+              subPath: config.js
+      volumes:
+        - name: config-js
+          configMap:
+            name: frontend-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: http
+  type: ClusterIP
+{{- end }}

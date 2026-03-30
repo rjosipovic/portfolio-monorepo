@@ -38,7 +38,7 @@ DEFAULT_USER="rjosipovic"
 DEFAULT_TAG="latest"
 
 # List of services from docker-compose.yml to build and publish.
-SERVICES="user-manager challenge-manager gamification-manager notification-manager analytics-manager api-gateway frontend"
+SERVICES="postgres-migrations user-manager challenge-manager gamification-manager notification-manager analytics-manager api-gateway frontend"
 # --- End Configuration ---
 
 # Parse arguments:
