@@ -10,6 +10,9 @@ metadata:
 spec:
   backoffLimit: 2
   template:
+    metadata:
+      labels:
+        app: postgres-migrations
     spec:
       containers:
         - name: migrations
