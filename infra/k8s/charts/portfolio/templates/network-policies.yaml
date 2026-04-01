@@ -184,6 +184,12 @@ spec:
               app: user-manager
       ports:
         - port: 8080
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - port: 6379
 
 ---
 # analytics-manager: accepts from api-gateway only
@@ -329,6 +335,9 @@ spec:
         - podSelector:
             matchLabels:
               app: challenge-manager
+        - podSelector:
+            matchLabels:
+              app: gamification-manager
       ports:
         - port: 6379
 
