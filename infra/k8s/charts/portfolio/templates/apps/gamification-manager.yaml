@@ -15,8 +15,17 @@ spec:
       labels:
         app: gamification-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
       containers:
         - name: gamification-manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           image: {{ .Values.apps.gamificationManager.image }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.gamificationManager.resources | nindent 12 }}
@@ -42,6 +51,12 @@ spec:
               port: management
             initialDelaySeconds: 30
             periodSeconds: 15
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

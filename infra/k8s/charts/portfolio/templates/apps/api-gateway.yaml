@@ -15,8 +15,17 @@ spec:
       labels:
         app: api-gateway
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
       containers:
         - name: api-gateway
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           image: {{ .Values.apps.apiGateway.image }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.apiGateway.resources | nindent 12 }}
@@ -40,6 +49,12 @@ spec:
               port: management
             initialDelaySeconds: 30
             periodSeconds: 15
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

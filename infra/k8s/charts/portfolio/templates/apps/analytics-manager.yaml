@@ -15,12 +15,26 @@ spec:
       labels:
         app: analytics-manager
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
       initContainers:
         - name: wait-for-neo4j
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           image: busybox
           command: ['sh', '-c', 'until nc -z neo4j-analytics 7687; do echo waiting for neo4j-analytics; sleep 2; done']
       containers:
         - name: analytics-manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
           image: {{ .Values.apps.analyticsManager.image }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.analyticsManager.resources | nindent 12 }}
@@ -46,6 +60,12 @@ spec:
               port: management
             initialDelaySeconds: 30
             periodSeconds: 15
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
