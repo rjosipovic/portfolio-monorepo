@@ -15,6 +15,11 @@ spec:
       labels:
         app: rabbitmq
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       containers:
         - name: rabbitmq
           image: rabbitmq:3.13-management
@@ -30,11 +35,14 @@ spec:
               command: ["rabbitmq-diagnostics", "check_running"]
             initialDelaySeconds: 60
             periodSeconds: 30
+            timeoutSeconds: 10
           readinessProbe:
             exec:
               command: ["rabbitmq-diagnostics", "check_port_connectivity"]
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 10
           volumeMounts:
             - name: data
               mountPath: /var/lib/rabbitmq
