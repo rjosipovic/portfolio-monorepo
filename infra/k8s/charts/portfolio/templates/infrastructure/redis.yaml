@@ -15,6 +15,7 @@ spec:
       labels:
         app: redis
     spec:
+      # redis/redis-stack runs as root by default; replacing with redis:7-alpine + standalone RedisInsight — tracked in separate card
       containers:
         - name: redis
           image: redis/redis-stack:7.2.0-v10

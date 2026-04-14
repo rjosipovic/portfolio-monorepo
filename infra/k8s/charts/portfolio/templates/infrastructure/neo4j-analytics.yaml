@@ -16,6 +16,11 @@ spec:
         app: neo4j-analytics
     spec:
       enableServiceLinks: false # Prevents K8s from injecting <SERVICE>_PORT_* env vars, which Neo4j misinterprets as config settings under strict validation
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 7474
+        runAsGroup: 7474
+        fsGroup: 7474
       containers:
         - name: neo4j-analytics
           image: neo4j:2025.09.0
