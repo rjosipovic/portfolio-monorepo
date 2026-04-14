@@ -40,3 +40,6 @@ infra/k8s/charts/portfolio/secrets.yaml
 
 # KIRO
 .kiro
+
+# GEMINI
+.gemini
