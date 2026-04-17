@@ -6,6 +6,8 @@ metadata:
   labels:
     app: postgres
 spec:
+  strategy:
+    type: Recreate
   replicas: 1
   selector:
     matchLabels:
