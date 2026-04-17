@@ -27,7 +27,7 @@ spec:
             - containerPort: 8001
           env:
             - name: REDIS_ARGS
-              value: "--user $(REDIS_USER) on >$(REDIS_PASSWORD) ~* +@all"
+              value: "--save 60 1 --appendonly yes --user $(REDIS_USER) on >$(REDIS_PASSWORD) ~* +@all"
           envFrom:
             - secretRef:
                 name: redis-secret
