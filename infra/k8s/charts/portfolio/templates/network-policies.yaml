@@ -338,6 +338,9 @@ spec:
         - podSelector:
             matchLabels:
               app: gamification-manager
+        - podSelector:
+            matchLabels:
+              app: redisinsight
       ports:
         - port: 6379
 

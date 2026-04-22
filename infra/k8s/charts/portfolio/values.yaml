@@ -66,6 +66,7 @@ infrastructure:
         memory: "256Mi"
 
   redis:
+    image: "redis:7-alpine"
     enabled: true
     host: "redis"
     port: "6379"
@@ -79,6 +80,15 @@ infrastructure:
         memory: "128Mi"
     storage: "512Mi"
 
+  redisinsight:
+    enabled: true
+    image: "redis/redisinsight:2.68.0"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
 
   neo4jAnalytics:
     enabled: true

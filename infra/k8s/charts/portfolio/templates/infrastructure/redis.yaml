@@ -17,20 +17,36 @@ spec:
       labels:
         app: redis
     spec:
-      # redis/redis-stack runs as root by default; replacing with redis:7-alpine + standalone RedisInsight — tracked in separate card
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
       containers:
         - name: redis
-          image: redis/redis-stack:7.2.0-v10
+          image: {{ .Values.infrastructure.redis.image }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              redis-server \
+              --save 60 1 \
+              --appendonly yes &
+              sleep 1
+              redis-cli ACL SETUSER "$REDIS_USER" on ">$REDIS_PASSWORD" "~*" "+@all"
+              wait
+          imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.infrastructure.redis.resources | nindent 12 }}
           ports:
             - containerPort: 6379
-            - containerPort: 8001
-          env:
-            - name: REDIS_ARGS
-              value: "--save 60 1 --appendonly yes --user $(REDIS_USER) on >$(REDIS_PASSWORD) ~* +@all"
           envFrom:
             - secretRef:
                 name: redis-secret
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           livenessProbe:
             exec:
               command: ["redis-cli", "ping"]
@@ -71,8 +87,5 @@ spec:
     - name: redis
       port: 6379
       targetPort: 6379
-    - name: ui
-      port: 8001
-      targetPort: 8001
   type: ClusterIP
 {{- end }}
