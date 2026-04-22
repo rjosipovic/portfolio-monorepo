@@ -19,6 +19,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1001
         runAsGroup: 1001
+      initContainers:
+        {{- include "portfolio.wait-for" (list "rabbitmq:5672") | nindent 8 }}
       containers:
         - name: notification-manager
           securityContext:
@@ -51,6 +53,13 @@ spec:
               port: management
             initialDelaySeconds: 30
             periodSeconds: 15
+          startupProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
           volumeMounts:
             - name: tmp
               mountPath: /tmp

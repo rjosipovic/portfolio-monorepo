@@ -20,14 +20,7 @@ spec:
         runAsUser: 1001
         runAsGroup: 1001
       initContainers:
-        - name: wait-for-neo4j
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            capabilities:
-              drop: ["ALL"]
-          image: busybox
-          command: ['sh', '-c', 'until nc -z neo4j-analytics 7687; do echo waiting for neo4j-analytics; sleep 2; done']
+        {{- include "portfolio.wait-for" (list "neo4j-analytics:7687" "rabbitmq:5672") | nindent 8 }}
       containers:
         - name: analytics-manager
           securityContext:
@@ -60,6 +53,13 @@ spec:
               port: management
             initialDelaySeconds: 30
             periodSeconds: 15
+          startupProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
           volumeMounts:
             - name: tmp
               mountPath: /tmp

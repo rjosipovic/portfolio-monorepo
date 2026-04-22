@@ -49,6 +49,13 @@ spec:
               port: management
             initialDelaySeconds: 30
             periodSeconds: 15
+          startupProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
           volumeMounts:
             - name: tmp
               mountPath: /tmp
