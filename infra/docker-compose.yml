@@ -118,7 +118,7 @@ services:
       - portfolio-network
 
   redis-exporter:
-    image: bitnami/redis-exporter:latest
+    image: bitnami/redis-exporter@sha256:8eb75bf1b44ec5c58701a4be102898e1f8ff763188151f60033441c1934a51c3
     environment:
       - REDIS_ADDR=redis:6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}

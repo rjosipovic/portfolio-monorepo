@@ -103,6 +103,93 @@ infrastructure:
         memory: "1Gi"
     storage: "2Gi"
 
+observability:
+  prometheus:
+    enabled: true
+    image: "prom/prometheus:v2.51.2"
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+  grafana:
+    enabled: true
+    image: "grafana/grafana:10.4.2"
+    adminUser: "admin"
+    adminPassword: ""
+    storage: "1Gi"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+      limits:
+        memory: "256Mi"
+  alertmanager:
+    enabled: true
+    image: "prom/alertmanager:v0.27.0"
+    smtp:
+      host: "smtp.gmail.com"
+      port: "587"
+      user: ""
+      password: ""
+      from: ""
+      to: ""
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  postgresExporter:
+    enabled: true
+    image: "prometheuscommunity/postgres-exporter:v0.15.0"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  redisExporter:
+    enabled: true
+    image: "bitnami/redis-exporter@sha256:8eb75bf1b44ec5c58701a4be102898e1f8ff763188151f60033441c1934a51c3"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  loki:
+    enabled: true
+    image: "grafana/loki:3.4.2"
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+  promtail:
+    enabled: true
+    image: "grafana/promtail:3.4.2"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  tempo:
+    enabled: true
+    image: "grafana/tempo:2.7.2"
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
 ingress:
   enabled: true
 

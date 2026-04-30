@@ -77,7 +77,11 @@ spec:
   selector:
     app: analytics-manager
   ports:
-    - port: {{ .Values.global.servicePort | default 8080 }}
+    - name: http-api
+      port: {{ .Values.global.servicePort | default 8080 }}
       targetPort: http-api
+    - name: management
+      port: {{ .Values.global.managementPort | default 9090 }}
+      targetPort: management
   type: ClusterIP
 {{- end }}

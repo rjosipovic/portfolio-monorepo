@@ -24,6 +24,7 @@ spec:
   ingress:
     - ports:
         - port: 8080
+        - port: 9090  # management/prometheus scraping
   egress:
     - ports:
         - port: 53
@@ -46,6 +47,12 @@ spec:
               app: analytics-manager
       ports:
         - port: 8080
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tempo
+      ports:
+        - port: 9411
 
 ---
 # user-manager: accepts from api-gateway and gamification-manager
@@ -91,6 +98,12 @@ spec:
     - to:
         - podSelector:
             matchLabels:
+              app: tempo
+      ports:
+        - port: 9411
+    - to:
+        - podSelector:
+            matchLabels:
               app: rabbitmq
       ports:
         - port: 5672
@@ -133,6 +146,12 @@ spec:
               app: redis
       ports:
         - port: 6379
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tempo
+      ports:
+        - port: 9411
     - to:
         - podSelector:
             matchLabels:
@@ -187,6 +206,12 @@ spec:
     - to:
         - podSelector:
             matchLabels:
+              app: tempo
+      ports:
+        - port: 9411
+    - to:
+        - podSelector:
+            matchLabels:
               app: redis
       ports:
         - port: 6379
@@ -226,6 +251,12 @@ spec:
     - to:
         - podSelector:
             matchLabels:
+              app: tempo
+      ports:
+        - port: 9411
+    - to:
+        - podSelector:
+            matchLabels:
               app: neo4j-analytics
       ports:
         - port: 7687
@@ -262,6 +293,12 @@ spec:
               app: rabbitmq
       ports:
         - port: 5672
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tempo
+      ports:
+        - port: 9411
     # SMTP egress — must exit the cluster
     - ports:
         - port: 587
@@ -312,6 +349,9 @@ spec:
         - podSelector:
             matchLabels:
               app: postgres-migrations
+        - podSelector:
+            matchLabels:
+              app: postgres-exporter
       ports:
         - port: 5432
 
@@ -341,6 +381,9 @@ spec:
         - podSelector:
             matchLabels:
               app: redisinsight
+        - podSelector:
+            matchLabels:
+              app: redis-exporter
       ports:
         - port: 6379
 
@@ -375,6 +418,12 @@ spec:
               app: notification-manager
       ports:
         - port: 5672
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 15692
 
 ---
 # neo4j-analytics: accepts from analytics-manager only
@@ -395,3 +444,331 @@ spec:
               app: analytics-manager
       ports:
         - port: 7687
+---
+# prometheus: scrapes app management ports, exporters, and sends to alertmanager
+{{- if .Values.observability.prometheus.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: 9090
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: user-manager
+        - podSelector:
+            matchLabels:
+              app: challenge-manager
+        - podSelector:
+            matchLabels:
+              app: gamification-manager
+        - podSelector:
+            matchLabels:
+              app: analytics-manager
+        - podSelector:
+            matchLabels:
+              app: notification-manager
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - port: 9090
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres-exporter
+      ports:
+        - port: 9187
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis-exporter
+      ports:
+        - port: 9121
+    - to:
+        - podSelector:
+            matchLabels:
+              app: rabbitmq
+      ports:
+        - port: 15692
+    - to:
+        - podSelector:
+            matchLabels:
+              app: alertmanager
+      ports:
+        - port: 9093
+{{- end }}
+
+---
+# postgres-exporter: scraped by prometheus, connects to postgres
+{{- if .Values.observability.postgresExporter.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-exporter-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres-exporter
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 9187
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - port: 5432
+{{- end }}
+
+---
+# redis-exporter: scraped by prometheus, connects to redis
+{{- if .Values.observability.redisExporter.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-exporter-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-exporter
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 9121
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - port: 6379
+{{- end }}
+
+---
+# grafana: accepts from ingress controller, connects to prometheus
+{{- if .Values.observability.grafana.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: 3000
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 9090
+    - to:
+        - podSelector:
+            matchLabels:
+              app: loki
+      ports:
+        - port: 3100
+    - to:
+        - podSelector:
+            matchLabels:
+              app: tempo
+      ports:
+        - port: 3200
+{{- end }}
+
+---
+# alertmanager: receives from prometheus, sends to smtp
+{{- if .Values.observability.alertmanager.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: alertmanager-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: alertmanager
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - port: 9093
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - ports:
+        - port: 587
+{{- end }}
+
+---
+{{- if .Values.observability.loki.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loki-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: loki
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: promtail
+        - podSelector:
+            matchLabels:
+              app: grafana
+      ports:
+        - port: 3100
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+{{- end }}
+
+---
+{{- if .Values.observability.promtail.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: promtail-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: promtail
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - podSelector:
+            matchLabels:
+              app: loki
+      ports:
+        - port: 3100
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 8443
+          protocol: TCP
+{{- end }}
+
+---
+{{- if .Values.observability.tempo.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tempo-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: tempo
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: grafana
+      ports:
+        - port: 3200
+    - from:
+        - podSelector:
+            matchLabels:
+              app: user-manager
+        - podSelector:
+            matchLabels:
+              app: challenge-manager
+        - podSelector:
+            matchLabels:
+              app: gamification-manager
+        - podSelector:
+            matchLabels:
+              app: analytics-manager
+        - podSelector:
+            matchLabels:
+              app: notification-manager
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - port: 9411
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+{{- end }}

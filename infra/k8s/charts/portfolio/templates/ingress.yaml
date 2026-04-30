@@ -25,5 +25,5 @@ spec:
               service:
                 name: api-gateway
                 port:
-                  number: 80
+                  number: {{ .Values.global.servicePort | default 8080 }}
 {{- end }}

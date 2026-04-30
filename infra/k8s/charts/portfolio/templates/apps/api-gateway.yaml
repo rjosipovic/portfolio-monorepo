@@ -73,8 +73,11 @@ spec:
   selector:
     app: api-gateway
   ports:
-    - name: http
-      port: 80
+    - name: http-api
+      port: {{ .Values.global.servicePort | default 8080 }}
       targetPort: http-api
+    - name: management
+      port: {{ .Values.global.managementPort | default 9090 }}
+      targetPort: management
   type: ClusterIP # Change to LoadBalancer or NodePort for external access
 {{- end }}
