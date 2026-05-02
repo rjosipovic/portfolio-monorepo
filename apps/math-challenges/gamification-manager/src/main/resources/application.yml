@@ -24,6 +24,8 @@ spring:
       observation-enabled: true
     publisher-confirm-type: CORRELATED
     listener:
+      simple:
+        observation-enabled: true
       retry:
         enabled: true
         max-attempts: 10

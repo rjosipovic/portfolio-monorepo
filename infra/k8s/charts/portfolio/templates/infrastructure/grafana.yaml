@@ -12,6 +12,7 @@ data:
         access: proxy
         url: http://prometheus:9090
         isDefault: true
+        uid: prometheus
       - name: Loki
         type: loki
         access: proxy
@@ -20,6 +21,11 @@ data:
         type: tempo
         access: proxy
         url: http://tempo:3200
+        jsonData:
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
 
 ---
 apiVersion: v1
