@@ -1,13 +1,12 @@
 {{- if .Values.infrastructure.neo4jAnalytics.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: neo4j-analytics
   labels:
     app: neo4j-analytics
 spec:
-  strategy:
-    type: Recreate
+  serviceName: neo4j-analytics
   replicas: 1
   selector:
     matchLabels:
@@ -19,12 +18,22 @@ spec:
     spec:
       enableServiceLinks: false # Prevents K8s from injecting <SERVICE>_PORT_* env vars, which Neo4j misinterprets as config settings under strict validation
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 7474
-        runAsGroup: 7474
         fsGroup: 7474
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.31
+          command: ['sh', '-c', 'chown -R 7474:7474 /data']
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: neo4j-analytics
+          securityContext:
+            runAsUser: 7474
+            runAsGroup: 7474
+            runAsNonRoot: true
           image: neo4j:2025.09.0
           resources: {{- toYaml .Values.infrastructure.neo4jAnalytics.resources | nindent 12 }}
           ports:
@@ -48,21 +57,15 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: neo4j-analytics-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: neo4j-analytics-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.infrastructure.neo4jAnalytics.storage }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.infrastructure.neo4jAnalytics.storage }}
 ---
 apiVersion: v1
 kind: Service

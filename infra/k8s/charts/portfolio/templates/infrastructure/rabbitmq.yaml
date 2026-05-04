@@ -1,13 +1,12 @@
 {{- if .Values.infrastructure.rabbitmq.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: rabbitmq
   labels:
     app: rabbitmq
 spec:
-  strategy:
-    type: Recreate
+  serviceName: rabbitmq
   replicas: 1
   selector:
     matchLabels:
@@ -18,12 +17,22 @@ spec:
         app: rabbitmq
     spec:
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-        runAsGroup: 999
         fsGroup: 999
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.31
+          command: ['sh', '-c', 'chown -R 999:999 /data']
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: rabbitmq
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
           image: rabbitmq:3.13-management
           resources: {{- toYaml .Values.infrastructure.rabbitmq.resources | nindent 12 }}
           ports:
@@ -49,21 +58,15 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/rabbitmq
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: rabbitmq-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: rabbitmq-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.infrastructure.rabbitmq.storage }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.infrastructure.rabbitmq.storage }}
 ---
 apiVersion: v1
 kind: Service
