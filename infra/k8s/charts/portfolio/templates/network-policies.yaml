@@ -352,6 +352,9 @@ spec:
         - podSelector:
             matchLabels:
               app: postgres-exporter
+        - podSelector:
+            matchLabels:
+              app: pgadmin
       ports:
         - port: 5432
 

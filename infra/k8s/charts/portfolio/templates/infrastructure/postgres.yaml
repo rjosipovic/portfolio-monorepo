@@ -1,13 +1,12 @@
 {{- if .Values.infrastructure.postgres.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgres
   labels:
     app: postgres
 spec:
-  strategy:
-    type: Recreate
+  serviceName: postgres
   replicas: 1
   selector:
     matchLabels:
@@ -18,13 +17,26 @@ spec:
         app: postgres
     spec:
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 999
-        runAsGroup: 999
         fsGroup: 999
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.31
+          command: ['sh', '-c', 'chown -R 999:999 /data']
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: postgres
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
           image: postgres:12
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           resources: {{- toYaml .Values.infrastructure.postgres.resources | nindent 12 }}
           ports:
             - containerPort: 5432
@@ -44,21 +56,15 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: postgres-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.infrastructure.postgres.storage }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.infrastructure.postgres.storage }}
 ---
 apiVersion: v1
 kind: Service
