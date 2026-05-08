@@ -5,7 +5,7 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: http://tempo:9411/api/v2/spans
+      endpoint: http://${TEMPO_HOST}:${TEMPO_PORT}/api/v2/spans
 spring:
   cloud:
     consul:

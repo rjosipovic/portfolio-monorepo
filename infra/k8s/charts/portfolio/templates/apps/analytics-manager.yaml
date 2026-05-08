@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: analytics-manager
+  namespace: {{ .Values.namespaces.mathChallenges }}
   labels:
     app: analytics-manager
 spec:
@@ -20,7 +21,7 @@ spec:
         runAsUser: 1001
         runAsGroup: 1001
       initContainers:
-        {{- include "portfolio.wait-for" (list "neo4j-analytics:7687" "rabbitmq:5672") | nindent 8 }}
+        {{- include "portfolio.wait-for" (list (printf "%s:7687" .Values.infrastructure.neo4jAnalytics.host) (printf "%s:5672" .Values.infrastructure.rabbitmq.host))  | nindent 8 }}
       containers:
         - name: analytics-manager
           securityContext:
@@ -71,6 +72,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: analytics-manager
+  namespace: {{ .Values.namespaces.mathChallenges }}
   labels:
     app: analytics-manager
 spec:

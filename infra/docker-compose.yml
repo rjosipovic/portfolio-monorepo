@@ -496,6 +496,16 @@ services:
       - portfolio-network
     restart: unless-stopped
 
+  portfolio-web:
+    image: ${DOCKER_USER:-rjosipovic}/portfolio-web:${TAG:-latest}
+    build:
+      context: ../apps/portfolio-web
+      dockerfile: Dockerfile
+    ports:
+      - "3001:8080"
+    networks:
+      - portfolio-network
+
   api-gateway:
     image: ${DOCKER_USER:-rjosipovic}/portfolio-common-api-gateway:${TAG:-latest}
     build:

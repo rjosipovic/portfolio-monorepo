@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: alertmanager-config
+  namespace: {{ .Values.namespaces.observability }}
 data:
   alertmanager.yml: |
     global:
@@ -31,6 +32,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alertmanager
+  namespace: {{ .Values.namespaces.observability }}
   labels:
     app: alertmanager
 spec:
@@ -91,6 +93,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: alertmanager
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   selector:
     app: alertmanager

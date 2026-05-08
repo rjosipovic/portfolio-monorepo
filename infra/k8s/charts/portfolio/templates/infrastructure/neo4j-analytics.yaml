@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: neo4j-analytics
+  namespace: {{ .Values.namespaces.infrastructure }}
   labels:
     app: neo4j-analytics
 spec:
@@ -71,6 +72,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: neo4j-analytics
+  namespace: {{ .Values.namespaces.infrastructure }}
 spec:
   selector:
     app: neo4j-analytics

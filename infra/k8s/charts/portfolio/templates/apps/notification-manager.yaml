@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notification-manager
+  namespace: {{ .Values.namespaces.sharedServices }}
   labels:
     app: notification-manager
 spec:
@@ -20,7 +21,7 @@ spec:
         runAsUser: 1001
         runAsGroup: 1001
       initContainers:
-        {{- include "portfolio.wait-for" (list "rabbitmq:5672") | nindent 8 }}
+        {{- include "portfolio.wait-for" (list (printf "%s:5672" .Values.infrastructure.rabbitmq.host)) | nindent 8 }}
       containers:
         - name: notification-manager
           securityContext:
@@ -71,6 +72,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: notification-manager
+  namespace: {{ .Values.namespaces.sharedServices }}
   labels:
     app: notification-manager
 spec:

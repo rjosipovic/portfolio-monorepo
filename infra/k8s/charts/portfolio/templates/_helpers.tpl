@@ -6,7 +6,9 @@ Each entry is "host:port".
 {{- define "portfolio.wait-for" -}}
 {{- range . }}
 {{- $parts := splitList ":" . }}
-- name: wait-for-{{ index $parts 0 }}
+{{- $host := index $parts 0 }}
+{{- $name := index (splitList "." $host) 0 }}
+- name: wait-for-{{ $name }}
   image: busybox
   securityContext:
     allowPrivilegeEscalation: false
@@ -14,6 +16,6 @@ Each entry is "host:port".
     capabilities:
       drop:
         - ALL
-  command: ['sh', '-c', 'until nc -z {{ index $parts 0 }} {{ index $parts 1 }}; do echo waiting for {{ index $parts 0 }}; sleep 2; done']
+  command: ['sh', '-c', 'until nc -z {{ $host }} {{ index $parts 1 }}; do echo waiting for {{ $name }}; sleep 2; done']
 {{- end }}
 {{- end -}}

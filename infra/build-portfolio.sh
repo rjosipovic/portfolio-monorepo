@@ -32,7 +32,7 @@ COMPOSE_FILE="$SCRIPT_DIR/docker-compose.yml"
 ENV_FILE="$PROJECT_ROOT/.env"
 
 # Define the list of services to build
-SERVICES="postgres-migrations user-manager challenge-manager gamification-manager notification-manager analytics-manager api-gateway frontend"
+SERVICES="postgres-migrations user-manager challenge-manager gamification-manager notification-manager analytics-manager api-gateway frontend portfolio-web"
 
 echo "=========================================="
 echo "Building Portfolio Monorepo Services"

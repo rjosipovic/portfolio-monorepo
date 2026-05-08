@@ -1,28 +1,28 @@
-{{- if .Values.apps.frontend.enabled }}
+{{- if .Values.apps.portfolioWeb.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
-  namespace: {{ .Values.namespaces.mathChallenges }}
+  name: portfolio-web
+  namespace: {{ .Values.namespaces.portfolioWeb }}
   labels:
-    app: frontend
+    app: portfolio-web
 spec:
-  replicas: {{ .Values.apps.frontend.replicas | default 1 }}
+  replicas: {{ .Values.apps.portfolioWeb.replicas | default 1 }}
   selector:
     matchLabels:
-      app: frontend
+      app: portfolio-web
   template:
     metadata:
       labels:
-        app: frontend
+        app: portfolio-web
     spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
         runAsGroup: 101
       containers:
-        - name: frontend
-          image: {{ .Values.apps.frontend.image }}
+        - name: portfolio-web
+          image: {{ .Values.apps.portfolioWeb.image }}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -30,7 +30,7 @@ spec:
             capabilities:
               drop:
                 - ALL
-          resources: {{- toYaml .Values.apps.frontend.resources | nindent 12 }}
+          resources: {{- toYaml .Values.apps.portfolioWeb.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8080
@@ -44,11 +44,10 @@ spec:
               mountPath: /var/cache/nginx
             - name: nginx-run
               mountPath: /var/run
-
       volumes:
         - name: config-js
           configMap:
-            name: frontend-config
+            name: portfolio-web-config
         - name: tmp
           emptyDir: {}
         - name: nginx-cache
@@ -59,13 +58,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend
-  namespace: {{ .Values.namespaces.mathChallenges }}
+  name: portfolio-web
+  namespace: {{ .Values.namespaces.portfolioWeb }}
   labels:
-    app: frontend
+    app: portfolio-web
 spec:
   selector:
-    app: frontend
+    app: portfolio-web
   ports:
     - port: 80
       targetPort: http

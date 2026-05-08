@@ -59,11 +59,16 @@ if [ ! -f "$SECRETS_FILE" ]; then
     exit 1
 fi
 
+# Create namespaces
+echo "Creating namespaces..."
+for NS in portfolio portfolio-web math-challenges shared-services infrastructure observability; do
+  kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
+done
+
 # Run the Helm command
 helm upgrade --install "$RELEASE_NAME" "$CHART_DIR" \
   -f "$VALUES_FILE" \
   -f "$SECRETS_FILE" \
-  --create-namespace \
   --namespace "$NAMESPACE"
 
 echo "=========================================="

@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: challenge-manager-config
+  namespace: {{ .Values.namespaces.mathChallenges }}
   labels:
     app: challenge-manager
 data:
@@ -25,4 +26,9 @@ data:
 
   # --- Database Config ---
   DATASOURCE_URL: {{ .Values.apps.challengeManager.db.url | quote }}
+
+  # --- Tempo (OpenTelemetry) ---
+  TEMPO_HOST: {{ .Values.observability.tempo.host | quote }}
+  TEMPO_PORT: {{ .Values.observability.tempo.port | default "9411" | quote }}
+
 {{- end }}

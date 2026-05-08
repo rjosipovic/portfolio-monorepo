@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis
+  namespace: {{ .Values.namespaces.infrastructure }}
   labels:
     app: redis
 spec:
@@ -82,6 +83,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis
+  namespace: {{ .Values.namespaces.infrastructure }}
 spec:
   selector:
     app: redis

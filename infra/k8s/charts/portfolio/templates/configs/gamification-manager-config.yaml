@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: gamification-manager-config
+  namespace: {{ .Values.namespaces.mathChallenges }}
   labels:
     app: gamification-manager
 data:
@@ -29,4 +30,9 @@ data:
   # --- Client Config ---
   USER_MANAGER_HOST: {{ .Values.apps.gamificationManager.clients.userManager.host | quote }}
   USER_MANAGER_PORT: {{ .Values.apps.userManager.service.port | default "8080" | quote }}
+
+  # --- Tempo (OpenTelemetry) ---
+  TEMPO_HOST: {{ .Values.observability.tempo.host | quote }}
+  TEMPO_PORT: {{ .Values.observability.tempo.port | default "9411" | quote }}
+
 {{- end }}

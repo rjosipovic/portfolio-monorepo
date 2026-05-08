@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tempo-config
+  namespace: {{ .Values.namespaces.observability }}
 data:
   tempo.yml: |
     server:
@@ -33,7 +34,7 @@ data:
       storage:
         path: /var/tempo/metrics
         remote_write:
-          - url: http://prometheus:9090/api/v1/write
+          - url: http://prometheus.observability.svc.cluster.local:9090/api/v1/write
     overrides:
       defaults:
         metrics_generator:
@@ -48,6 +49,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tempo
+  namespace: {{ .Values.namespaces.observability }}
   labels:
     app: tempo
 spec:
@@ -108,6 +110,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: tempo-pvc
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -119,6 +122,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tempo
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   selector:
     app: tempo

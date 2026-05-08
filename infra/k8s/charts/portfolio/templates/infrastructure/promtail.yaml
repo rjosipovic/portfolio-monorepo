@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: promtail-config
+  namespace: {{ .Values.namespaces.observability }}
 data:
   promtail.yml: |
     server:
@@ -12,7 +13,7 @@ data:
       filename: /tmp/positions.yaml
 
     clients:
-      - url: http://loki:3100/loki/api/v1/push
+      - url: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
 
     scrape_configs:
       - job_name: kubernetes-pods
@@ -20,7 +21,11 @@ data:
           - role: pod
             namespaces:
               names:
-                - portfolio
+                - math-challenges
+                - shared-services
+                - infrastructure
+                - observability
+                - portfolio-web
         relabel_configs:
           - source_labels: [__meta_kubernetes_pod_label_app]
             target_label: app
@@ -41,6 +46,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: promtail
+  namespace: {{ .Values.namespaces.observability }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -55,10 +61,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: promtail
+  namespace: {{ .Values.namespaces.observability }}
 subjects:
   - kind: ServiceAccount
     name: promtail
-    namespace: portfolio
+    namespace: {{ .Values.namespaces.observability }}
 roleRef:
   kind: ClusterRole
   name: promtail
@@ -68,6 +75,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: promtail
+  namespace: {{ .Values.namespaces.observability }}
   labels:
     app: promtail
 spec:

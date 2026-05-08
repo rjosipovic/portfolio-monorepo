@@ -7,10 +7,17 @@ global:
   managementPort: "9090"
   authSecret: "" # Set via secrets file
 
+namespaces:
+  portfolioWeb: "portfolio-web"
+  mathChallenges: "math-challenges"
+  sharedServices: "shared-services"
+  infrastructure: "infrastructure"
+  observability: "observability"
+
 infrastructure:
   rabbitmq:
     enabled: true
-    host: "rabbitmq"
+    host: "rabbitmq.infrastructure.svc.cluster.local"
     port: "5672"
     user: "challenges-rabbitmq-user"
     password: ""
@@ -23,7 +30,7 @@ infrastructure:
     storage: "512Mi"
   postgres:
     enabled: true
-    host: "postgres"
+    host: "postgres.infrastructure.svc.cluster.local"
     port: "5432"
     user: "postgres"
     password: ""
@@ -68,7 +75,7 @@ infrastructure:
   redis:
     image: "redis:7-alpine"
     enabled: true
-    host: "redis"
+    host: "redis.infrastructure.svc.cluster.local"
     port: "6379"
     user: "challenges-redis-user"
     password: ""
@@ -92,7 +99,7 @@ infrastructure:
 
   neo4jAnalytics:
     enabled: true
-    host: "neo4j-analytics"
+    host: "neo4j-analytics.infrastructure.svc.cluster.local"
     user: "neo4j"
     password: ""
     resources:
@@ -181,6 +188,8 @@ observability:
         memory: "128Mi"
   tempo:
     enabled: true
+    host: "tempo.observability.svc.cluster.local"
+    port: "9411"
     image: "grafana/tempo:2.7.2"
     storage: "2Gi"
     resources:
@@ -194,6 +203,19 @@ ingress:
   enabled: true
 
 apps:
+  portfolioWeb:
+    enabled: true
+    image: rjosipovic/portfolio-web:latest
+    replicas: 1
+    ingress:
+      host: "portfolio.local"
+    mathChallengesUrl: "http://app.local"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "32Mi"
+      limits:
+        memory: "64Mi"
   frontend:
     enabled: true
     image: rjosipovic/portfolio-math-challenges-frontend:latest
@@ -230,7 +252,7 @@ apps:
     image: rjosipovic/portfolio-common-user-manager:latest
     replicas: 1
     db:
-      url: "jdbc:postgresql://postgres:5432/user-manager-db"
+      url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/user-manager-db"
     service:
       port: 8080 # The port the user-manager service listens on
     resources:
@@ -248,11 +270,11 @@ apps:
     ingress:
       host: "api.local" # Add to /etc/hosts pointing to minikube ip for local dev
     routes:
-      challengeManager: "http://challenge-manager:8080/"
-      userManager: "http://user-manager:8080/"
-      gamificationManager: "http://gamification-manager:8080/"
-      notificationManager: "http://notification-manager:8080/"
-      analyticsManager: "http://analytics-manager:8080/"
+      challengeManager: "http://challenge-manager.math-challenges.svc.cluster.local:8080/"
+      userManager: "http://user-manager.shared-services.svc.cluster.local:8080/"
+      gamificationManager: "http://gamification-manager.math-challenges.svc.cluster.local:8080/"
+      notificationManager: "http://notification-manager.shared-services.svc.cluster.local:8080/"
+      analyticsManager: "http://analytics-manager.math-challenges.svc.cluster.local:8080/"
     resources:
       requests:
         cpu: "100m"
@@ -265,7 +287,7 @@ apps:
     image: rjosipovic/portfolio-math-challenges-challenge-manager:latest
     replicas: 1
     db:
-      url: "jdbc:postgresql://postgres:5432/challenge-manager-db"
+      url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/challenge-manager-db"
     resources:
       requests:
         cpu: "100m"
@@ -278,11 +300,11 @@ apps:
     image: rjosipovic/portfolio-math-challenges-gamification-manager:latest
     replicas: 1
     db:
-      url: "jdbc:postgresql://postgres:5432/gamification-manager-db"
+      url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/gamification-manager-db"
     clients:
       userManager:
         # The host is the Kubernetes service name, which is static.
-        host: "user-manager" 
+        host: "user-manager.shared-services.svc.cluster.local"
         # The port is now referenced from the userManager's own definition.
         # This can be left blank as the template will handle it.
         port: ""
@@ -303,3 +325,11 @@ apps:
         memory: "256Mi"
       limits:
         memory: "512Mi"
+
+networkPolicies:
+  enabled: false
+
+tls:
+  enabled: false
+  clusterIssuer: ""
+  secretName: ""

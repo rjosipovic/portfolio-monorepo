@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: analytics-manager-config
+  namespace: {{ .Values.namespaces.mathChallenges }}
   labels:
     app: analytics-manager
 data:
@@ -19,4 +20,9 @@ data:
 
   # --- Neo4j ---
   NEO4J_URI: {{ printf "bolt://%s:7687" .Values.infrastructure.neo4jAnalytics.host | quote }}
+
+  # --- Tempo (OpenTelemetry) ---
+  TEMPO_HOST: {{ .Values.observability.tempo.host | quote }}
+  TEMPO_PORT: {{ .Values.observability.tempo.port | default "9411" | quote }}
+
 {{- end }}

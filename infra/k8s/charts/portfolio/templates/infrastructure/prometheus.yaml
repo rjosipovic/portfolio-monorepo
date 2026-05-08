@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
+  namespace: {{ .Values.namespaces.observability }}
 data:
   prometheus.yml: |
     global:
@@ -16,12 +17,12 @@ data:
         metrics_path: /prometheus
         static_configs:
           - targets:
-              - 'user-manager:{{ .Values.global.managementPort }}'
-              - 'challenge-manager:{{ .Values.global.managementPort }}'
-              - 'gamification-manager:{{ .Values.global.managementPort }}'
-              - 'analytics-manager:{{ .Values.global.managementPort }}'
-              - 'notification-manager:{{ .Values.global.managementPort }}'
-              - 'api-gateway:{{ .Values.global.managementPort }}'
+              - 'user-manager.shared-services.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'challenge-manager.math-challenges.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'gamification-manager.math-challenges.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'analytics-manager.math-challenges.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'notification-manager.shared-services.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'api-gateway.shared-services.svc.cluster.local:{{ .Values.global.managementPort }}'
         relabel_configs:
           - source_labels: [__address__]
             regex: '([^:]+):\d+'
@@ -30,21 +31,21 @@ data:
 
       - job_name: 'postgres-exporter'
         static_configs:
-          - targets: ['postgres-exporter:9187']
+          - targets: ['postgres-exporter.observability.svc.cluster.local:9187']
 
       - job_name: 'rabbitmq'
         static_configs:
-          - targets: ['rabbitmq:15692']
+          - targets: ['rabbitmq.infrastructure.svc.cluster.local:15692']
 
       - job_name: 'redis-exporter'
         static_configs:
-          - targets: ['redis-exporter:9121']
+          - targets: ['redis-exporter.observability.svc.cluster.local:9121']
 
     alerting:
       alertmanagers:
         - static_configs:
             - targets:
-                - 'alertmanager:9093'
+                - 'alertmanager.observability.svc.cluster.local:9093'
 
   rules.yml: |
     groups:
@@ -72,6 +73,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
+  namespace: {{ .Values.namespaces.observability }}
   labels:
     app: prometheus
 spec:
@@ -131,6 +133,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: prometheus-pvc
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -142,6 +145,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   selector:
     app: prometheus

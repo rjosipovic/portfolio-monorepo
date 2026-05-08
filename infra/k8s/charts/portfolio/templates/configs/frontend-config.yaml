@@ -3,11 +3,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: frontend-config
+  namespace: {{ .Values.namespaces.mathChallenges }}
   labels:
     app: frontend
 data:
   config.js: |
-    const PROTOCOL = 'http';
+    const PROTOCOL = '{{ .Values.apps.frontend.apiProtocol | default "http" }}';
     const HOST = '{{ .Values.apps.apiGateway.ingress.host }}';
 
     const API_ENDPOINTS = {

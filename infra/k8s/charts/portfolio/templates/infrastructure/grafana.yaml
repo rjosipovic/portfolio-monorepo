@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-datasource-config
+  namespace: {{ .Values.namespaces.observability }}
 data:
   datasources.yml: |
     apiVersion: 1
@@ -10,17 +11,17 @@ data:
       - name: Prometheus
         type: prometheus
         access: proxy
-        url: http://prometheus:9090
+        url: http://prometheus.observability.svc.cluster.local:9090
         isDefault: true
         uid: prometheus
       - name: Loki
         type: loki
         access: proxy
-        url: http://loki:3100
+        url: http://loki.observability.svc.cluster.local:3100
       - name: Tempo
         type: tempo
         access: proxy
-        url: http://tempo:3200
+        url: http://tempo.observability.svc.cluster.local:3200
         jsonData:
           serviceMap:
             datasourceUid: prometheus
@@ -32,6 +33,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-dashboard-provider-config
+  namespace: {{ .Values.namespaces.observability }}
 data:
   default.yml: |
     apiVersion: 1
@@ -51,6 +53,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
+  namespace: {{ .Values.namespaces.observability }}
   labels:
     app: grafana
 spec:
@@ -123,6 +126,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: grafana-pvc
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   accessModes:
     - ReadWriteOnce
@@ -134,6 +138,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
+  namespace: {{ .Values.namespaces.observability }}
 spec:
   selector:
     app: grafana

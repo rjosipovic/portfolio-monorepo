@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redisinsight
+  namespace: {{ .Values.namespaces.infrastructure }}
   labels:
     app: redisinsight
 spec:
@@ -31,6 +32,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redisinsight
+  namespace: {{ .Values.namespaces.infrastructure }}
   labels:
     app: redisinsight
 spec:
