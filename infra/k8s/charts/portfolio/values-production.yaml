@@ -1,0 +1,30 @@
+# values-production.yaml
+# Production overrides for k3s on Hetzner
+# Usage: helm upgrade --install portfolio . -f values.yaml -f secrets.yaml -f values-production.yaml --namespace portfolio
+
+ingress:
+  className: "traefik"
+
+apps:
+  portfolioWeb:
+    image: rjosipovic/portfolio-web:latest
+    ingress:
+      host: "roman-josipovic.from.hr"
+    mathChallengesUrl: "https://math.roman-josipovic.from.hr"
+
+  frontend:
+    image: rjosipovic/portfolio-math-challenges-frontend:latest
+    ingress:
+      host: "math.roman-josipovic.from.hr"
+    apiProtocol: "https"
+
+  apiGateway:
+    image: rjosipovic/portfolio-common-api-gateway:latest
+    ingress:
+      host: "api.roman-josipovic.from.hr"
+    allowedOrigins: "https://math.roman-josipovic.from.hr"
+
+tls:
+  enabled: true
+  clusterIssuer: "letsencrypt-prod"
+  secretName: "portfolio-wildcard-tls"

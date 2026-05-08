@@ -1,0 +1,335 @@
+# Default values for portfolio.
+# Passwords are set via secrets file
+
+global:
+  springProfilesActive: "k8s"
+  servicePort: "8080"
+  managementPort: "9090"
+  authSecret: "" # Set via secrets file
+
+namespaces:
+  portfolioWeb: "portfolio-web"
+  mathChallenges: "math-challenges"
+  sharedServices: "shared-services"
+  infrastructure: "infrastructure"
+  observability: "observability"
+
+infrastructure:
+  rabbitmq:
+    enabled: true
+    host: "rabbitmq.infrastructure.svc.cluster.local"
+    port: "5672"
+    user: "challenges-rabbitmq-user"
+    password: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+    storage: "512Mi"
+  postgres:
+    enabled: true
+    host: "postgres.infrastructure.svc.cluster.local"
+    port: "5432"
+    user: "postgres"
+    password: ""
+    migrations:
+      enabled: true
+      image: "rjosipovic/portfolio-postgres-migrations:latest"
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          memory: "128Mi"
+    accounts:
+      userManager:
+        user: "user-manager-user"
+        password: ""
+      challengeManager:
+        user: "challenge-manager-user"
+        password: ""
+      gamificationManager:
+        user: "gamification-manager-user"
+        password: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        memory: "256Mi"
+    storage: "1Gi"
+
+  pgadmin:
+    enabled: true
+    email: "admin@admin.com"
+    password: ""
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  redis:
+    image: "redis:7-alpine"
+    enabled: true
+    host: "redis.infrastructure.svc.cluster.local"
+    port: "6379"
+    user: "challenges-redis-user"
+    password: ""
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+    storage: "512Mi"
+
+  redisinsight:
+    enabled: true
+    image: "redis/redisinsight:2.68.0"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+
+  neo4jAnalytics:
+    enabled: true
+    host: "neo4j-analytics.infrastructure.svc.cluster.local"
+    user: "neo4j"
+    password: ""
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        memory: "1Gi"
+    storage: "2Gi"
+
+observability:
+  prometheus:
+    enabled: true
+    image: "prom/prometheus:v2.51.2"
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+  grafana:
+    enabled: true
+    image: "grafana/grafana:10.4.2"
+    adminUser: "admin"
+    adminPassword: ""
+    storage: "1Gi"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+      limits:
+        memory: "256Mi"
+  alertmanager:
+    enabled: true
+    image: "prom/alertmanager:v0.27.0"
+    smtp:
+      host: "smtp.gmail.com"
+      port: "587"
+      user: ""
+      password: ""
+      from: ""
+      to: ""
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  postgresExporter:
+    enabled: true
+    image: "prometheuscommunity/postgres-exporter:v0.15.0"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  redisExporter:
+    enabled: true
+    image: "bitnami/redis-exporter@sha256:8eb75bf1b44ec5c58701a4be102898e1f8ff763188151f60033441c1934a51c3"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  loki:
+    enabled: true
+    image: "grafana/loki:3.4.2"
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+  promtail:
+    enabled: true
+    image: "grafana/promtail:3.4.2"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+  tempo:
+    enabled: true
+    host: "tempo.observability.svc.cluster.local"
+    port: "9411"
+    image: "grafana/tempo:2.7.2"
+    storage: "2Gi"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+      limits:
+        memory: "1Gi"
+
+ingress:
+  enabled: true
+
+apps:
+  portfolioWeb:
+    enabled: true
+    image: rjosipovic/portfolio-web:latest
+    replicas: 1
+    ingress:
+      host: "portfolio.local"
+    mathChallengesUrl: "http://app.local"
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "32Mi"
+      limits:
+        memory: "64Mi"
+  frontend:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-frontend:latest
+    replicas: 1
+    ingress:
+      host: "app.local" # Add to /etc/hosts pointing to minikube ip for local dev
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        memory: "128Mi"
+
+  notificationManager:
+    enabled: true
+    image: rjosipovic/portfolio-common-notification-manager:latest
+    replicas: 1
+    mail:
+      host: "smtp.gmail.com"
+      port: "587"
+      username: "rjosipovic@gmail.com"
+      password: ""
+      from: "change-me@mail.com"
+      to: "rjosipovic@gmail.com"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  userManager:
+    enabled: true
+    image: rjosipovic/portfolio-common-user-manager:latest
+    replicas: 1
+    db:
+      url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/user-manager-db"
+    service:
+      port: 8080 # The port the user-manager service listens on
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  apiGateway:
+    enabled: true
+    image: rjosipovic/portfolio-common-api-gateway:latest
+    replicas: 1
+    allowedOrigins: ""
+    ingress:
+      host: "api.local" # Add to /etc/hosts pointing to minikube ip for local dev
+    routes:
+      challengeManager: "http://challenge-manager.math-challenges.svc.cluster.local:8080/"
+      userManager: "http://user-manager.shared-services.svc.cluster.local:8080/"
+      gamificationManager: "http://gamification-manager.math-challenges.svc.cluster.local:8080/"
+      notificationManager: "http://notification-manager.shared-services.svc.cluster.local:8080/"
+      analyticsManager: "http://analytics-manager.math-challenges.svc.cluster.local:8080/"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  challengeManager:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-challenge-manager:latest
+    replicas: 1
+    db:
+      url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/challenge-manager-db"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  gamificationManager:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-gamification-manager:latest
+    replicas: 1
+    db:
+      url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/gamification-manager-db"
+    clients:
+      userManager:
+        # The host is the Kubernetes service name, which is static.
+        host: "user-manager.shared-services.svc.cluster.local"
+        # The port is now referenced from the userManager's own definition.
+        # This can be left blank as the template will handle it.
+        port: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+  analyticsManager:
+    enabled: true
+    image: rjosipovic/portfolio-math-challenges-analytics-manager:latest
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        memory: "512Mi"
+
+networkPolicies:
+  enabled: false
+
+tls:
+  enabled: false
+  clusterIssuer: ""
+  secretName: ""

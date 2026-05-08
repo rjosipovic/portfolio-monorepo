@@ -1,0 +1,156 @@
+{{- if .Values.observability.prometheus.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: {{ .Values.namespaces.observability }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+
+    rule_files:
+      - "/etc/prometheus/rules.yml"
+
+    scrape_configs:
+      - job_name: 'spring-services'
+        metrics_path: /prometheus
+        static_configs:
+          - targets:
+              - 'user-manager.shared-services.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'challenge-manager.math-challenges.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'gamification-manager.math-challenges.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'analytics-manager.math-challenges.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'notification-manager.shared-services.svc.cluster.local:{{ .Values.global.managementPort }}'
+              - 'api-gateway.shared-services.svc.cluster.local:{{ .Values.global.managementPort }}'
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: '([^:]+):\d+'
+            target_label: job
+            replacement: '$1'
+
+      - job_name: 'postgres-exporter'
+        static_configs:
+          - targets: ['postgres-exporter.observability.svc.cluster.local:9187']
+
+      - job_name: 'rabbitmq'
+        static_configs:
+          - targets: ['rabbitmq.infrastructure.svc.cluster.local:15692']
+
+      - job_name: 'redis-exporter'
+        static_configs:
+          - targets: ['redis-exporter.observability.svc.cluster.local:9121']
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - 'alertmanager.observability.svc.cluster.local:9093'
+
+  rules.yml: |
+    groups:
+      - name: service_alerts
+        rules:
+          - alert: InstanceDown
+            expr: up == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Instance {{`{{ $labels.instance }}`}} down"
+              description: "{{`{{ $labels.job }}`}} instance {{`{{ $labels.instance }}`}} has been down for more than 1 minute."
+
+          - alert: HighRequestLatency
+            expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket[5m])) by (le, job)) > 0.5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High request latency on {{`{{ $labels.job }}`}}"
+              description: "The 95th percentile latency for {{`{{ $labels.job }}`}} is over 500ms."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespaces.observability }}
+  labels:
+    app: prometheus
+spec:
+  strategy:
+    type: Recreate
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: prometheus
+          image: {{ .Values.observability.prometheus.image }}
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.enable-remote-write-receiver'
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.observability.prometheus.resources | nindent 12 }}
+          ports:
+            - containerPort: 9090
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: data
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: prometheus-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-pvc
+  namespace: {{ .Values.namespaces.observability }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.observability.prometheus.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespaces.observability }}
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+  type: ClusterIP
+{{- end }}

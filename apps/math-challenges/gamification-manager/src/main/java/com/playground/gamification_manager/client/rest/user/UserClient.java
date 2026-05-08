@@ -24,7 +24,7 @@ public class UserClient {
 
     public UserClient(UserManagerClientConfig userManagerClientConfig, WebClient.Builder loadBalancedWebClientBuilder) {
         this.userManagerClientConfig = userManagerClientConfig;
-        var baseUrl = String.format("http://%s/users", userManagerClientConfig.getServiceName());
+        var baseUrl = userManagerClientConfig.getUsersEndpoint();
         this.webClient = loadBalancedWebClientBuilder
                 .baseUrl(baseUrl)
                 .filter(logRequest())
@@ -38,6 +38,9 @@ public class UserClient {
                 .collect(Collectors.joining(","));
 
         final var token = extractToken();
+
+        log.info("Calling user-manager with token: {}", token != null ? token.substring(0, 20) + "..." : "NULL");
+
 
         var retrySpec = Retry.backoff(
                 userManagerClientConfig.getRetry().getMaxAttempts(),

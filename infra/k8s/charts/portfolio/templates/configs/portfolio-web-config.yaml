@@ -1,0 +1,14 @@
+{{- if .Values.apps.portfolioWeb.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: portfolio-web-config
+  namespace: {{ .Values.namespaces.portfolioWeb }}
+  labels:
+    app: portfolio-web
+data:
+  config.js: |
+    const PORTFOLIO_CONFIG = {
+        MATH_CHALLENGES_URL: '{{ .Values.apps.portfolioWeb.mathChallengesUrl }}'
+    };
+{{- end }}

@@ -1,0 +1,30 @@
+{{- if .Values.apps.frontend.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: {{ .Values.namespaces.mathChallenges }}
+  labels:
+    app: frontend
+data:
+  config.js: |
+    const PROTOCOL = '{{ .Values.apps.frontend.apiProtocol | default "http" }}';
+    const HOST = '{{ .Values.apps.apiGateway.ingress.host }}';
+
+    const API_ENDPOINTS = {
+        BASE_URL: `${PROTOCOL}://${HOST}/`,
+
+        get CHALLENGE_API() { return this.BASE_URL + 'challenges'; },
+        get ATTEMPT_API() { return this.BASE_URL + 'attempts'; },
+
+        get AUTH_API() { return this.BASE_URL + 'auth'; },
+        get USERS_API() { return this.BASE_URL + 'users'; },
+
+        get LEADERBOARD_API() { return this.BASE_URL + 'leaders'; },
+
+        get CONTACT_API() { return this.BASE_URL + 'notifications'; },
+
+        get STATS_API() { return this.BASE_URL + 'analytics/statistics'; },
+        get HISTORY_API() { return this.BASE_URL + 'analytics/attempts'; }
+    };
+{{- end }}

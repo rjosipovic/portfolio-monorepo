@@ -1,0 +1,89 @@
+{{- if .Values.apps.notificationManager.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-manager
+  namespace: {{ .Values.namespaces.sharedServices }}
+  labels:
+    app: notification-manager
+spec:
+  replicas: {{ .Values.apps.notificationManager.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: notification-manager
+  template:
+    metadata:
+      labels:
+        app: notification-manager
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+      initContainers:
+        {{- include "portfolio.wait-for" (list (printf "%s:5672" .Values.infrastructure.rabbitmq.host)) | nindent 8 }}
+      containers:
+        - name: notification-manager
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          image: {{ .Values.apps.notificationManager.image }}
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.apps.notificationManager.resources | nindent 12 }}
+          ports:
+            - name: http-api
+              containerPort: {{ .Values.global.servicePort | default 8080 }}
+            - name: management
+              containerPort: {{ .Values.global.managementPort | default 9090 }}
+          envFrom:
+            - configMapRef:
+                name: notification-manager-config
+            - secretRef:
+                name: notification-manager-secret
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          startupProbe:
+            httpGet:
+              path: /health/liveness
+              port: management
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 12
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-manager
+  namespace: {{ .Values.namespaces.sharedServices }}
+  labels:
+    app: notification-manager
+spec:
+  selector:
+    app: notification-manager
+  ports:
+    - name: http-api
+      port: {{ .Values.global.servicePort | default 8080 }}
+      targetPort: http-api
+    - name: management
+      port: {{ .Values.global.managementPort | default 9090 }}
+      targetPort: management
+  type: ClusterIP
+{{- end }}

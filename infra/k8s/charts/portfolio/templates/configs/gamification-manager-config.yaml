@@ -1,0 +1,38 @@
+{{- if .Values.apps.gamificationManager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gamification-manager-config
+  namespace: {{ .Values.namespaces.mathChallenges }}
+  labels:
+    app: gamification-manager
+data:
+  # --- Spring Boot Config ---
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.springProfilesActive | default "k8s" | quote }}
+
+  # --- Common Service Ports ---
+  SERVICE_PORT: {{ .Values.global.servicePort | default "8080" | quote }}
+  MANAGEMENT_PORT: {{ .Values.global.managementPort | default "9090" | quote }}
+
+  # --- Hosts & Ports ---
+  RABBITMQ_HOST: {{ .Values.infrastructure.rabbitmq.host | default "rabbitmq" | quote }}
+  RABBITMQ_PORT: {{ .Values.infrastructure.rabbitmq.port | default "5672" | quote }}
+
+  REDIS_HOST: {{ .Values.infrastructure.redis.host | default "redis" | quote }}
+  REDIS_PORT: {{ .Values.infrastructure.redis.port | default "6379" | quote }}
+
+  POSTGRES_HOST: {{ .Values.infrastructure.postgres.host | default "postgres" | quote }}
+  POSTGRES_PORT: {{ .Values.infrastructure.postgres.port | default "5432" | quote }}
+
+  # --- Database Config ---
+  DATASOURCE_URL: {{ .Values.apps.gamificationManager.db.url | quote }}
+
+  # --- Client Config ---
+  USER_MANAGER_HOST: {{ .Values.apps.gamificationManager.clients.userManager.host | quote }}
+  USER_MANAGER_PORT: {{ .Values.apps.userManager.service.port | default "8080" | quote }}
+
+  # --- Tempo (OpenTelemetry) ---
+  TEMPO_HOST: {{ .Values.observability.tempo.host | quote }}
+  TEMPO_PORT: {{ .Values.observability.tempo.port | default "9411" | quote }}
+
+{{- end }}

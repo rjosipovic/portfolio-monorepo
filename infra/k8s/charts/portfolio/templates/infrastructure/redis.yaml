@@ -1,0 +1,95 @@
+{{- if .Values.infrastructure.redis.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: {{ .Values.namespaces.infrastructure }}
+  labels:
+    app: redis
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      securityContext:
+        fsGroup: 999
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.31
+          command: ['sh', '-c', 'chown -R 999:999 /data']
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      containers:
+        - name: redis
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          image: {{ .Values.infrastructure.redis.image }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              redis-server \
+              --save 60 1 \
+              --appendonly yes &
+              sleep 1
+              redis-cli ACL SETUSER "$REDIS_USER" on ">$REDIS_PASSWORD" "~*" "+@all"
+              wait
+          imagePullPolicy: IfNotPresent
+          resources: {{- toYaml .Values.infrastructure.redis.resources | nindent 12 }}
+          ports:
+            - containerPort: 6379
+          envFrom:
+            - secretRef:
+                name: redis-secret
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.infrastructure.redis.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: {{ .Values.namespaces.infrastructure }}
+spec:
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
+{{- end }}

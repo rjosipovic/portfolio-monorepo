@@ -26,7 +26,7 @@ FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 # Create a non-privileged user and group to run the application
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup --no-create-home appuser
+RUN addgroup --system --gid 1001 appgroup && adduser --system --uid 1001 --ingroup appgroup --no-create-home appuser
 USER appuser
 
 # Copy the built JAR from the 'builder' stage

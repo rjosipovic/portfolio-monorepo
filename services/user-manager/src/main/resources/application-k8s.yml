@@ -1,0 +1,14 @@
+management:
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://${TEMPO_HOST}:${TEMPO_PORT}/api/v2/spans
+spring:
+  cloud:
+    consul:
+      enabled: false # Disable Consul entirely
+      discovery:
+        enabled: false

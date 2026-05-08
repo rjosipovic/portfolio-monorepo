@@ -1,0 +1,25 @@
+{{- if .Values.apps.apiGateway.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+  namespace: {{ .Values.namespaces.sharedServices }}
+  labels:
+    app: api-gateway
+data:
+  # --- Spring Boot Config ---
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.springProfilesActive | default "k8s" | quote }}
+
+  # --- Gateway Config ---
+  ALLOWED_ORIGINS: {{ .Values.apps.apiGateway.allowedOrigins | default (printf "http://%s" .Values.apps.frontend.ingress.host) | quote }}
+  CHALLENGE_MANAGER_URI: {{ .Values.apps.apiGateway.routes.challengeManager | quote }}
+  USER_MANAGER_URI: {{ .Values.apps.apiGateway.routes.userManager | quote }}
+  GAMIFICATION_MANAGER_URI: {{ .Values.apps.apiGateway.routes.gamificationManager | quote }}
+  NOTIFICATION_MANAGER_URI: {{ .Values.apps.apiGateway.routes.notificationManager | quote }}
+  ANALYTICS_MANAGER_URI: {{ .Values.apps.apiGateway.routes.analyticsManager | quote }}
+
+  # --- Tempo (OpenTelemetry) ---
+  TEMPO_HOST: {{ .Values.observability.tempo.host | quote }}
+  TEMPO_PORT: {{ .Values.observability.tempo.port | default "9411" | quote }}
+
+{{- end }}

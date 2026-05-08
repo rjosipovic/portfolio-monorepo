@@ -1,0 +1,104 @@
+{{- if .Values.observability.alertmanager.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: {{ .Values.namespaces.observability }}
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: '{{ .Values.observability.alertmanager.smtp.host }}:{{ .Values.observability.alertmanager.smtp.port }}'
+      smtp_from: '{{ .Values.observability.alertmanager.smtp.from }}'
+      smtp_auth_username: '{{ .Values.observability.alertmanager.smtp.user }}'
+      smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
+
+    route:
+      receiver: 'email-notifications'
+      group_by: ['alertname', 'job']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    receivers:
+      - name: 'email-notifications'
+        email_configs:
+          - to: '{{ .Values.observability.alertmanager.smtp.to }}'
+            send_resolved: true
+            headers:
+              subject: 'Alertmanager: {{`{{ .CommonAnnotations.summary }}`}}'
+            html: '{{`{{ template "email.default.html" . }}`}}'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: {{ .Values.namespaces.observability }}
+  labels:
+    app: alertmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: alertmanager
+          image: {{ .Values.observability.alertmanager.image }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - '--config.file=/etc/alertmanager/alertmanager.yml'
+            - '--storage.path=/alertmanager'
+          resources: {{- toYaml .Values.observability.alertmanager.resources | nindent 12 }}
+          ports:
+            - containerPort: 9093
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9093
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alertmanager
+            - name: secrets
+              mountPath: /etc/alertmanager/secrets
+            - name: data
+              mountPath: /alertmanager
+      volumes:
+        - name: config
+          configMap:
+            name: alertmanager-config
+        - name: secrets
+          secret:
+            secretName: alertmanager-secret
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: {{ .Values.namespaces.observability }}
+spec:
+  selector:
+    app: alertmanager
+  ports:
+    - port: 9093
+      targetPort: 9093
+  type: ClusterIP
+{{- end }}
