@@ -51,6 +51,9 @@ management:
   info:
     build:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 logging:
   pattern:
@@ -92,7 +95,7 @@ app:
   clients:
     user-manager:
       load-balanced: false
-      users-endpoint: ${USER_MANAGER_ENDPOINT:http://user-manager:8080/users}
+      users-endpoint: http://${USER_MANAGER_HOST}:${USER_MANAGER_PORT}/users
       retry:
         max-attempts: 3
         wait-duration: 500ms
