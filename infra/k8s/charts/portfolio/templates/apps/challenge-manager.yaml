@@ -29,7 +29,7 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-          image: {{ .Values.apps.challengeManager.image }}
+          image: {{ .Values.apps.challengeManager.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.challengeManager.resources | nindent 12 }}
           ports:

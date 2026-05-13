@@ -29,7 +29,7 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-          image: {{ .Values.apps.notificationManager.image }}
+          image: {{ .Values.apps.notificationManager.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.notificationManager.resources | nindent 12 }}
           ports:

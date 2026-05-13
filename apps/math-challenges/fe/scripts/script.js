@@ -2,6 +2,8 @@ const USER_NOT_FOUND_CODE = 'U001';
 const USER_EXISTS_CODE = 'U002';
 const INVALID_VERIFICATION_CODE = 'A001';
 
+// Set app-version
+document.getElementById('app-version').textContent = `v${APP_VERSION}`;
 
 // Get the current year for the footer
 document.getElementById('current-year').textContent = new Date().getFullYear();

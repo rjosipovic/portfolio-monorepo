@@ -29,7 +29,7 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-          image: {{ .Values.apps.userManager.image }}
+          image: {{ .Values.apps.userManager.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.userManager.resources | nindent 12 }}
           ports:
