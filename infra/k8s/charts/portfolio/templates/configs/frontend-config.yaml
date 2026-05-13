@@ -10,6 +10,7 @@ data:
   config.js: |
     const PROTOCOL = '{{ .Values.apps.frontend.apiProtocol | default "http" }}';
     const HOST = '{{ .Values.apps.apiGateway.ingress.host }}';
+    const APP_VERSION = '{{ .Values.global.imageTag }}';
 
     const API_ENDPOINTS = {
         BASE_URL: `${PROTOCOL}://${HOST}/`,
