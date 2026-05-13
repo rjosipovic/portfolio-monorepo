@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,25 @@
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="styles/style.css">
 </head>
-<body class="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
 
+<body class="min-h-screen bg-gray-900 text-gray-100 flex flex-col">
+    <!-- Disclaimer Banner -->
+    <div id="disclaimer-banner"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-3">Portfolio Demo</h2>
+            <p class="text-gray-600 text-sm mb-2">This is a portfolio showcase application for demonstration purposes
+                only.</p>
+            <ul class="text-gray-600 text-sm mb-4 list-disc list-inside space-y-1">
+                <li>Data may be reset at any time</li>
+                <li>No personal data is shared with third parties</li>
+            </ul>
+            <button id="disclaimer-accept"
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition duration-300">
+                I Understand
+            </button>
+        </div>
+    </div>
     <!-- Header -->
     <header class="relative z-10 bg-gradient-to-r from-green-700 to-emerald-700 p-4 shadow-lg rounded-b-lg mx-2 mt-2">
         <div class="container mx-auto flex justify-between items-center">
@@ -22,34 +40,44 @@
             <nav>
                 <ul class="flex space-x-4">
                     <li>
-                        <a href="#" id="nav-home" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Home</a>
+                        <a href="#" id="nav-home"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Home</a>
                     </li>
                     <li id="li-nav-register">
-                        <a href="#" id="nav-register" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Register</a>
+                        <a href="#" id="nav-register"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Register</a>
                     </li>
                     <li id="li-nav-login">
-                        <a href="#" id="nav-login" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Login</a>
+                        <a href="#" id="nav-login"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Login</a>
                     </li>
                     <li id="li-nav-game" class="hidden">
-                        <a href="#" id="nav-game" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Game</a>
+                        <a href="#" id="nav-game"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Game</a>
                     </li>
                     <li id="li-nav-statistics" class="hidden">
-                        <a href="#" id="nav-statistics" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Statistics</a>
+                        <a href="#" id="nav-statistics"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Statistics</a>
                     </li>
                     <li id="li-nav-history" class="hidden">
-                        <a href="#" id="nav-history" class="text-white hover:text-green-200 transition duration-300 ease-in-out">History</a>
+                        <a href="#" id="nav-history"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">History</a>
                     </li>
                     <li id="li-nav-leaderboard" class="hidden">
-                        <a href="#" id="nav-leaderboard" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Leaderboard</a>
+                        <a href="#" id="nav-leaderboard"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Leaderboard</a>
                     </li>
                     <li>
-                        <a href="#" id="nav-about" class="text-white hover:text-green-200 transition duration-300 ease-in-out">About</a>
+                        <a href="#" id="nav-about"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">About</a>
                     </li>
                     <li>
-                        <a href="#" id="nav-contact" class="text-white hover:text-green-200 transition duration-300 ease-in-out">Contact</a>
+                        <a href="#" id="nav-contact"
+                            class="text-white hover:text-green-200 transition duration-300 ease-in-out">Contact</a>
                     </li>
                     <li id="li-nav-logout" class="hidden">
-                        <a href="#" id="nav-logout" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">Logout</a>
+                        <a href="#" id="nav-logout"
+                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out">Logout</a>
                     </li>
                 </ul>
             </nav>
@@ -67,20 +95,20 @@
             <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto animate-slide-up">
                 Sharpen your mind with fun and challenging math problems. Pick your operation and difficulty!
             </p>
-            <img
-                src="https://placehold.co/1200x400/22C55E/FFFFFF?text=Math+Challenge"
-                alt="Math Challenge Background"
+            <img src="https://placehold.co/1200x400/22C55E/FFFFFF?text=Math+Challenge" alt="Math Challenge Background"
                 class="rounded-lg shadow-xl mx-auto w-full max-w-4xl animate-zoom-in"
-                onerror="this.onerror=null;this.src='https://placehold.co/1200x400/6B7280/FFFFFF?text=Image+Error'"
-            />
+                onerror="this.onerror=null;this.src='https://placehold.co/1200x400/6B7280/FFFFFF?text=Image+Error'" />
             <div class="mt-10 flex flex-wrap justify-center gap-4">
-                <button id="home-to-register" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                <button id="home-to-register"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
                     Register Now
                 </button>
-                <button id="home-to-login" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                <button id="home-to-login"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
                     Login
                 </button>
-                <button id="home-to-game" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
+                <button id="home-to-game"
+                    class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1">
                     Start Game
                 </button>
             </div>
@@ -94,58 +122,35 @@
                 <form id="register-form" class="space-y-6">
                     <div>
                         <label for="reg-alias" class="block text-gray-300 text-sm font-bold mb-2">Alias:</label>
-                        <input
-                            type="text"
-                            id="reg-alias"
+                        <input type="text" id="reg-alias"
                             class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
-                            placeholder="Choose an alias"
-                            required
-                        />
+                            placeholder="Choose an alias" required />
                     </div>
                     <div>
                         <label for="reg-email" class="block text-gray-300 text-sm font-bold mb-2">Email:</label>
-                        <input
-                            type="email"
-                            id="reg-email"
+                        <input type="email" id="reg-email"
                             class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
-                            placeholder="Enter your email"
-                            required
-                        />
+                            placeholder="Enter your email" required />
                     </div>
                     <div>
                         <label for="reg-birthdate" class="block text-gray-300 text-sm font-bold mb-2">Birthdate:</label>
-                        <input
-                            type="date"
-                            id="reg-birthdate"
-                            class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
-                        />
+                        <input type="date" id="reg-birthdate"
+                            class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white" />
                     </div>
                     <div>
                         <label class="block text-gray-300 text-sm font-bold mb-2">Gender:</label>
                         <div class="flex items-center space-x-4">
-                            <input
-                                type="radio"
-                                id="reg-gender-male"
-                                name="reg-gender"
-                                value="male"
-                                class="form-radio text-green-500 bg-gray-700 border-gray-600 focus:ring-green-500"
-                            />
+                            <input type="radio" id="reg-gender-male" name="reg-gender" value="male"
+                                class="form-radio text-green-500 bg-gray-700 border-gray-600 focus:ring-green-500" />
                             <label for="reg-gender-male" class="text-gray-300">Male</label>
 
-                            <input
-                                type="radio"
-                                id="reg-gender-female"
-                                name="reg-gender"
-                                value="female"
-                                class="form-radio text-green-500 bg-gray-700 border-gray-600 focus:ring-green-500"
-                            />
+                            <input type="radio" id="reg-gender-female" name="reg-gender" value="female"
+                                class="form-radio text-green-500 bg-gray-700 border-gray-600 focus:ring-green-500" />
                             <label for="reg-gender-female" class="text-gray-300">Female</label>
                         </div>
                     </div>
-                    <button
-                        type="submit"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1"
-                    >
+                    <button type="submit"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1">
                         Register
                     </button>
                 </form>
@@ -162,18 +167,12 @@
                     <div id="login-step1">
                         <div>
                             <label for="login-email" class="block text-gray-300 text-sm font-bold mb-2">Email:</label>
-                            <input
-                                type="email"
-                                id="login-email"
+                            <input type="email" id="login-email"
                                 class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white"
-                                placeholder="Enter your email"
-                                required
-                            />
+                                placeholder="Enter your email" required />
                         </div>
-                        <button
-                            type="button" id="generate-code-btn"
-                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-6"
-                        >
+                        <button type="button" id="generate-code-btn"
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-6">
                             Generate Code
                         </button>
                     </div>
@@ -181,26 +180,18 @@
                     <!-- Step 2: Code Input (hidden by default) -->
                     <div id="login-step2" class="hidden">
                         <div>
-                            <label for="login-code" class="block text-gray-300 text-sm font-bold mb-2">Verification Code:</label>
-                            <input
-                                type="text"
-                                id="login-code"
+                            <label for="login-code" class="block text-gray-300 text-sm font-bold mb-2">Verification
+                                Code:</label>
+                            <input type="text" id="login-code"
                                 class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-700 border-gray-600 text-white text-center text-xl"
-                                placeholder="Enter 6-digit code"
-                                maxlength="6"
-                                required
-                            />
+                                placeholder="Enter 6-digit code" maxlength="6" required />
                         </div>
-                        <button
-                            type="button" id="verify-code-btn"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-6"
-                        >
+                        <button type="button" id="verify-code-btn"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-6">
                             Verify Code
                         </button>
-                        <button
-                            type="button" id="resend-code-btn"
-                            class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-3 text-sm"
-                        >
+                        <button type="button" id="resend-code-btn"
+                            class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-3 text-sm">
                             Resend Code
                         </button>
                     </div>
@@ -217,11 +208,10 @@
                 <!-- Game Setup Controls -->
                 <div id="game-setup" class="space-y-6 mb-8">
                     <div>
-                        <label for="math-operation" class="block text-gray-300 text-lg font-bold mb-2">Select Operation:</label>
-                        <select
-                            id="math-operation"
-                            class="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                        >
+                        <label for="math-operation" class="block text-gray-300 text-lg font-bold mb-2">Select
+                            Operation:</label>
+                        <select id="math-operation"
+                            class="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
                             <option value="addition">Addition (+)</option>
                             <option value="subtraction">Subtraction (-)</option>
                             <option value="multiplication">Multiplication (x)</option>
@@ -230,11 +220,10 @@
                     </div>
 
                     <div>
-                        <label for="difficulty" class="block text-gray-300 text-lg font-bold mb-2">Select Difficulty:</label>
-                        <select
-                            id="difficulty"
-                            class="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                        >
+                        <label for="difficulty" class="block text-gray-300 text-lg font-bold mb-2">Select
+                            Difficulty:</label>
+                        <select id="difficulty"
+                            class="w-full p-3 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
                             <option value="easy">Easy</option>
                             <option value="medium">Medium</option>
                             <option value="hard">Hard</option>
@@ -242,10 +231,8 @@
                         </select>
                     </div>
 
-                    <button
-                        id="start-game-btn"
-                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1"
-                    >
+                    <button id="start-game-btn"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1">
                         Start Game
                     </button>
                 </div>
@@ -259,31 +246,21 @@
                     <p class="text-5xl font-extrabold text-white mb-4" id="problem-display">?</p>
                     <div>
                         <label for="answer-input" class="sr-only">Your Answer:</label>
-                        <input
-                            type="number"
-                            id="answer-input"
+                        <input type="number" id="answer-input"
                             class="w-full p-3 rounded-lg bg-gray-700 text-white text-center text-2xl focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="Enter your answer"
-                            required
-                        />
+                            placeholder="Enter your answer" required />
                     </div>
-                    <button
-                        id="submit-answer-btn"
-                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1"
-                    >
+                    <button id="submit-answer-btn"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1">
                         Submit Answer
                     </button>
                     <p id="feedback-message" class="text-lg mt-4"></p>
-                    <button
-                        id="next-problem-btn"
-                        class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hidden"
-                    >
+                    <button id="next-problem-btn"
+                        class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 hidden">
                         Next Problem
                     </button>
-                    <button
-                        id="end-game-btn"
-                        class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-4"
-                    >
+                    <button id="end-game-btn"
+                        class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1 mt-4">
                         End Game
                     </button>
                 </div>
@@ -332,7 +309,8 @@
                 <h2 class="text-3xl font-bold text-white mb-6 text-center">Previous Attempts</h2>
                 <div id="history-list" class="space-y-4 overflow-y-auto max-h-96">
                     <!-- History items will be injected here by JavaScript -->
-                    <p class="text-center text-gray-400" id="no-history-message">No history available yet. Play a game to see your attempts!</p>
+                    <p class="text-center text-gray-400" id="no-history-message">No history available yet. Play a game
+                        to see your attempts!</p>
                 </div>
             </div>
         </section>
@@ -343,10 +321,13 @@
                 About Math Challenge
             </h2>
             <p class="text-lg text-gray-300 mb-4 max-w-3xl mx-auto">
-                Math Challenge is designed to help you improve your math skills with fun and engaging challenges. Whether you're a beginner or an expert, you can choose your preferred operation and difficulty level to test your abilities.
+                Math Challenge is designed to help you improve your math skills with fun and engaging challenges.
+                Whether you're a beginner or an expert, you can choose your preferred operation and difficulty level to
+                test your abilities.
             </p>
             <p class="text-lg text-gray-300 mb-8 max-w-3xl mx-auto">
-                Track your progress with detailed statistics and review your past attempts to see how you're improving. Get ready to sharpen your mind and become a math master!
+                Track your progress with detailed statistics and review your past attempts to see how you're improving.
+                Get ready to sharpen your mind and become a math master!
             </p>
         </section>
 
@@ -360,38 +341,26 @@
                 <form id="contact-form" class="space-y-6">
                     <!-- Email field - shown only for logged-out users -->
                     <div id="contact-email-group" class="hidden">
-                        <label for="contact-email" class="block text-gray-300 text-sm font-bold mb-2">Your Email:</label>
-                        <input
-                            type="email"
-                            id="contact-email"
+                        <label for="contact-email" class="block text-gray-300 text-sm font-bold mb-2">Your
+                            Email:</label>
+                        <input type="email" id="contact-email"
                             class="shadow appearance-none border rounded-lg w-full py-3 px-4 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
-                            placeholder="Enter your email"
-                        />
+                            placeholder="Enter your email" />
                     </div>
                     <div>
                         <label for="contact-subject" class="block text-gray-300 text-sm font-bold mb-2">Subject:</label>
-                        <input
-                            type="text"
-                            id="contact-subject"
+                        <input type="text" id="contact-subject"
                             class="shadow appearance-none border rounded-lg w-full py-3 px-4 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
-                            placeholder="What is your message about?"
-                            required
-                        />
+                            placeholder="What is your message about?" required />
                     </div>
                     <div>
                         <label for="contact-content" class="block text-gray-300 text-sm font-bold mb-2">Content:</label>
-                        <textarea
-                            id="contact-content"
-                            rows="5"
+                        <textarea id="contact-content" rows="5"
                             class="shadow appearance-none border rounded-lg w-full py-3 px-4 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
-                            placeholder="Write your message here..."
-                            required
-                        ></textarea>
+                            placeholder="Write your message here..." required></textarea>
                     </div>
-                    <button
-                        type="submit"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1"
-                    >
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:-translate-y-1">
                         Send Message
                     </button>
                 </form>
@@ -430,4 +399,5 @@
     <script src="config.js"></script>
     <script src="scripts/script.js"></script>
 </body>
+
 </html>

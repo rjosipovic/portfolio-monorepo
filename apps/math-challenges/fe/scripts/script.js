@@ -4,6 +4,17 @@ const INVALID_VERIFICATION_CODE = 'A001';
 
 // Set app-version
 document.getElementById('app-version').textContent = `v${APP_VERSION}`;
+// Disclaimer banner
+(function() {
+    if (!localStorage.getItem('disclaimer-accepted')) {
+        const banner = document.getElementById('disclaimer-banner');
+        banner.classList.remove('hidden');
+        document.getElementById('disclaimer-accept').addEventListener('click', function() {
+            localStorage.setItem('disclaimer-accepted', 'true');
+            banner.classList.add('hidden');
+        });
+    }
+})();
 
 // Get the current year for the footer
 document.getElementById('current-year').textContent = new Date().getFullYear();
