@@ -6,6 +6,7 @@ global:
   servicePort: "8080"
   managementPort: "9090"
   authSecret: "" # Set via secrets file
+  imageTag: "latest"
 
 namespaces:
   portfolioWeb: "portfolio-web"
@@ -205,7 +206,7 @@ ingress:
 apps:
   portfolioWeb:
     enabled: true
-    image: rjosipovic/portfolio-web:latest
+    image: rjosipovic/portfolio-web
     replicas: 1
     ingress:
       host: "portfolio.local"
@@ -218,7 +219,7 @@ apps:
         memory: "64Mi"
   frontend:
     enabled: true
-    image: rjosipovic/portfolio-math-challenges-frontend:latest
+    image: rjosipovic/portfolio-math-challenges-frontend
     replicas: 1
     ingress:
       host: "app.local" # Add to /etc/hosts pointing to minikube ip for local dev
@@ -231,7 +232,7 @@ apps:
 
   notificationManager:
     enabled: true
-    image: rjosipovic/portfolio-common-notification-manager:latest
+    image: rjosipovic/portfolio-common-notification-manager
     replicas: 1
     mail:
       host: "smtp.gmail.com"
@@ -249,7 +250,7 @@ apps:
 
   userManager:
     enabled: true
-    image: rjosipovic/portfolio-common-user-manager:latest
+    image: rjosipovic/portfolio-common-user-manager
     replicas: 1
     db:
       url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/user-manager-db"
@@ -264,7 +265,7 @@ apps:
 
   apiGateway:
     enabled: true
-    image: rjosipovic/portfolio-common-api-gateway:latest
+    image: rjosipovic/portfolio-common-api-gateway
     replicas: 1
     allowedOrigins: ""
     ingress:
@@ -284,7 +285,7 @@ apps:
 
   challengeManager:
     enabled: true
-    image: rjosipovic/portfolio-math-challenges-challenge-manager:latest
+    image: rjosipovic/portfolio-math-challenges-challenge-manager
     replicas: 1
     db:
       url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/challenge-manager-db"
@@ -297,7 +298,7 @@ apps:
 
   gamificationManager:
     enabled: true
-    image: rjosipovic/portfolio-math-challenges-gamification-manager:latest
+    image: rjosipovic/portfolio-math-challenges-gamification-manager
     replicas: 1
     db:
       url: "jdbc:postgresql://postgres.infrastructure.svc.cluster.local:5432/gamification-manager-db"
@@ -317,7 +318,7 @@ apps:
 
   analyticsManager:
     enabled: true
-    image: rjosipovic/portfolio-math-challenges-analytics-manager:latest
+    image: rjosipovic/portfolio-math-challenges-analytics-manager
     replicas: 1
     resources:
       requests:

@@ -29,7 +29,7 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-          image: {{ .Values.apps.gamificationManager.image }}
+          image: {{ .Values.apps.gamificationManager.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.gamificationManager.resources | nindent 12 }}
           ports:

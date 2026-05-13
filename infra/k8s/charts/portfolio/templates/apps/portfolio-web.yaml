@@ -22,7 +22,7 @@ spec:
         runAsGroup: 101
       containers:
         - name: portfolio-web
-          image: {{ .Values.apps.portfolioWeb.image }}
+          image: {{ .Values.apps.portfolioWeb.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

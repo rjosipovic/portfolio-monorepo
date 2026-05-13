@@ -27,7 +27,7 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
-          image: {{ .Values.apps.apiGateway.image }}
+          image: {{ .Values.apps.apiGateway.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           resources: {{- toYaml .Values.apps.apiGateway.resources | nindent 12 }}
           ports:

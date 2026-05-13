@@ -22,7 +22,7 @@ spec:
         runAsGroup: 101
       containers:
         - name: frontend
-          image: {{ .Values.apps.frontend.image }}
+          image: {{ .Values.apps.frontend.image }}:{{ .Values.global.imageTag }}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
