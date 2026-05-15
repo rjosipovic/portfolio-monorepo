@@ -27,7 +27,6 @@ jobs:
       - id: changes
         run: |
           CHANGED=$(git diff --name-only HEAD~1 HEAD)
-          SERVICES='[]'
           declare -a svc_list
 
           if echo "$CHANGED" | grep -q '^services/user-manager/'; then
@@ -59,10 +58,14 @@ jobs:
           fi
 
           if [ ${#svc_list[@]} -gt 0 ]; then
-            SERVICES=$(printf '%s\n' "${svc_list[@]}" | jq -s '.')
+            SERVICES=$(printf '%s\n' "${svc_list[@]}" | jq -s -c '.')
+          else
+            SERVICES='[]'
           fi
 
-          echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
+          echo "services<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$SERVICES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
           echo "Detected changes in: $(echo $SERVICES | jq -r '.[].name')"
 
   build:
