@@ -1,0 +1,78 @@
+name: Release — Build & Push to Production
+
+on:
+  push:
+    tags: ['v*']
+
+env:
+  DOCKER_USER: rjosipovic
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - { name: user-manager, path: services/user-manager, image: portfolio-common-user-manager, type: maven }
+          - { name: notification-manager, path: services/notification-manager, image: portfolio-common-notification-manager, type: maven }
+          - { name: api-gateway, path: services/api-gateway, image: portfolio-common-api-gateway, type: maven }
+          - { name: challenge-manager, path: apps/math-challenges/challenge-manager, image: portfolio-math-challenges-challenge-manager, type: maven }
+          - { name: gamification-manager, path: apps/math-challenges/gamification-manager, image: portfolio-math-challenges-gamification-manager, type: maven }
+          - { name: analytics-manager, path: apps/math-challenges/analytics-manager, image: portfolio-math-challenges-analytics-manager, type: maven }
+          - { name: frontend, path: apps/math-challenges/fe, image: portfolio-math-challenges-frontend, type: static }
+          - { name: portfolio-web, path: apps/portfolio-web, image: portfolio-web, type: static }
+          - { name: postgres-migrations, path: infra/postgres-migrations, image: portfolio-postgres-migrations, type: static }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        if: matrix.service.type == 'maven'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build & Test
+        if: matrix.service.type == 'maven'
+        run: ./mvnw clean package
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Docker image
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          IMAGE="${{ env.DOCKER_USER }}/${{ matrix.service.image }}"
+          docker build -t "$IMAGE:$VERSION" .
+          docker push "$IMAGE:$VERSION"
+        working-directory: ${{ matrix.service.path }}
+
+  update-production-values:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update production image tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/imageTag: .*/imageTag: \"$VERSION\"/" infra/k8s/charts/portfolio/values-production.yaml
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infra/k8s/charts/portfolio/values-production.yaml
+          git diff --cached --quiet || git commit -m "release: update production to ${GITHUB_REF_NAME}"
+          git push

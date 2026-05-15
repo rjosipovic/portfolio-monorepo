@@ -1,0 +1,6 @@
+# values-staging.yaml
+# Staging overrides for home server
+# Updated automatically by CI pipeline
+
+global:
+  imageTag: "latest"

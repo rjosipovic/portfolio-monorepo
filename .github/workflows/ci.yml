@@ -1,0 +1,125 @@
+name: CI — Build & Push to Staging
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/**'
+      - 'services/**'
+      - 'infra/postgres-migrations/**'
+
+env:
+  DOCKER_USER: rjosipovic
+
+permissions:
+  contents: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changes.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: changes
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          SERVICES='[]'
+          declare -a svc_list
+
+          if echo "$CHANGED" | grep -q '^services/user-manager/'; then
+            svc_list+=('{"name":"user-manager","path":"services/user-manager","image":"portfolio-common-user-manager","type":"maven"}')
+          fi
+          if echo "$CHANGED" | grep -q '^services/notification-manager/'; then
+            svc_list+=('{"name":"notification-manager","path":"services/notification-manager","image":"portfolio-common-notification-manager","type":"maven"}')
+          fi
+          if echo "$CHANGED" | grep -q '^services/api-gateway/'; then
+            svc_list+=('{"name":"api-gateway","path":"services/api-gateway","image":"portfolio-common-api-gateway","type":"maven"}')
+          fi
+          if echo "$CHANGED" | grep -q '^apps/math-challenges/challenge-manager/'; then
+            svc_list+=('{"name":"challenge-manager","path":"apps/math-challenges/challenge-manager","image":"portfolio-math-challenges-challenge-manager","type":"maven"}')
+          fi
+          if echo "$CHANGED" | grep -q '^apps/math-challenges/gamification-manager/'; then
+            svc_list+=('{"name":"gamification-manager","path":"apps/math-challenges/gamification-manager","image":"portfolio-math-challenges-gamification-manager","type":"maven"}')
+          fi
+          if echo "$CHANGED" | grep -q '^apps/math-challenges/analytics-manager/'; then
+            svc_list+=('{"name":"analytics-manager","path":"apps/math-challenges/analytics-manager","image":"portfolio-math-challenges-analytics-manager","type":"maven"}')
+          fi
+          if echo "$CHANGED" | grep -q '^apps/math-challenges/fe/'; then
+            svc_list+=('{"name":"frontend","path":"apps/math-challenges/fe","image":"portfolio-math-challenges-frontend","type":"static"}')
+          fi
+          if echo "$CHANGED" | grep -q '^apps/portfolio-web/'; then
+            svc_list+=('{"name":"portfolio-web","path":"apps/portfolio-web","image":"portfolio-web","type":"static"}')
+          fi
+          if echo "$CHANGED" | grep -q '^infra/postgres-migrations/'; then
+            svc_list+=('{"name":"postgres-migrations","path":"infra/postgres-migrations","image":"portfolio-postgres-migrations","type":"static"}')
+          fi
+
+          if [ ${#svc_list[@]} -gt 0 ]; then
+            SERVICES=$(printf '%s\n' "${svc_list[@]}" | jq -s '.')
+          fi
+
+          echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
+          echo "Detected changes in: $(echo $SERVICES | jq -r '.[].name')"
+
+  build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        if: matrix.service.type == 'maven'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build & Test
+        if: matrix.service.type == 'maven'
+        run: ./mvnw clean package
+        working-directory: ${{ matrix.service.path }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push Docker image
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE="${{ env.DOCKER_USER }}/${{ matrix.service.image }}"
+          docker build -t "$IMAGE:dev-$SHORT_SHA" .
+          docker push "$IMAGE:dev-$SHORT_SHA"
+        working-directory: ${{ matrix.service.path }}
+
+  update-staging-values:
+    needs: [detect-changes, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update staging image tags
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          TAG="dev-$SHORT_SHA"
+          sed -i "s/imageTag: .*/imageTag: \"$TAG\"/" infra/k8s/charts/portfolio/values-staging.yaml
+
+      - name: Commit & push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infra/k8s/charts/portfolio/values-staging.yaml
+          git diff --cached --quiet || git commit -m "ci: update staging to dev-$(echo ${{ github.sha }} | cut -c1-7)"
+          git push
