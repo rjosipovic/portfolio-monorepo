@@ -3,7 +3,7 @@
 # Usage: helm upgrade --install portfolio . -f values.yaml -f secrets.yaml -f values-production.yaml --namespace portfolio
 
 global:
-  imageTag: "1.1.0"
+  imageTag: "1.1.1"
 
 ingress:
   className: "traefik"
