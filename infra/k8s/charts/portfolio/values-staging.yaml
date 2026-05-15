@@ -3,4 +3,4 @@
 # Updated automatically by CI pipeline
 
 global:
-  imageTag: "latest"
+  imageTag: "dev-f01520d"
