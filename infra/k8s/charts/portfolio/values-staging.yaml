@@ -4,7 +4,7 @@
 # Usage: helm upgrade --install portfolio . -f values.yaml -f secrets-staging.yaml -f values-staging.yaml --namespace portfolio
 
 global:
-  imageTag: "1.1.1"
+  imageTag: "dev-f9453b3"
 
 ingress:
   className: "traefik"
