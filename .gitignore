@@ -38,6 +38,7 @@ build/
 # HELM secrets
 infra/k8s/charts/portfolio/secrets.yaml
 infra/k8s/charts/portfolio/secrets-production.yaml
+infra/k8s/charts/portfolio/secrets-staging.yaml
 
 # KIRO
 .kiro

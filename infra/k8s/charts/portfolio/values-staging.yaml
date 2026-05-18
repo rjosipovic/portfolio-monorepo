@@ -1,6 +1,31 @@
 # values-staging.yaml
-# Staging overrides for home server
-# Updated automatically by CI pipeline
+# Staging overrides for home server (forge-1)
+# Updated automatically by CI pipeline (imageTag)
+# Usage: helm upgrade --install portfolio . -f values.yaml -f secrets-staging.yaml -f values-staging.yaml --namespace portfolio
 
 global:
-  imageTag: "dev-7b0b2da"
+  imageTag: "1.1.1"
+
+ingress:
+  className: "traefik"
+
+apps:
+  portfolioWeb:
+    ingress:
+      host: "staging.roman-josipovic.from.hr"
+    mathChallengesUrl: "https://math-staging.roman-josipovic.from.hr"
+
+  frontend:
+    ingress:
+      host: "math-staging.roman-josipovic.from.hr"
+    apiProtocol: "https"
+
+  apiGateway:
+    ingress:
+      host: "api-staging.roman-josipovic.from.hr"
+    allowedOrigins: "https://math-staging.roman-josipovic.from.hr"
+
+tls:
+  enabled: true
+  clusterIssuer: "letsencrypt-prod"
+  secretName: "portfolio-staging-wildcard-tls"
