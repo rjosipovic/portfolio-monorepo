@@ -14,19 +14,27 @@ Format: `MAJOR.MINOR.PATCH`
 
 ## Release Workflow
 
-1. Make changes on `development` branch
-2. Determine version bump based on changes
-3. Build and publish images:
-   bash
-   ./infra/publish-portfolio.sh <version>
+1. Make changes on `master` branch
+2. Changes auto-deploy to staging via CI pipeline (`dev-<sha>` tags)
+3. Verify on staging
+4. When ready to release:
 
-4. Update imageTag in infra/k8s/charts/portfolio/values-production.yaml
-5. Deploy to production:
-   bash
-   kubectl config use-context production
-   ./infra/deploy-k8s-production.sh
+```bash
+git tag v1.2.0
+git push --tags
+```
 
+5. GitHub Actions builds all services, pushes images with semver tag
+6. `values-production.yaml` is updated automatically
+7. Sync production in ArgoCD
+
+## Image Tagging Strategy
+
+| Environment | Tag Format | Example |
+|---|---|---|
+| Staging | `dev-<short-sha>` | `dev-a13c428` |
+| Production | semver | `1.2.0` |
 
 ## Local Development
 
-Local development uses latest tag (default in values.yaml). No version management needed for local work.
+Local development uses `latest` tag (default in `values.yaml`). No version management needed for local work.
