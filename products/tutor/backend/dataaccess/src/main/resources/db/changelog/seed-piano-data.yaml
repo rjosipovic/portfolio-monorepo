@@ -1,0 +1,184 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-piano-001-instructor
+      author: studioengine
+      context: piano
+      changes:
+        - insert:
+            tableName: instructor
+            columns:
+              - column:
+                  name: id
+                  value: "a1b2c3d4-0002-4000-8000-000000000002"
+              - column:
+                  name: name
+                  value: "Ivana Jurić"
+              - column:
+                  name: email
+                  value: "ivana@piano-studio.hr"
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+
+  - changeSet:
+      id: seed-piano-002-service-categories
+      author: studioengine
+      context: piano
+      changes:
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b2b2c3d4-0001-4000-8000-000000000001"
+              - column:
+                  name: name
+                  value: "Početni tečaj klavira"
+              - column:
+                  name: description
+                  value: "Osnove sviranja — pravilno držanje ruku, čitanje nota, jednostavne melodije."
+              - column:
+                  name: price
+                  valueNumeric: 30.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b2b2c3d4-0002-4000-8000-000000000002"
+              - column:
+                  name: name
+                  value: "Klasični repertoar"
+              - column:
+                  name: description
+                  value: "Rad na klasičnim skladbama — Bach, Mozart, Chopin. Za učenike s minimalno 2 godine iskustva."
+              - column:
+                  name: price
+                  valueNumeric: 40.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b2b2c3d4-0003-4000-8000-000000000003"
+              - column:
+                  name: name
+                  value: "Teorija glazbe"
+              - column:
+                  name: description
+                  value: "Harmonija, ritam, intervali, ljestvice — teorijska podloga za ozbiljnije sviranje."
+              - column:
+                  name: price
+                  valueNumeric: 25.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b2b2c3d4-0004-4000-8000-000000000004"
+              - column:
+                  name: name
+                  value: "Priprema za prijemni ispit"
+              - column:
+                  name: description
+                  value: "Intenzivna priprema za prijemni na Muzičku akademiju — tehnika, slušna analiza, repertoar."
+              - column:
+                  name: price
+                  valueNumeric: 45.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+
+  - changeSet:
+      id: seed-piano-003-students
+      author: studioengine
+      context: piano
+      changes:
+        - insert:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  value: "c2b2c3d4-0001-4000-8000-000000000001"
+              - column:
+                  name: name
+                  value: "Maja Tomić"
+              - column:
+                  name: email
+                  value: "maja.tomic@gmail.com"
+              - column:
+                  name: phone
+                  value: "+385 91 876 5432"
+              - column:
+                  name: created_at
+                  valueDate: "2025-02-10T11:00:00+01:00"
+        - insert:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  value: "c2b2c3d4-0002-4000-8000-000000000002"
+              - column:
+                  name: name
+                  value: "Ivan Knežević"
+              - column:
+                  name: email
+                  value: "ivan.knezevic@yahoo.com"
+              - column:
+              - column:
+                  name: phone
+                  value: "+385 98 222 3344"
+              - column:
+                  name: created_at
+                  valueDate: "2025-03-05T16:00:00+01:00"
+        - insert:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  value: "c2b2c3d4-0003-4000-8000-000000000003"
+              - column:
+                  name: name
+                  value: "Sara Vuković"
+              - column:
+                  name: email
+                  value: "sara.vukovic@outlook.com"
+              - column:
+                  name: phone
+                  value: "+385 95 444 5566"
+              - column:
+                  name: created_at
+                  valueDate: "2025-04-12T13:30:00+01:00"

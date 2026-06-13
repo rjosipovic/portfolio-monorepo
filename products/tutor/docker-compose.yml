@@ -1,0 +1,81 @@
+services:
+  tutor-math:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_PORT: 8080
+      MANAGEMENT_PORT: 9090
+      DB_URL: jdbc:postgresql://postgres-math:5432/tutor_math_db
+      DB_USERNAME: tutor
+      DB_PASSWORD: tutor
+      LIQUIBASE_CONTEXTS: math
+      APP_BRAND_NAME: Math Studio
+      APP_BRAND_PRIMARY_COLOR: "#2563eb"
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+    ports:
+      - "8081:8080"
+      - "9081:9090"
+    depends_on:
+      postgres-math:
+        condition: service_healthy
+
+  tutor-piano:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_PORT: 8080
+      MANAGEMENT_PORT: 9090
+      DB_URL: jdbc:postgresql://postgres-piano:5432/tutor_piano_db
+      DB_USERNAME: tutor
+      DB_PASSWORD: tutor
+      LIQUIBASE_CONTEXTS: piano
+      APP_BRAND_NAME: Piano Studio
+      APP_BRAND_PRIMARY_COLOR: "#7c3aed"
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+    ports:
+      - "8082:8080"
+      - "9082:9090"
+    depends_on:
+      postgres-piano:
+        condition: service_healthy
+
+  postgres-math:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tutor_math_db
+      POSTGRES_USER: tutor
+      POSTGRES_PASSWORD: tutor
+    volumes:
+      - pgdata-math:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tutor -d tutor_math_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres-piano:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tutor_piano_db
+      POSTGRES_USER: tutor
+      POSTGRES_PASSWORD: tutor
+    volumes:
+      - pgdata-piano:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tutor -d tutor_piano_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "8025:8025"
+
+volumes:
+  pgdata-math:
+  pgdata-piano:

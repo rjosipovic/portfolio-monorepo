@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd ">
+    <!-- No fixed GA release available as of 2026-06-08 -->
+    <suppress>
+        <notes>angus-activation 2.0.3 is the latest stable release. CVE-2025-7962 has no fix available yet.</notes>
+        <cve>CVE-2025-7962</cve>
+    </suppress>
+    <!-- False positive: CVE-2022-0839 applies to liquibase-core < 4.8.0, not Spring Boot's liquibase starter -->
+    <suppress>
+        <notes>CVE-2022-0839 was fixed in Liquibase 4.8.0. Spring Boot 4.0.6 ships Liquibase 5.0.2. CPE mismatch.</notes>
+        <gav regex="true">org\.springframework\.boot:spring-boot.*liquibase.*:.*</gav>
+        <cve>CVE-2022-0839</cve>
+    </suppress>
+    <!-- No fixed 1.16.x release available as of 2026-06-09 -->
+    <suppress>
+        <notes>micrometer-registry-prometheus 1.16.5 is the latest in Spring Boot 4.0.6's managed line. Awaiting patch.</notes>
+        <gav regex="true">io\.micrometer:micrometer-registry-prometheus:.*</gav>
+        <cve>CVE-2026-42154</cve>
+    </suppress>
+</suppressions>

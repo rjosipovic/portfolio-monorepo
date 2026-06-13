@@ -1,0 +1,79 @@
+server:
+  port: ${SERVICE_PORT:8080}
+  shutdown: graceful
+
+spring:
+  application:
+    name: tutor
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/tutor_db}
+    username: ${DATABASE_USERNAME:tutor}
+    password: ${DATABASE_PASSWORD:tutor}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    contexts: ${APP_LIQUIBASE_CONTEXT:math}
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+
+app:
+  brand:
+    name: ${BRAND_NAME:}
+    logo-url: ${BRAND_LOGO_URL:}
+    primary-color: ${BRAND_PRIMARY_COLOR:}
+    locale: ${BRAND_LOCALE:hr-HR}
+    currency: ${BRAND_CURRENCY:EUR}
+    timezone: ${BRAND_TIMEZONE:Europe/Zagreb}
+  auth:
+    jwt-secret: ${AUTH_JWT_SECRET:}
+    jwt-expiration: ${AUTH_JWT_EXPIRATION:3600s}
+    otp-expiration: ${AUTH_OTP_EXPIRATION:300s}
+    otp-length: ${AUTH_OTP_LENGTH:6}
+    otp-max-attempts: ${AUTH_OTP_MAX_ATTEMPTS:5}
+    otp-lockout-window: ${AUTH_OTP_LOCKOUT_WINDOW:30m}
+    instructor-email: ${AUTH_INSTRUCTOR_EMAIL:}
+  payment:
+    stripe-secret-key: ${STRIPE_SECRET_KEY:}
+    stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    stripe-success-url: ${STRIPE_SUCCESS_URL:}
+    stripe-cancel-url: ${STRIPE_CANCEL_URL:}
+    bank-iban: ${PAYMENT_BANK_IBAN:}
+    bank-model: ${PAYMENT_BANK_MODEL:HR00}
+    bank-recipient-name: ${PAYMENT_BANK_RECIPIENT:}
+  scheduling:
+    reservation-timeout: ${SCHEDULING_RESERVATION_TIMEOUT:900s}
+    payment-overdue-threshold: ${SCHEDULING_PAYMENT_OVERDUE_THRESHOLD:48h}
+    cancellation-deadline: ${SCHEDULING_CANCELLATION_DEADLINE:24h}
+    nudge-delay: ${SCHEDULING_NUDGE_DELAY:2h}
+    nudge-cooldown: ${SCHEDULING_NUDGE_COOLDOWN:24h}
+  instance:
+    base-url: ${APP_BASE_URL:http://localhost:8080}
+  cleanup:
+    login-attempt-retention: ${CLEANUP_LOGIN_ATTEMPT_RETENTION:30d}
+    otp-retention: ${CLEANUP_OTP_RETENTION:7d}
+    notification-log-retention: ${CLEANUP_NOTIFICATION_LOG_RETENTION:90d}
+    state-log-retention: ${CLEANUP_STATE_LOG_RETENTION:365d}
+    state-log-enabled: ${CLEANUP_STATE_LOG_ENABLED:false}

@@ -1,0 +1,711 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-instructor
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: instructor
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 002-create-service-category
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: price
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: varchar(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 003-create-time-slot
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: time_slot
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: slot_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: time
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: time
+                  constraints:
+                    nullable: false
+              - column:
+                  name: state
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: state_changed_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 004-create-student
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: phone
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 005-create-appointment
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: appointment
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: time_slot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_appointment_time_slot
+                    references: time_slot(id)
+              - column:
+                  name: service_category_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_appointment_service_category
+                    references: service_category(id)
+              - column:
+                  name: student_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_appointment_student
+                    references: student(id)
+              - column:
+                  name: state
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stripe_session_id
+                  type: varchar(255)
+              - column:
+                  name: session_notes
+                  type: text
+              - column:
+                  name: original_price
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: final_price
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: origin
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: state_changed_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: version
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 006-create-student-benefit
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: student_benefit
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: student_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_benefit_student
+                    references: student(id)
+              - column:
+                  name: type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: text
+              - column:
+                  name: consumed
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: granted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: consumed_at
+                  type: timestamp with time zone
+              - column:
+                  name: consumed_by_appointment_id
+                  type: uuid
+                  constraints:
+                    foreignKeyName: fk_benefit_appointment
+                    references: appointment(id)
+
+  - changeSet:
+      id: 007-create-appointment-state-log
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: appointment_state_log
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: appointment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_state_log_appointment
+                    references: appointment(id)
+              - column:
+                  name: from_state
+                  type: varchar(20)
+              - column:
+                  name: to_state
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: triggered_by
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transitioned_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 008-create-timeslot-state-log
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: timeslot_state_log
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: time_slot_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_state_log_time_slot
+                    references: time_slot(id)
+              - column:
+                  name: from_state
+                  type: varchar(20)
+              - column:
+                  name: to_state
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: triggered_by
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transitioned_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 009-create-payment-record
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: payment_record
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: appointment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_payment_appointment
+                    references: appointment(id)
+              - column:
+                  name: amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payment_method
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stripe_payment_id
+                  type: varchar(255)
+              - column:
+                  name: payment_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recorded_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 010-create-student-note
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: student_note
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: student_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_note_student
+                    references: student(id)
+              - column:
+                  name: content
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+
+  - changeSet:
+      id: 011-create-cancellation-token
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: cancellation_token
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: appointment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_token_appointment
+                    references: appointment(id)
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: token_type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: used
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 012-create-otp-record
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: otp_record
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: otp_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: used
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 013-create-notification-log
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: notification_log
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: appointment_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_notification_appointment
+                    references: appointment(id)
+              - column:
+                  name: notification_type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 014-create-login-attempt
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: login_attempt
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: successful
+                  type: boolean
+                  constraints:
+                    nullable: false
+              - column:
+                  name: attempted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 015-create-shedlock
+      author: studioengine
+      changes:
+        - createTable:
+            tableName: shedlock
+            columns:
+              - column:
+                  name: name
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: lock_until
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_by
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 016-create-indexes
+      author: studioengine
+      changes:
+        - createIndex:
+            indexName: idx_time_slot_state_date
+            tableName: time_slot
+            columns:
+              - column:
+                  name: state
+              - column:
+                  name: slot_date
+        - createIndex:
+            indexName: idx_time_slot_state_changed
+            tableName: time_slot
+            columns:
+              - column:
+                  name: state
+              - column:
+                  name: state_changed_at
+        - createIndex:
+            indexName: idx_appointment_stripe_session
+            tableName: appointment
+            unique: true
+            columns:
+              - column:
+                  name: stripe_session_id
+        - createIndex:
+            indexName: idx_appointment_state_slot
+            tableName: appointment
+            columns:
+              - column:
+                  name: state
+              - column:
+                  name: time_slot_id
+        - createIndex:
+            indexName: idx_appointment_state_changed
+            tableName: appointment
+            columns:
+              - column:
+                  name: state
+              - column:
+                  name: state_changed_at
+        - createIndex:
+            indexName: idx_appointment_student_created
+            tableName: appointment
+            columns:
+              - column:
+                  name: student_id
+              - column:
+                  name: created_at
+        - createIndex:
+            indexName: idx_benefit_student_unconsumed
+            tableName: student_benefit
+            columns:
+              - column:
+                  name: student_id
+              - column:
+                  name: consumed
+              - column:
+                  name: granted_at
+        - createIndex:
+            indexName: idx_cancellation_token_appointment
+            tableName: cancellation_token
+            columns:
+              - column:
+                  name: appointment_id
+              - column:
+                  name: token_type
+        - createIndex:
+            indexName: idx_appointment_state_log
+            tableName: appointment_state_log
+            columns:
+              - column:
+                  name: appointment_id
+              - column:
+                  name: transitioned_at
+        - createIndex:
+            indexName: idx_timeslot_state_log
+            tableName: timeslot_state_log
+            columns:
+              - column:
+                  name: time_slot_id
+              - column:
+                  name: transitioned_at
+        - createIndex:
+            indexName: idx_notification_dedup
+            tableName: notification_log
+            columns:
+              - column:
+                  name: appointment_id
+              - column:
+                  name: notification_type
+              - column:
+                  name: sent_at
+        - createIndex:
+            indexName: idx_login_attempt_email_time
+            tableName: login_attempt
+            columns:
+              - column:
+                  name: email
+              - column:
+                  name: attempted_at

@@ -1,0 +1,183 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed-math-001-instructor
+      author: studioengine
+      context: math
+      changes:
+        - insert:
+            tableName: instructor
+            columns:
+              - column:
+                  name: id
+                  value: "a1b2c3d4-0001-4000-8000-000000000001"
+              - column:
+                  name: name
+                  value: "Marko Horvat"
+              - column:
+                  name: email
+                  value: "marko@math-studio.hr"
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+
+  - changeSet:
+      id: seed-math-002-service-categories
+      author: studioengine
+      context: math
+      changes:
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b1b2c3d4-0001-4000-8000-000000000001"
+              - column:
+                  name: name
+                  value: "Matematika za osnovnu školu"
+              - column:
+                  name: description
+                  value: "Pomoć s gradivom od 5. do 8. razreda — razlomci, jednadžbe, geometrija."
+              - column:
+                  name: price
+                  valueNumeric: 25.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b1b2c3d4-0002-4000-8000-000000000002"
+              - column:
+                  name: name
+                  value: "Priprema za Državnu Maturu"
+              - column:
+                  name: description
+                  value: "Intenzivna priprema za A i B razinu — integrali, derivacije, trigonometrija."
+              - column:
+                  name: price
+                  valueNumeric: 35.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b1b2c3d4-0003-4000-8000-000000000003"
+              - column:
+                  name: name
+                  value: "Fakultetska matematika"
+              - column:
+                  name: description
+                  value: "Linearna algebra, matematička analiza, diskretna matematika za studente."
+              - column:
+                  name: price
+                  valueNumeric: 40.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "b1b2c3d4-0004-4000-8000-000000000004"
+              - column:
+                  name: name
+                  value: "Srednjoškolska matematika"
+              - column:
+                  name: description
+                  value: "Redovne instrukcije za 1.–4. razred srednje škole — funkcije, vjerovatnost, vektori."
+              - column:
+                  name: price
+                  valueNumeric: 30.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
+
+  - changeSet:
+      id: seed-math-003-students
+      author: studioengine
+      context: math
+      changes:
+        - insert:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  value: "c1b2c3d4-0001-4000-8000-000000000001"
+              - column:
+                  name: name
+                  value: "Ana Kovačević"
+              - column:
+                  name: email
+                  value: "ana.kovacevic@gmail.com"
+              - column:
+                  name: phone
+                  value: "+385 91 234 5678"
+              - column:
+                  name: created_at
+                  valueDate: "2025-02-15T10:00:00+01:00"
+        - insert:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  value: "c1b2c3d4-0002-4000-8000-000000000002"
+              - column:
+                  name: name
+                  value: "Luka Babić"
+              - column:
+                  name: email
+                  value: "luka.babic@gmail.com"
+              - column:
+                  name: phone
+                  value: "+385 98 765 4321"
+              - column:
+                  name: created_at
+                  valueDate: "2025-03-01T14:30:00+01:00"
+        - insert:
+            tableName: student
+            columns:
+              - column:
+                  name: id
+                  value: "c1b2c3d4-0003-4000-8000-000000000003"
+              - column:
+                  name: name
+                  value: "Petra Novak"
+              - column:
+                  name: email
+                  value: "petra.novak@outlook.com"
+              - column:
+                  name: phone
+                  value: "+385 95 111 2233"
+              - column:
+                  name: created_at
+                  valueDate: "2025-03-20T09:00:00+01:00"

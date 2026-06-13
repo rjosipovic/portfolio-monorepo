@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/schema-bootstrap.yaml
+  - include:
+      file: db/changelog/seed-math-data.yaml
+      context: math
+  - include:
+      file: db/changelog/seed-piano-data.yaml
+      context: piano
