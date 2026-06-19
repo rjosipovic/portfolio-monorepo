@@ -23,7 +23,7 @@ public class TimeSlotResponse {
     LocalTime endTime;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class ChallengeSolvedEventBuilder {
+    public static class TimeSlotResponseBuilder {
     }
 }
 

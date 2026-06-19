@@ -124,6 +124,37 @@
                         </suppressionFiles>
                     </configuration>
                 </plugin>
+                <!-- Code coverage reporting (run: ./mvnw verify, report at app/target/site/jacoco-aggregate/) -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.12</version>
+                    <executions>
+                        <execution>
+                            <id>prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <excludes>
+                            <exclude>**/dto/**</exclude>
+                            <exclude>**/config/**</exclude>
+                            <exclude>**/errors/**</exclude>
+                            <exclude>**/enums/**</exclude>
+                            <exclude>**/entities/**</exclude>
+                            <exclude>**/*Application.*</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

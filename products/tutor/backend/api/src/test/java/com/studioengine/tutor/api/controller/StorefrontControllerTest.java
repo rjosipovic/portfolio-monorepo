@@ -1,8 +1,14 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.dto.CheckoutRequest;
+import com.studioengine.tutor.api.dto.CheckoutResponse;
 import com.studioengine.tutor.api.dto.ReservationRequest;
 import com.studioengine.tutor.api.dto.ReservationResponse;
 import com.studioengine.tutor.api.dto.TimeSlotResponse;
+import com.studioengine.tutor.checkout.Checkout;
+import com.studioengine.tutor.checkout.CheckoutService;
+import com.studioengine.tutor.checkout.PaymentMethodChoice;
+import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.scheduling.AvailableSlot;
 import com.studioengine.tutor.scheduling.Reservation;
 import com.studioengine.tutor.scheduling.ReservationService;
@@ -41,6 +47,9 @@ class StorefrontControllerTest {
     @Mock
     private ReservationService reservationService;
 
+    @Mock
+    private CheckoutService checkoutService;
+
     @InjectMocks
     private StorefrontController storefrontController;
 
@@ -49,6 +58,8 @@ class StorefrontControllerTest {
     private JacksonTester<ReservationRequest> reservationRequestJson;
     private JacksonTester<ReservationResponse> reservationResponseJson;
     private JacksonTester<List<TimeSlotResponse>> timeSlotResponseJson;
+    private JacksonTester<CheckoutRequest> checkoutRequestJson;
+    private JacksonTester<CheckoutResponse> checkoutResponseJson;
 
     @BeforeEach
     void setUp() {
@@ -110,7 +121,6 @@ class StorefrontControllerTest {
     }
 
     // --- POST /reservations ---
-
     @Test
     void shouldReserveSlotAndReturn201() throws Exception {
         // given
@@ -145,6 +155,121 @@ class StorefrontControllerTest {
 
         // when / then
         mockMvc.perform(post("/api/v1/storefront/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    // --- POST /checkout ---
+    @Test
+    void shouldCheckoutWithStripeAndReturn200() throws Exception {
+        // given
+        var appointmentId = UUID.randomUUID();
+        var checkout = Checkout.builder()
+                .appointmentId(appointmentId)
+                .status(AppointmentState.RESERVED)
+                .stripeRedirectUrl("https://checkout.stripe.com/session123")
+                .build();
+
+        when(checkoutService.checkout(any())).thenReturn(checkout);
+
+        var request = CheckoutRequest.builder()
+                .reservationId(UUID.randomUUID())
+                .serviceCategoryId(UUID.randomUUID())
+                .guest(CheckoutRequest.Guest.builder()
+                        .name("Ana Kovačević")
+                        .email("ana@test.com")
+                        .phone("+385 91 234 5678")
+                        .build())
+                .paymentMethodChoice(PaymentMethodChoice.STRIPE)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/storefront/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutRequestJson.write(request).getJson()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        var content = checkoutResponseJson.parse(response.getContentAsString());
+        assertThat(content.getObject().getAppointmentId()).isEqualTo(appointmentId);
+        assertThat(content.getObject().getStatus()).isEqualTo("RESERVED");
+        assertThat(content.getObject().getStripeRedirectUrl()).isEqualTo("https://checkout.stripe.com/session123");
+    }
+
+    @Test
+    void shouldCheckoutWithBankTransferAndReturn200() throws Exception {
+        // given
+        var appointmentId = UUID.randomUUID();
+        var checkout = Checkout.builder()
+                .appointmentId(appointmentId)
+                .status(AppointmentState.PENDING_PAYMENT)
+                .message("Invoice sent to email")
+                .build();
+
+        when(checkoutService.checkout(any())).thenReturn(checkout);
+
+        var request = CheckoutRequest.builder()
+                .reservationId(UUID.randomUUID())
+                .serviceCategoryId(UUID.randomUUID())
+                .guest(CheckoutRequest.Guest.builder()
+                        .name("Ana Kovačević")
+                        .email("ana@test.com")
+                        .phone("+385 91 234 5678")
+                        .build())
+                .paymentMethodChoice(PaymentMethodChoice.BANK_TRANSFER)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/storefront/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutRequestJson.write(request).getJson()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        var content = checkoutResponseJson.parse(response.getContentAsString());
+        assertThat(content.getObject().getAppointmentId()).isEqualTo(appointmentId);
+        assertThat(content.getObject().getStatus()).isEqualTo("PENDING_PAYMENT");
+        assertThat(content.getObject().getMessage()).isEqualTo("Invoice sent to email");
+        assertThat(content.getObject().getStripeRedirectUrl()).isNull();
+    }
+
+    @Test
+    void shouldReturn400WhenGuestEmailInvalid() throws Exception {
+        // given
+        var request = CheckoutRequest.builder()
+                .reservationId(UUID.randomUUID())
+                .serviceCategoryId(UUID.randomUUID())
+                .guest(CheckoutRequest.Guest.builder()
+                        .name("Ana")
+                        .email("not-an-email")
+                        .phone("+385 91 234 5678")
+                        .build())
+                .paymentMethodChoice(PaymentMethodChoice.STRIPE)
+                .build();
+
+        // when / then
+        mockMvc.perform(post("/api/v1/storefront/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutRequestJson.write(request).getJson()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn400WhenGuestMissing() throws Exception {
+        // given
+        var json = """
+              {
+                  "reservationId": "%s",
+                  "serviceCategoryId": "%s",
+                  "paymentMethodChoice": "STRIPE"
+              }
+              """.formatted(UUID.randomUUID(), UUID.randomUUID());
+
+        // when / then
+        mockMvc.perform(post("/api/v1/storefront/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());

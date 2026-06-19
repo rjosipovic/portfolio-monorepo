@@ -18,6 +18,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     Optional<Appointment> findByStripeSessionId(String stripeSessionId);
 
+    Optional<Appointment> findByIdAndStripeSessionId(UUID id, String stripeSessionId);
+
     List<Appointment> findByStudentIdOrderByCreatedAtDesc(UUID studentId);
 
     List<Appointment> findByStateIn(Collection<AppointmentState> states);

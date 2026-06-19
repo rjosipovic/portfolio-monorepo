@@ -1,8 +1,13 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.dto.CheckoutRequest;
+import com.studioengine.tutor.api.dto.CheckoutResponse;
 import com.studioengine.tutor.api.dto.ReservationRequest;
 import com.studioengine.tutor.api.dto.ReservationResponse;
 import com.studioengine.tutor.api.dto.TimeSlotResponse;
+import com.studioengine.tutor.checkout.Checkout;
+import com.studioengine.tutor.checkout.CheckoutCommand;
+import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.scheduling.ReservationService;
 import com.studioengine.tutor.scheduling.ReserveSlotCommand;
 import com.studioengine.tutor.scheduling.TimeSlotService;
@@ -29,6 +34,7 @@ public class StorefrontController {
 
     private final TimeSlotService timeSlotService;
     private final ReservationService reservationService;
+    private final CheckoutService checkoutService;
 
     @GetMapping("/availability")
     public List<TimeSlotResponse> getAvailability(
@@ -63,6 +69,42 @@ public class StorefrontController {
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<CheckoutResponse> checkout(@Valid @RequestBody CheckoutRequest request) {
+        log.info("POST /checkout reservationId={} paymentMethod={}", request.getReservationId(), request.getPaymentMethodChoice());
+
+        var command = CheckoutCommand.builder()
+                .reservedSlotId(request.getReservationId())
+                .serviceCategoryId(request.getServiceCategoryId())
+                .guestName(request.getGuest().getName())
+                .guestEmail(request.getGuest().getEmail())
+                .guestPhone(request.getGuest().getPhone())
+                .sessionNotes(request.getSessionNotes())
+                .paymentMethod(request.getPaymentMethodChoice())
+                .build();
+
+        var result = checkoutService.checkout(command);
+
+        var response = CheckoutResponse.builder()
+                .appointmentId(result.getAppointmentId())
+                .status(result.getStatus().name())
+                .stripeRedirectUrl(result.getStripeRedirectUrl())
+                .message(result.getMessage())
+                .benefitApplied(mapBenefit(result.getBenefitApplied()))
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    private CheckoutResponse.BenefitAppliedResponse mapBenefit(Checkout.BenefitApplied benefit) {
+        if (benefit == null) return null;
+        return CheckoutResponse.BenefitAppliedResponse.builder()
+                .type(benefit.getType())
+                .originalPrice(benefit.getOriginalPrice())
+                .finalPrice(benefit.getFinalPrice())
+                .build();
     }
 }
 
