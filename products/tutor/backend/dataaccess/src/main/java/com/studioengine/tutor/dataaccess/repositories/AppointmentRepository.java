@@ -36,5 +36,5 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     @Query("SELECT a FROM Appointment a JOIN a.timeSlot t WHERE a.state IN :states AND (t.slotDate < :date OR (t.slotDate = :date AND t.endTime <=:endTime))")
     List<Appointment> findUnclosedPastAppointments(Collection<AppointmentState> states, LocalDate date, java.time.LocalTime endTime);
 
-    Optional<Appointment> findByTimeSlotIdAndStateIn(UUID timeSlotId, Collection<AppointmentState> states);
+    List<Appointment> findByTimeSlotIdInAndStateIn(List<UUID> timeSlotIds, Collection<AppointmentState> states);
 }

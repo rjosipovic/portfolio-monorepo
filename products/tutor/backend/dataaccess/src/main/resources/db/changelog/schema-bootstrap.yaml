@@ -709,3 +709,11 @@ databaseChangeLog:
                   name: email
               - column:
                   name: attempted_at
+  - changeSet:
+      id: 017-unique-slot-date-time
+      author: studioengine
+      changes:
+        - addUniqueConstraint:
+            tableName: time_slot
+            columnNames: slot_date, start_time
+            constraintName: uq_time_slot_date_start_time

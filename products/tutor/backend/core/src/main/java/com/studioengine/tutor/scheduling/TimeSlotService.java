@@ -6,5 +6,13 @@ import java.util.List;
 public interface TimeSlotService {
 
     List<AvailableSlot> getAvailability(LocalDate from, LocalDate to);
+
+    List<CreatedSlot> createSlots(CreateSlotsCommand command);
+
+    List<CreatedSlot> publishSlots(PublishSlotsCommand command);
+
+    void deleteSlots(DeleteSlotsCommand command);
+
+    void withdrawSlots(WithdrawSlotsCommand command);
 }
 
