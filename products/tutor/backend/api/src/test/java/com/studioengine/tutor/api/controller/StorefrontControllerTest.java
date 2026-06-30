@@ -4,7 +4,10 @@ import com.studioengine.tutor.api.dto.CheckoutRequest;
 import com.studioengine.tutor.api.dto.CheckoutResponse;
 import com.studioengine.tutor.api.dto.ReservationRequest;
 import com.studioengine.tutor.api.dto.ReservationResponse;
+import com.studioengine.tutor.api.dto.ServiceCategoryResponse;
 import com.studioengine.tutor.api.dto.TimeSlotResponse;
+import com.studioengine.tutor.catalog.AvailableService;
+import com.studioengine.tutor.catalog.ServiceCatalog;
 import com.studioengine.tutor.checkout.Checkout;
 import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.checkout.PaymentMethodChoice;
@@ -32,6 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -58,6 +62,9 @@ class StorefrontControllerTest {
     @Mock
     private CheckoutService checkoutService;
 
+    @Mock
+    private ServiceCatalog serviceCatalog;
+
     @InjectMocks
     private StorefrontController storefrontController;
 
@@ -69,6 +76,7 @@ class StorefrontControllerTest {
     private JacksonTester<CheckoutRequest> checkoutRequestJson;
     private JacksonTester<CheckoutResponse> checkoutResponseJson;
     private JacksonTester<ErrorResponse> errorResponseJson;
+    private JacksonTester<List<ServiceCategoryResponse>> serviceCategoryResponseListJson;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +85,46 @@ class StorefrontControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(storefrontController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+    }
+
+    // GET /services
+    @Test
+    void shouldReturnActiveServices() throws Exception {
+        // given
+        var services = List.of(
+                AvailableService.builder()
+                        .id(UUID.randomUUID())
+                        .name("Matematika za osnovnu školu")
+                        .description("Pomoć s gradivom od 5. do 8. razreda")
+                        .price(new BigDecimal("25.00"))
+                        .currency("EUR")
+                        .build()
+        );
+        when(serviceCatalog.getActiveServices()).thenReturn(services);
+
+        // when
+        var response = mockMvc.perform(get("/api/v1/storefront/services"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        var content = serviceCategoryResponseListJson.parse(response.getContentAsString());
+        assertThat(content.getObject()).hasSize(1);
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoActiveServices() throws Exception {
+        // given
+        when(serviceCatalog.getActiveServices()).thenReturn(List.of());
+
+        // when
+        var response = mockMvc.perform(get("/api/v1/storefront/services"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        var content = serviceCategoryResponseListJson.parse(response.getContentAsString());
+        assertThat(content.getObject()).isEmpty();
     }
 
     // --- GET /availability ---

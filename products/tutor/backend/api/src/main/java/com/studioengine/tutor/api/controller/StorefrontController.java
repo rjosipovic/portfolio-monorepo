@@ -4,7 +4,9 @@ import com.studioengine.tutor.api.dto.CheckoutRequest;
 import com.studioengine.tutor.api.dto.CheckoutResponse;
 import com.studioengine.tutor.api.dto.ReservationRequest;
 import com.studioengine.tutor.api.dto.ReservationResponse;
+import com.studioengine.tutor.api.dto.ServiceCategoryResponse;
 import com.studioengine.tutor.api.dto.TimeSlotResponse;
+import com.studioengine.tutor.catalog.ServiceCatalog;
 import com.studioengine.tutor.checkout.Checkout;
 import com.studioengine.tutor.checkout.CheckoutCommand;
 import com.studioengine.tutor.checkout.CheckoutService;
@@ -35,6 +37,23 @@ public class StorefrontController {
     private final TimeSlotService timeSlotService;
     private final ReservationService reservationService;
     private final CheckoutService checkoutService;
+    private final ServiceCatalog serviceCatalog;
+
+    @GetMapping("/services")
+    public ResponseEntity<List<ServiceCategoryResponse>> getServices() {
+        log.info("GET /storefront/services");
+
+        return ResponseEntity.ok(serviceCatalog.getActiveServices()
+                .stream()
+                .map(service -> ServiceCategoryResponse.builder()
+                        .id(service.getId())
+                        .name(service.getName())
+                        .description(service.getDescription())
+                        .price(service.getPrice())
+                        .currency(service.getCurrency())
+                        .build())
+                .toList());
+    }
 
     @GetMapping("/availability")
     public List<TimeSlotResponse> getAvailability(
