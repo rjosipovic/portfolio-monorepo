@@ -6,6 +6,12 @@ import com.studioengine.tutor.booking.DirectBooking;
 import com.studioengine.tutor.booking.DirectBookingCommand;
 import com.studioengine.tutor.booking.DirectBookingService;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
+import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
+import com.studioengine.tutor.errors.ErrorCode;
+import com.studioengine.tutor.errors.ErrorResponse;
+import com.studioengine.tutor.errors.GlobalExceptionHandler;
+import com.studioengine.tutor.errors.exceptions.InvalidStateTransitionException;
+import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -46,12 +53,15 @@ class DashboardBookingControllerTest {
 
     private JacksonTester<DirectBookingRequest> directBookingRequestJson;
     private JacksonTester<DirectBookingResponse> directBookingResponseJson;
+    private JacksonTester<ErrorResponse> errorResponseJson;
 
     @BeforeEach
     void setUp() {
         var jsonMapper = JsonMapper.builder().findAndAddModules().build();
         JacksonTester.initFields(this, jsonMapper);
-        mockMvc = MockMvcBuilders.standaloneSetup(dashboardBookingController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(dashboardBookingController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     // POST /dashboard/bookings
@@ -111,6 +121,83 @@ class DashboardBookingControllerTest {
 
         // then
         verify(bookingService, never()).book(any());
+    }
+
+    @Test
+    void shouldNotBookWhenTimeSlotNotExists() throws Exception {
+        // given
+        var timeSlotId = UUID.randomUUID();
+        var studentId = UUID.randomUUID();
+        var serviceCategoryId = UUID.randomUUID();
+        var request = DirectBookingRequest.builder()
+                .timeSlotId(timeSlotId)
+                .studentId(studentId)
+                .serviceCategoryId(serviceCategoryId)
+                .build();
+        var command = DirectBookingCommand.builder()
+                .timeSlotId(request.getTimeSlotId())
+                .studentId(request.getStudentId())
+                .serviceCategoryId(request.getServiceCategoryId())
+                .build();
+
+
+        var reason = "TimeSlot not found: %s".formatted(timeSlotId.toString());
+        when(bookingService.book(command)).thenThrow(new ResourceNotFoundException(reason));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                .reason(reason)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/dashboard/bookings/direct")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(directBookingRequestJson.write(request).getJson()))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse();
+
+        // then
+        verify(bookingService).book(command);
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
+
+    @Test
+    void shouldNotBookWhenInvalidStateTransition() throws Exception {
+        // given
+        var timeSlotId = UUID.randomUUID();
+        var timeSlotState = TimeSlotState.BOOKED;
+        var allowedSlotStates = Set.of(TimeSlotState.DRAFT, TimeSlotState.AVAILABLE);
+        var studentId = UUID.randomUUID();
+        var serviceCategoryId = UUID.randomUUID();
+        var request = DirectBookingRequest.builder()
+                .timeSlotId(timeSlotId)
+                .studentId(studentId)
+                .serviceCategoryId(serviceCategoryId)
+                .build();
+        var command = DirectBookingCommand.builder()
+                .timeSlotId(request.getTimeSlotId())
+                .studentId(request.getStudentId())
+                .serviceCategoryId(request.getServiceCategoryId())
+                .build();
+
+        var reason = "Slot %s is in state %s, expected %s".formatted(timeSlotId, timeSlotState, allowedSlotStates);
+        when(bookingService.book(command)).thenThrow(new InvalidStateTransitionException(reason));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.INVALID_STATE_TRANSITION.getMessage())
+                .code(ErrorCode.INVALID_STATE_TRANSITION.getCode())
+                .reason(reason)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/dashboard/bookings/direct")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(directBookingRequestJson.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse();
+
+        // then
+        verify(bookingService).book(command);
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 
     static Stream<DirectBookingRequest> invalidRequests() {

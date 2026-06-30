@@ -6,6 +6,12 @@ import com.studioengine.tutor.api.dto.PublishSlotsRequest;
 import com.studioengine.tutor.api.dto.SlotResponse;
 import com.studioengine.tutor.api.dto.WithdrawSlotsRequest;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
+import com.studioengine.tutor.errors.ErrorCode;
+import com.studioengine.tutor.errors.ErrorResponse;
+import com.studioengine.tutor.errors.GlobalExceptionHandler;
+import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
+import com.studioengine.tutor.errors.exceptions.SlotConflictException;
+import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
 import com.studioengine.tutor.scheduling.CreateSlotsCommand;
 import com.studioengine.tutor.scheduling.CreatedSlot;
 import com.studioengine.tutor.scheduling.DeleteSlotsCommand;
@@ -31,6 +37,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,10 +46,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// TODO: Add exception propagation tests once GlobalExceptionHandler is implemented
-//  - service throws SlotConflictException → 409
-//  - service throws ResourceNotFoundException → 404
-//  - service throws SlotWithdrawalBlockedException → 400
 @ExtendWith(MockitoExtension.class)
 class DashboardCalendarControllerTest {
 
@@ -60,13 +63,16 @@ class DashboardCalendarControllerTest {
     private JacksonTester<PublishSlotsRequest> publishSlotRequestJson;
     private JacksonTester<WithdrawSlotsRequest> withdrawSlotsRequestJson;
     private JacksonTester<DeleteSlotsRequest> deleteSlotsRequestJson;
+    private JacksonTester<ErrorResponse> errorResponseJson;
 
 
     @BeforeEach
     void setUp() {
         var jsonMapper = JsonMapper.builder().findAndAddModules().build();
         JacksonTester.initFields(this, jsonMapper);
-        mockMvc = MockMvcBuilders.standaloneSetup(dashboardCalendarController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(dashboardCalendarController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     // --- POST /dashboard/slots ---
@@ -170,6 +176,42 @@ class DashboardCalendarControllerTest {
         verify(timeSlotService, never()).createSlots(any());
     }
 
+    @Test
+    void shouldNotCreateSlotsWhenSLotConflict() throws Exception {
+        // given
+        var date = LocalDate.of(2026, 6, 22);
+        var startTime = LocalTime.of(11, 0);
+        var slot = CreateSlotsRequest.SlotDefinition.builder()
+                .date(date)
+                .startTime(startTime)
+                .build();
+        var request = CreateSlotsRequest.builder()
+                .slots(List.of(slot))
+                .build();
+        var command = CreateSlotsCommand.builder()
+                .slots(List.of(CreateSlotsCommand.SlotDefinition.builder().date(date).startTime(startTime).build()))
+                .build();
+
+        var exMsg = "Slot already exists for %s at %s".formatted(date, startTime);
+        when(timeSlotService.createSlots(command)).thenThrow(new SlotConflictException(exMsg));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.SLOT_CONFLICT.getMessage())
+                .code(ErrorCode.SLOT_CONFLICT.getCode())
+                .reason(exMsg)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/dashboard/slots")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createSlotRequestJson.write(request).getJson()))
+                .andExpect(status().isConflict())
+                .andReturn().getResponse();
+
+        // then
+        verify(timeSlotService).createSlots(command);
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
+
 
     @Test
     void shouldPublishSlots() throws Exception {
@@ -228,6 +270,30 @@ class DashboardCalendarControllerTest {
     }
 
     @Test
+    void shouldNotPublishWhenSlotsNotExist() throws Exception {
+        // given
+        var slotId = UUID.randomUUID();
+        var request = PublishSlotsRequest.builder().slotIds(List.of(slotId)).build();
+
+        when(timeSlotService.publishSlots(any())).thenThrow(new ResourceNotFoundException("One or more TimeSlots not found"));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                .reason("One or more TimeSlots not found")
+                .build();
+        // when
+        var response = mockMvc.perform(patch("/api/v1/dashboard/slots/publish")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(publishSlotRequestJson.write(request).getJson()))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse();
+
+        // then
+        verify(timeSlotService).publishSlots(any());
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
+
+    @Test
     void shouldWithdrawSlot() throws Exception {
         // given
         var slotToWithdrawId1 = UUID.randomUUID();
@@ -243,12 +309,13 @@ class DashboardCalendarControllerTest {
 
         // when
         mockMvc.perform(patch("/api/v1/dashboard/slots/withdraw")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(withdrawSlotsRequestJson.write(request).getJson()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(withdrawSlotsRequestJson.write(request).getJson()))
                 .andExpect(status().isNoContent());
 
         // then
         verify(timeSlotService).withdrawSlots(command);
+
     }
 
     @Test
@@ -261,6 +328,37 @@ class DashboardCalendarControllerTest {
         verify(timeSlotService, never()).withdrawSlots(any());
     }
 
+    @Test
+    void shouldNotWithdrawSlotWhenBlocked() throws Exception {
+        // given
+        var slotToWithdrawId1 = UUID.randomUUID();
+        var slotToWithdrawId2 = UUID.randomUUID();
+        var slotIds = List.of(slotToWithdrawId1, slotToWithdrawId2);
+        var request = WithdrawSlotsRequest.builder()
+                .slotIds(slotIds)
+                .build();
+
+        var command = WithdrawSlotsCommand.builder()
+                .slotIds(List.of(slotToWithdrawId1, slotToWithdrawId2))
+                .build();
+        doThrow(new SlotWithdrawalBlockedException("Slot %s has an active appointment".formatted(slotToWithdrawId2))).when(timeSlotService).withdrawSlots(command);
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.SLOT_WITHDRAWAL_BLOCKED.getMessage())
+                .code(ErrorCode.SLOT_WITHDRAWAL_BLOCKED.getCode())
+                .reason("Slot %s has an active appointment".formatted(slotToWithdrawId2))
+                .build();
+
+        // when
+        var response = mockMvc.perform(patch("/api/v1/dashboard/slots/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(withdrawSlotsRequestJson.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse();
+
+        // then
+        verify(timeSlotService).withdrawSlots(command);
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
 
     @Test
     void shouldDeleteSlots() throws Exception {

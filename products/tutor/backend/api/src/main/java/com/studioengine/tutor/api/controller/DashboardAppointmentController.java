@@ -69,9 +69,7 @@ public class DashboardAppointmentController {
                         .state(result.getState().name())
                         .build()
                 );
-
     }
-
 
     private CloseAppointmentCommand.CloseOutcome mapOutcome(CloseAppointmentRequest.Outcome outcome) {
         return switch (outcome) {

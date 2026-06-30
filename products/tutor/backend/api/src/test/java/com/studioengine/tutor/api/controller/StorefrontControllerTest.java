@@ -9,6 +9,13 @@ import com.studioengine.tutor.checkout.Checkout;
 import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.checkout.PaymentMethodChoice;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
+import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
+import com.studioengine.tutor.errors.ErrorCode;
+import com.studioengine.tutor.errors.ErrorResponse;
+import com.studioengine.tutor.errors.GlobalExceptionHandler;
+import com.studioengine.tutor.errors.exceptions.InvalidReservationException;
+import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
+import com.studioengine.tutor.errors.exceptions.SlotConflictException;
 import com.studioengine.tutor.scheduling.AvailableSlot;
 import com.studioengine.tutor.scheduling.Reservation;
 import com.studioengine.tutor.scheduling.ReservationService;
@@ -33,6 +40,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -60,12 +68,15 @@ class StorefrontControllerTest {
     private JacksonTester<List<TimeSlotResponse>> timeSlotResponseJson;
     private JacksonTester<CheckoutRequest> checkoutRequestJson;
     private JacksonTester<CheckoutResponse> checkoutResponseJson;
+    private JacksonTester<ErrorResponse> errorResponseJson;
 
     @BeforeEach
     void setUp() {
         var jsonMapper = JsonMapper.builder().findAndAddModules().build();
         JacksonTester.initFields(this, jsonMapper);
-        mockMvc = MockMvcBuilders.standaloneSetup(storefrontController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(storefrontController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     // --- GET /availability ---
@@ -158,6 +169,61 @@ class StorefrontControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldNotReserveWhenTimeSlotNotExists() throws Exception {
+        // given
+        var slotId = UUID.randomUUID();
+
+        var reason = "TimeSlot not found: %s".formatted(slotId);
+        when(reservationService.reserve(any())).thenThrow(new ResourceNotFoundException(reason));
+
+        var request = ReservationRequest.builder().timeSlotId(slotId).build();
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                .reason(reason)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/storefront/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(reservationRequestJson.write(request).getJson()))
+                .andExpect(status().isNotFound())
+                .andReturn().getResponse();
+
+        // then
+        verify(reservationService).reserve(any());
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
+
+    @Test
+    void shouldNotReserveWhenSlotConflict() throws Exception {
+        // given
+        var slotId = UUID.randomUUID();
+        var state = AppointmentState.RESERVED;
+        var request = ReservationRequest.builder().timeSlotId(slotId).build();
+
+        var reason = "Slot %s is in state %s, expected AVAILABLE".formatted(slotId, state);
+        when(reservationService.reserve(any())).thenThrow(new SlotConflictException(reason));
+
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.SLOT_CONFLICT.getMessage())
+                .code(ErrorCode.SLOT_CONFLICT.getCode())
+                .reason(reason)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/storefront/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(reservationRequestJson.write(request).getJson()))
+                .andExpect(status().isConflict())
+                .andReturn().getResponse();
+
+        // then
+        verify(reservationService).reserve(any());
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 
     // --- POST /checkout ---
@@ -273,5 +339,42 @@ class StorefrontControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldNotCheckoutWhenInvalidReservation() throws Exception {
+        // given
+        var slotId = UUID.randomUUID();
+        var slotState = TimeSlotState.BOOKED;
+
+        var reason = "Slot %s is in state %s, expected RESERVED".formatted(slotId, slotState);
+        when(checkoutService.checkout(any())).thenThrow(new InvalidReservationException(reason));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.INVALID_RESERVATION.getMessage())
+                .code(ErrorCode.INVALID_RESERVATION.getCode())
+                .reason(reason)
+                .build();
+
+        var request = CheckoutRequest.builder()
+                .reservationId(UUID.randomUUID())
+                .serviceCategoryId(UUID.randomUUID())
+                .guest(CheckoutRequest.Guest.builder()
+                        .name("Ana Kovačević")
+                        .email("ana@test.com")
+                        .phone("+385 91 234 5678")
+                        .build())
+                .paymentMethodChoice(PaymentMethodChoice.STRIPE)
+                .build();
+
+        // when
+        var response = mockMvc.perform(post("/api/v1/storefront/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkoutRequestJson.write(request).getJson()))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse();
+
+        // then
+        verify(checkoutService).checkout(any());
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 }

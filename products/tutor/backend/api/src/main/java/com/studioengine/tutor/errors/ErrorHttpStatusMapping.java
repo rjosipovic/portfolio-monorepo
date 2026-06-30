@@ -1,6 +1,5 @@
-package com.studioengine.tutor.errors.exceptions;
+package com.studioengine.tutor.errors;
 
-import com.studioengine.tutor.errors.ErrorCode;
 import org.springframework.http.HttpStatus;
 
 import java.util.Map;
