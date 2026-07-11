@@ -1,4 +1,4 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.student;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,16 +14,15 @@ import java.util.UUID;
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = TimeSlotResponse.TimeSlotResponseBuilder.class)
-public class TimeSlotResponse {
+@JsonDeserialize(builder = AppointmentHistoryResponse.AppointmentHistoryResponseBuilder.class)
+public class AppointmentHistoryResponse {
 
-    UUID id;
+    UUID appointmentId;
     LocalDate date;
     LocalTime startTime;
-    LocalTime endTime;
+    String serviceCategoryName;
+    String state;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class TimeSlotResponseBuilder {
-    }
+    public static class AppointmentHistoryResponseBuilder {}
 }
-

@@ -1,4 +1,4 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.booking;
 
 import com.studioengine.tutor.api.dto.summary.AppointmentSummary;
 import com.studioengine.tutor.api.dto.summary.ServiceCategorySummary;

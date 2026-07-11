@@ -1,4 +1,4 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.calendar;
 
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
@@ -14,12 +14,12 @@ import java.util.UUID;
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = DeleteSlotsRequest.DeleteSlotsRequestBuilder.class)
-public class DeleteSlotsRequest {
+@JsonDeserialize(builder = WithdrawSlotsRequest.WithdrawSlotsRequestBuilder.class)
+public class WithdrawSlotsRequest {
 
     @NotEmpty
     List<UUID> slotIds;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class DeleteSlotsRequestBuilder {}
+    public static class WithdrawSlotsRequestBuilder{}
 }

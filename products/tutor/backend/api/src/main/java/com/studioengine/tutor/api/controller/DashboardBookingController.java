@@ -1,7 +1,7 @@
 package com.studioengine.tutor.api.controller;
 
-import com.studioengine.tutor.api.dto.DirectBookingRequest;
-import com.studioengine.tutor.api.dto.DirectBookingResponse;
+import com.studioengine.tutor.api.dto.booking.DirectBookingRequest;
+import com.studioengine.tutor.api.dto.booking.DirectBookingResponse;
 import com.studioengine.tutor.api.dto.summary.AppointmentSummary;
 import com.studioengine.tutor.api.dto.summary.ServiceCategorySummary;
 import com.studioengine.tutor.api.dto.summary.StudentSummary;
@@ -50,6 +50,8 @@ public class DashboardBookingController {
                 .student(StudentSummary.builder()
                         .id(result.getStudentId())
                         .name(result.getStudentName())
+                        .email(result.getStudentEmail())
+                        .phone(result.getStudentPhone())
                         .build())
                 .serviceCategory(ServiceCategorySummary.builder()
                         .id(result.getServiceCategoryId())

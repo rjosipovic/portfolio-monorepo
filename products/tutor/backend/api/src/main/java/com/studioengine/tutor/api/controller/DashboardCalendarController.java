@@ -1,10 +1,10 @@
 package com.studioengine.tutor.api.controller;
 
-import com.studioengine.tutor.api.dto.CreateSlotsRequest;
-import com.studioengine.tutor.api.dto.DeleteSlotsRequest;
-import com.studioengine.tutor.api.dto.PublishSlotsRequest;
-import com.studioengine.tutor.api.dto.SlotResponse;
-import com.studioengine.tutor.api.dto.WithdrawSlotsRequest;
+import com.studioengine.tutor.api.dto.calendar.CreateSlotsRequest;
+import com.studioengine.tutor.api.dto.calendar.DeleteSlotsRequest;
+import com.studioengine.tutor.api.dto.calendar.PublishSlotsRequest;
+import com.studioengine.tutor.api.dto.calendar.SlotResponse;
+import com.studioengine.tutor.api.dto.calendar.WithdrawSlotsRequest;
 import com.studioengine.tutor.scheduling.CreateSlotsCommand;
 import com.studioengine.tutor.scheduling.CreatedSlot;
 import com.studioengine.tutor.scheduling.DeleteSlotsCommand;

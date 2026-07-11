@@ -1,11 +1,11 @@
 package com.studioengine.tutor.api.controller;
 
-import com.studioengine.tutor.api.dto.CheckoutRequest;
-import com.studioengine.tutor.api.dto.CheckoutResponse;
-import com.studioengine.tutor.api.dto.ReservationRequest;
-import com.studioengine.tutor.api.dto.ReservationResponse;
-import com.studioengine.tutor.api.dto.ServiceCategoryResponse;
-import com.studioengine.tutor.api.dto.TimeSlotResponse;
+import com.studioengine.tutor.api.dto.storefront.CheckoutRequest;
+import com.studioengine.tutor.api.dto.storefront.CheckoutResponse;
+import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
+import com.studioengine.tutor.api.dto.storefront.ReservationResponse;
+import com.studioengine.tutor.api.dto.storefront.ServiceCategoryResponse;
+import com.studioengine.tutor.api.dto.storefront.TimeSlotResponse;
 import com.studioengine.tutor.catalog.ServiceCatalog;
 import com.studioengine.tutor.checkout.Checkout;
 import com.studioengine.tutor.checkout.CheckoutCommand;

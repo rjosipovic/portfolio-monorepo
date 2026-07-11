@@ -1,4 +1,4 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.storefront;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

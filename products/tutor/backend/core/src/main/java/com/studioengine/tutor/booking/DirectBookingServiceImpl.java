@@ -66,6 +66,8 @@ public class DirectBookingServiceImpl implements DirectBookingService {
                 .appointmentId(appointment.getId())
                 .studentId(student.getId())
                 .studentName(student.getName())
+                .studentEmail(student.getEmail())
+                .studentPhone(student.getPhone())
                 .state(appointment.getState())
                 .timeSlotId(slot.getId())
                 .slotDate(slot.getSlotDate())

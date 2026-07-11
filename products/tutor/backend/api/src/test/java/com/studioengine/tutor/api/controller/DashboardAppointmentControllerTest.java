@@ -1,7 +1,7 @@
 package com.studioengine.tutor.api.controller;
 
-import com.studioengine.tutor.api.dto.CancelAppointmentRequest;
-import com.studioengine.tutor.api.dto.CloseAppointmentRequest;
+import com.studioengine.tutor.api.dto.appointment.CancelAppointmentRequest;
+import com.studioengine.tutor.api.dto.appointment.CloseAppointmentRequest;
 import com.studioengine.tutor.api.dto.summary.AppointmentSummary;
 import com.studioengine.tutor.appointment.AppointmentService;
 import com.studioengine.tutor.appointment.CancelAppointmentCommand;

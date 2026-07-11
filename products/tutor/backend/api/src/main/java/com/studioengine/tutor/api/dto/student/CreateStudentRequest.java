@@ -1,5 +1,6 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.student;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,12 +12,19 @@ import tools.jackson.databind.annotation.JsonPOJOBuilder;
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = CancelAppointmentRequest.CancelAppointmentRequestBuilder.class)
-public class CancelAppointmentRequest {
+@JsonDeserialize(builder = CreateStudentRequest.CreateStudentRequestBuilder.class)
+public class CreateStudentRequest {
 
     @NotBlank
-    String reason;
+    String name;
+
+    @NotBlank
+    @Email
+    String email;
+
+    @NotBlank
+    String phone;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class CancelAppointmentRequestBuilder {}
+    public static class CreateStudentRequestBuilder {}
 }

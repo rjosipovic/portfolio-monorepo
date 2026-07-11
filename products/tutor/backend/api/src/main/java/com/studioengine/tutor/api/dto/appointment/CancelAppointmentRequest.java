@@ -1,5 +1,6 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.appointment;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,20 +8,15 @@ import lombok.Value;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonPOJOBuilder;
 
-import java.time.OffsetDateTime;
-import java.util.UUID;
-
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = ReservationResponse.ReservationResponseBuilder.class)
-public class ReservationResponse {
+@JsonDeserialize(builder = CancelAppointmentRequest.CancelAppointmentRequestBuilder.class)
+public class CancelAppointmentRequest {
 
-    UUID timeSlotId;
-    OffsetDateTime expiresAt;
+    @NotBlank
+    String reason;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class ReservationResponseBuilder {
-    }
+    public static class CancelAppointmentRequestBuilder {}
 }
-

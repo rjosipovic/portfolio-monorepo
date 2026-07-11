@@ -1,5 +1,6 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.calendar;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,21 +8,18 @@ import lombok.Value;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonPOJOBuilder;
 
-import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = ServiceCategoryResponse.ServiceCategoryResponseBuilder.class)
-public class ServiceCategoryResponse {
+@JsonDeserialize(builder = DeleteSlotsRequest.DeleteSlotsRequestBuilder.class)
+public class DeleteSlotsRequest {
 
-    UUID id;
-    String name;
-    String description;
-    BigDecimal price;
-    String currency;
+    @NotEmpty
+    List<UUID> slotIds;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class ServiceCategoryResponseBuilder {}
+    public static class DeleteSlotsRequestBuilder {}
 }

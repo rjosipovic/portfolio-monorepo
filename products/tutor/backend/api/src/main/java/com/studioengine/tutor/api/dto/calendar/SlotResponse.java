@@ -1,6 +1,5 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.calendar;
 
-import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,18 +7,22 @@ import lombok.Value;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonPOJOBuilder;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = PublishSlotsRequest.PublishSlotsRequestBuilder.class)
-public class PublishSlotsRequest {
+@JsonDeserialize(builder = SlotResponse.SlotResponseBuilder.class)
+public class SlotResponse {
 
-    @NotEmpty
-    List<UUID> slotIds;
+    UUID id;
+    LocalDate date;
+    LocalTime startTime;
+    LocalTime endTime;
+    String state;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class PublishSlotsRequestBuilder {}
+    public static class SlotResponseBuilder {}
 }

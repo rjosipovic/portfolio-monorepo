@@ -1,6 +1,5 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.student;
 
-import jakarta.validation.constraints.NotEmpty;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,18 +7,20 @@ import lombok.Value;
 import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.annotation.JsonPOJOBuilder;
 
-import java.util.List;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = WithdrawSlotsRequest.WithdrawSlotsRequestBuilder.class)
-public class WithdrawSlotsRequest {
+@JsonDeserialize(builder = NoteResponse.NoteResponseBuilder.class)
+public class NoteResponse {
 
-    @NotEmpty
-    List<UUID> slotIds;
+    UUID id;
+    String content;
+    OffsetDateTime createdAt;
+    OffsetDateTime updatedAt;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class WithdrawSlotsRequestBuilder{}
+    public static class NoteResponseBuilder {}
 }

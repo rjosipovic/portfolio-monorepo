@@ -7,6 +7,7 @@ import java.util.Map;
 import static com.studioengine.tutor.errors.ErrorCode.AUTHENTICATION_FAILED;
 import static com.studioengine.tutor.errors.ErrorCode.CHECKOUT_VALIDATION_FAILED;
 import static com.studioengine.tutor.errors.ErrorCode.DEADLINE_PASSED;
+import static com.studioengine.tutor.errors.ErrorCode.EMAIL_ALREADY_IN_USE;
 import static com.studioengine.tutor.errors.ErrorCode.INVALID_RESERVATION;
 import static com.studioengine.tutor.errors.ErrorCode.INVALID_STATE_TRANSITION;
 import static com.studioengine.tutor.errors.ErrorCode.MISSING_CANCELLATION_REASON;
@@ -42,7 +43,8 @@ public final class ErrorHttpStatusMapping {
             Map.entry(OTP_VERIFICATION_FAILED, UNAUTHORIZED),
             Map.entry(RESOURCE_NOT_FOUND, NOT_FOUND),
             Map.entry(PRE_BOOKED_SELF_SERVICE, BAD_REQUEST),
-            Map.entry(CHECKOUT_VALIDATION_FAILED, BAD_REQUEST)
+            Map.entry(CHECKOUT_VALIDATION_FAILED, BAD_REQUEST),
+            Map.entry(EMAIL_ALREADY_IN_USE, BAD_REQUEST)
     );
 
     public static HttpStatus resolve(ErrorCode errorCode) {

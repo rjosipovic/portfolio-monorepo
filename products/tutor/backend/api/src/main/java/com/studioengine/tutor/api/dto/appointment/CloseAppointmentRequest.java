@@ -1,4 +1,4 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.appointment;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;

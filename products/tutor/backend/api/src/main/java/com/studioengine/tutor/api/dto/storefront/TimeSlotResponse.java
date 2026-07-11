@@ -1,6 +1,5 @@
-package com.studioengine.tutor.api.dto.summary;
+package com.studioengine.tutor.api.dto.storefront;
 
-import com.studioengine.tutor.api.dto.storefront.TimeSlotResponse;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,12 +15,15 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @JsonDeserialize(builder = TimeSlotResponse.TimeSlotResponseBuilder.class)
-public class TimeSlotSummary {
+public class TimeSlotResponse {
 
     UUID id;
     LocalDate date;
     LocalTime startTime;
+    LocalTime endTime;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class TimeSlotSummaryBuilder{}
+    public static class TimeSlotResponseBuilder {
+    }
 }
+

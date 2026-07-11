@@ -1,4 +1,4 @@
-package com.studioengine.tutor.api.dto;
+package com.studioengine.tutor.api.dto.calendar;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;

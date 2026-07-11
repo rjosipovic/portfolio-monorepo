@@ -1,5 +1,6 @@
-package com.studioengine.tutor.api.dto.summary;
+package com.studioengine.tutor.api.dto.storefront;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,14 +13,13 @@ import java.util.UUID;
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@JsonDeserialize(builder = StudentSummary.StudentSummaryBuilder.class)
-public class StudentSummary {
+@JsonDeserialize(builder = ReservationRequest.ReservationRequestBuilder.class)
+public class ReservationRequest {
 
-    UUID id;
-    String name;
-    String email;
-    String phone;
+    @NotNull
+    UUID timeSlotId;
 
     @JsonPOJOBuilder(withPrefix = "")
-    public static class StudentSummaryBuilder {}
+    public static class ReservationRequestBuilder {
+    }
 }

@@ -65,6 +65,8 @@ class DirectBookingServiceImplTest {
         var timeSlot = mock(TimeSlot.class);
         var studentId = UUID.randomUUID();
         var studentName = "Marko Markić";
+        var studentEmail = "marko.markic@example.com";
+        var studentPhone = "+38599123456";
         var student = mock(Student.class);
         var serviceCategoryId = UUID.randomUUID();
         var serviceCategoryName = "Matematika za osnovnu školu";
@@ -83,6 +85,8 @@ class DirectBookingServiceImplTest {
         when(timeSlot.getStartTime()).thenReturn(startTime);
         when(student.getId()).thenReturn(studentId);
         when(student.getName()).thenReturn(studentName);
+        when(student.getEmail()).thenReturn(studentEmail);
+        when(student.getPhone()).thenReturn(studentPhone);
         when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
         when(serviceCategory.getId()).thenReturn(serviceCategoryId);
         when(serviceCategory.getName()).thenReturn(serviceCategoryName);

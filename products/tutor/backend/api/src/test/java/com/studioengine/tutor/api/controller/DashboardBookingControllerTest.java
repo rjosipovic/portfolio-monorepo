@@ -1,7 +1,7 @@
 package com.studioengine.tutor.api.controller;
 
-import com.studioengine.tutor.api.dto.DirectBookingRequest;
-import com.studioengine.tutor.api.dto.DirectBookingResponse;
+import com.studioengine.tutor.api.dto.booking.DirectBookingRequest;
+import com.studioengine.tutor.api.dto.booking.DirectBookingResponse;
 import com.studioengine.tutor.booking.DirectBooking;
 import com.studioengine.tutor.booking.DirectBookingCommand;
 import com.studioengine.tutor.booking.DirectBookingService;
@@ -90,6 +90,8 @@ class DashboardBookingControllerTest {
                 .startTime(LocalTime.of(10, 0))
                 .studentId(studentId)
                 .studentName("Marko Markić")
+                .studentEmail("marko.markic@gmail.com")
+                .studentPhone("+38599123456")
                 .serviceCategoryId(serviceCategoryId)
                 .serviceCategoryName("Matematika za osnovnu školu")
                 .build();

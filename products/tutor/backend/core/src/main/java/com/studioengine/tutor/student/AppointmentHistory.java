@@ -1,4 +1,4 @@
-package com.studioengine.tutor.booking;
+package com.studioengine.tutor.student;
 
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import lombok.AccessLevel;
@@ -13,17 +13,11 @@ import java.util.UUID;
 @Value
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class DirectBooking {
+public class AppointmentHistory {
 
     UUID appointmentId;
-    AppointmentState state;
-    UUID timeSlotId;
-    LocalDate slotDate;
+    LocalDate date;
     LocalTime startTime;
-    UUID studentId;
-    String studentName;
-    String studentEmail;
-    String studentPhone;
-    UUID serviceCategoryId;
     String serviceCategoryName;
+    AppointmentState state;
 }
