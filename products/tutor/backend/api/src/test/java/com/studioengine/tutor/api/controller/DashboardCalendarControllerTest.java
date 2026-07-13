@@ -1,5 +1,6 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.mapper.CalendarMapper;
 import com.studioengine.tutor.api.dto.calendar.CreateSlotsRequest;
 import com.studioengine.tutor.api.dto.calendar.DeleteSlotsRequest;
 import com.studioengine.tutor.api.dto.calendar.PublishSlotsRequest;
@@ -38,7 +39,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -49,9 +52,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class DashboardCalendarControllerTest {
 
-
     @Mock
     private TimeSlotService timeSlotService;
+
+    @Mock
+    private CalendarMapper calendarMapper;
 
     @InjectMocks
     private DashboardCalendarController dashboardCalendarController;
@@ -118,6 +123,9 @@ class DashboardCalendarControllerTest {
         var createdSlots = List.of(createdSlot1, createdSlot2);
 
         when(timeSlotService.createSlots(command)).thenReturn(createdSlots);
+        var slotResponse = mock(SlotResponse.class);
+        when(calendarMapper.toSlotDefinitions(request.getSlots())).thenReturn(command.getSlots());
+        when(calendarMapper.toSlotResponse(any(CreatedSlot.class))).thenReturn(slotResponse);
 
         // when
         var response = mockMvc.perform(post("/api/v1/dashboard/slots")
@@ -130,6 +138,8 @@ class DashboardCalendarControllerTest {
         var content = slotResponseListJson.parse(response.getContentAsString());
         assertThat(content.getObject()).hasSize(2);
         verify(timeSlotService).createSlots(command);
+        verify(calendarMapper, times(2)).toSlotResponse(any(CreatedSlot.class));
+        verify(calendarMapper).toSlotDefinitions(request.getSlots());
     }
 
     @Test
@@ -194,6 +204,7 @@ class DashboardCalendarControllerTest {
 
         var exMsg = "Slot already exists for %s at %s".formatted(date, startTime);
         when(timeSlotService.createSlots(command)).thenThrow(new SlotConflictException(exMsg));
+        when(calendarMapper.toSlotDefinitions(request.getSlots())).thenReturn(command.getSlots());
         var expectedError = ErrorResponse.builder()
                 .message(ErrorCode.SLOT_CONFLICT.getMessage())
                 .code(ErrorCode.SLOT_CONFLICT.getCode())
@@ -210,6 +221,7 @@ class DashboardCalendarControllerTest {
         // then
         verify(timeSlotService).createSlots(command);
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+        verify(calendarMapper).toSlotDefinitions(request.getSlots());
     }
 
 
@@ -246,6 +258,8 @@ class DashboardCalendarControllerTest {
                 .build();
 
         when(timeSlotService.publishSlots(command)).thenReturn(publishedSlots);
+        when(calendarMapper.toSlotResponse(any(CreatedSlot.class))).thenReturn(mock(SlotResponse.class));
+
         // when
         var response = mockMvc.perform(patch("/api/v1/dashboard/slots/publish")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -257,6 +271,7 @@ class DashboardCalendarControllerTest {
         var content = slotResponseListJson.parse(response.getContentAsString());
         assertThat(content.getObject()).hasSize(2);
         verify(timeSlotService).publishSlots(command);
+        verify(calendarMapper, times(2)).toSlotResponse(any(CreatedSlot.class));
     }
 
     @Test

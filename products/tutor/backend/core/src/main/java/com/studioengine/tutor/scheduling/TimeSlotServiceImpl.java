@@ -30,12 +30,13 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final TimeSlotRepository timeSlotRepository;
     private final TimeSlotStateMachine stateMachine;
     private final AppointmentRepository appointmentRepository;
+    private final TimeSlotServiceMapper timeSlotServiceMapper;
 
     @Override
     public List<AvailableSlot> getAvailability(LocalDate from, LocalDate to) {
         return timeSlotRepository.findBySlotDateBetweenAndState(from, to, TimeSlotState.AVAILABLE)
                 .stream()
-                .map(this::toAvailableSlot)
+                .map(timeSlotServiceMapper::toAvailableSlot)
                 .toList();
     }
 
@@ -51,7 +52,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 .toList();
 
         return timeSlotRepository.saveAll(slots).stream()
-                .map(this::toCreatedSlot)
+                .map(timeSlotServiceMapper::toCreatedSlot)
                 .toList();
     }
 
@@ -64,7 +65,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         timeSlotRepository.saveAll(slots);
 
         return slots.stream()
-                .map(this::toCreatedSlot)
+                .map(timeSlotServiceMapper::toCreatedSlot)
                 .toList();
     }
 
@@ -103,25 +104,6 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                     "Slot %s has an active appointment".formatted(blockedSlotId)
             );
         }
-    }
-
-    private AvailableSlot toAvailableSlot(TimeSlot slot) {
-        return AvailableSlot.builder()
-                .id(slot.getId())
-                .date(slot.getSlotDate())
-                .startTime(slot.getStartTime())
-                .endTime(slot.getEndTime())
-                .build();
-    }
-
-    private CreatedSlot toCreatedSlot(TimeSlot slot) {
-        return CreatedSlot.builder()
-                .id(slot.getId())
-                .date(slot.getSlotDate())
-                .startTime(slot.getStartTime())
-                .endTime(slot.getEndTime())
-                .state(slot.getState())
-                .build();
     }
 
     private void verifySlotNotExists(CreateSlotsCommand.SlotDefinition def) {

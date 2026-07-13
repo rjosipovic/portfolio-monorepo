@@ -2,6 +2,7 @@ package com.studioengine.tutor.api.controller;
 
 import com.studioengine.tutor.api.dto.booking.DirectBookingRequest;
 import com.studioengine.tutor.api.dto.booking.DirectBookingResponse;
+import com.studioengine.tutor.api.mapper.BookingMapper;
 import com.studioengine.tutor.booking.DirectBooking;
 import com.studioengine.tutor.booking.DirectBookingCommand;
 import com.studioengine.tutor.booking.DirectBookingService;
@@ -34,6 +35,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,6 +47,8 @@ class DashboardBookingControllerTest {
 
     @Mock
     private DirectBookingService bookingService;
+    @Mock
+    private BookingMapper bookingMapper;
 
     @InjectMocks
     private DashboardBookingController dashboardBookingController;
@@ -96,7 +100,11 @@ class DashboardBookingControllerTest {
                 .serviceCategoryName("Matematika za osnovnu školu")
                 .build();
 
+        var directBookingResponse = mock(DirectBookingResponse.class);
+
+        when(bookingMapper.toCommand(request)).thenReturn(command);
         when(bookingService.book(command)).thenReturn(directBooking);
+        when(bookingMapper.toResponse(directBooking)).thenReturn(directBookingResponse);
 
         // when
         var response = mockMvc.perform(post("/api/v1/dashboard/bookings/direct")
@@ -107,6 +115,8 @@ class DashboardBookingControllerTest {
 
         // then
         verify(bookingService).book(command);
+        verify(bookingMapper).toCommand(request);
+        verify(bookingMapper).toResponse(directBooking);
         assertThat(response).isNotNull();
     }
 
@@ -143,6 +153,7 @@ class DashboardBookingControllerTest {
                 .build();
 
 
+        when(bookingMapper.toCommand(request)).thenReturn(command);
         var reason = "TimeSlot not found: %s".formatted(timeSlotId.toString());
         when(bookingService.book(command)).thenThrow(new ResourceNotFoundException(reason));
         var expectedError = ErrorResponse.builder()
@@ -160,6 +171,7 @@ class DashboardBookingControllerTest {
 
         // then
         verify(bookingService).book(command);
+        verify(bookingMapper).toCommand(request);
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 
@@ -182,6 +194,7 @@ class DashboardBookingControllerTest {
                 .serviceCategoryId(request.getServiceCategoryId())
                 .build();
 
+        when(bookingMapper.toCommand(request)).thenReturn(command);
         var reason = "Slot %s is in state %s, expected %s".formatted(timeSlotId, timeSlotState, allowedSlotStates);
         when(bookingService.book(command)).thenThrow(new InvalidStateTransitionException(reason));
         var expectedError = ErrorResponse.builder()
@@ -198,6 +211,7 @@ class DashboardBookingControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(bookingMapper).toCommand(request);
         verify(bookingService).book(command);
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }

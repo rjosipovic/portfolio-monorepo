@@ -2,11 +2,7 @@ package com.studioengine.tutor.api.controller;
 
 import com.studioengine.tutor.api.dto.booking.DirectBookingRequest;
 import com.studioengine.tutor.api.dto.booking.DirectBookingResponse;
-import com.studioengine.tutor.api.dto.summary.AppointmentSummary;
-import com.studioengine.tutor.api.dto.summary.ServiceCategorySummary;
-import com.studioengine.tutor.api.dto.summary.StudentSummary;
-import com.studioengine.tutor.api.dto.summary.TimeSlotSummary;
-import com.studioengine.tutor.booking.DirectBookingCommand;
+import com.studioengine.tutor.api.mapper.BookingMapper;
 import com.studioengine.tutor.booking.DirectBookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,39 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardBookingController {
 
     private final DirectBookingService directBookingService;
+    private final BookingMapper bookingMapper;
 
     @PostMapping("/direct")
     public ResponseEntity<DirectBookingResponse> book(@Valid @RequestBody DirectBookingRequest request) {
         log.info("POST /dashboard/bookings/direct slotId={} studentId={}", request.getTimeSlotId(), request.getStudentId());
 
-        var command = DirectBookingCommand.builder()
-                .timeSlotId(request.getTimeSlotId())
-                .studentId(request.getStudentId())
-                .serviceCategoryId(request.getServiceCategoryId())
-                .build();
+        var command = bookingMapper.toCommand(request);
         var result = directBookingService.book(command);
-
-        var response = DirectBookingResponse.builder()
-                .appointment(AppointmentSummary.builder()
-                        .id(result.getAppointmentId())
-                        .state(result.getState().name())
-                        .build())
-                .timeSlot(TimeSlotSummary.builder()
-                        .id(result.getTimeSlotId())
-                        .date(result.getSlotDate())
-                        .startTime(result.getStartTime())
-                        .build())
-                .student(StudentSummary.builder()
-                        .id(result.getStudentId())
-                        .name(result.getStudentName())
-                        .email(result.getStudentEmail())
-                        .phone(result.getStudentPhone())
-                        .build())
-                .serviceCategory(ServiceCategorySummary.builder()
-                        .id(result.getServiceCategoryId())
-                        .name(result.getServiceCategoryName())
-                        .build())
-                .build();
+        var response = bookingMapper.toResponse(result);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

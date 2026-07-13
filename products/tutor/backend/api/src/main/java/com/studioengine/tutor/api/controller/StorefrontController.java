@@ -6,12 +6,10 @@ import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
 import com.studioengine.tutor.api.dto.storefront.ReservationResponse;
 import com.studioengine.tutor.api.dto.storefront.ServiceCategoryResponse;
 import com.studioengine.tutor.api.dto.storefront.TimeSlotResponse;
+import com.studioengine.tutor.api.mapper.StorefrontMapper;
 import com.studioengine.tutor.catalog.ServiceCatalog;
-import com.studioengine.tutor.checkout.Checkout;
-import com.studioengine.tutor.checkout.CheckoutCommand;
 import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.scheduling.ReservationService;
-import com.studioengine.tutor.scheduling.ReserveSlotCommand;
 import com.studioengine.tutor.scheduling.TimeSlotService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,54 +36,38 @@ public class StorefrontController {
     private final ReservationService reservationService;
     private final CheckoutService checkoutService;
     private final ServiceCatalog serviceCatalog;
+    private final StorefrontMapper storefrontMapper;
 
     @GetMapping("/services")
     public ResponseEntity<List<ServiceCategoryResponse>> getServices() {
         log.info("GET /storefront/services");
 
-        return ResponseEntity.ok(serviceCatalog.getActiveServices()
-                .stream()
-                .map(service -> ServiceCategoryResponse.builder()
-                        .id(service.getId())
-                        .name(service.getName())
-                        .description(service.getDescription())
-                        .price(service.getPrice())
-                        .currency(service.getCurrency())
-                        .build())
-                .toList());
+        var result = serviceCatalog.getActiveServices();
+        var response = storefrontMapper.toServiceCategoryResponseList(result);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/availability")
-    public List<TimeSlotResponse> getAvailability(
+    public ResponseEntity<List<TimeSlotResponse>> getAvailability(
             @RequestParam LocalDate from,
             @RequestParam LocalDate to
     ) {
         log.info("GET /availability from={} to={}", from, to);
 
-        return timeSlotService.getAvailability(from, to)
-                .stream()
-                .map(slot -> TimeSlotResponse.builder()
-                        .id(slot.getId())
-                        .date(slot.getDate())
-                        .startTime(slot.getStartTime())
-                        .endTime(slot.getEndTime())
-                        .build())
-                .toList();
+        var result = timeSlotService.getAvailability(from, to);
+        var response = storefrontMapper.toTimeSlotResponse(result);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reservations")
     public ResponseEntity<ReservationResponse> reserve(@Valid @RequestBody ReservationRequest request) {
         log.info("POST /reservations slotId={}", request.getTimeSlotId());
 
-        var command = ReserveSlotCommand.builder()
-                .slotId(request.getTimeSlotId())
-                .build();
+        var command = storefrontMapper.toReserveSlotCommand(request);
         var result = reservationService.reserve(command);
-
-        var response = ReservationResponse.builder()
-                .timeSlotId(result.getTimeslotId())
-                .expiresAt(result.getExpiresAt())
-                .build();
+        var response = storefrontMapper.toReservationResponse(result);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -94,36 +76,11 @@ public class StorefrontController {
     public ResponseEntity<CheckoutResponse> checkout(@Valid @RequestBody CheckoutRequest request) {
         log.info("POST /checkout reservationId={} paymentMethod={}", request.getReservationId(), request.getPaymentMethodChoice());
 
-        var command = CheckoutCommand.builder()
-                .reservedSlotId(request.getReservationId())
-                .serviceCategoryId(request.getServiceCategoryId())
-                .guestName(request.getGuest().getName())
-                .guestEmail(request.getGuest().getEmail())
-                .guestPhone(request.getGuest().getPhone())
-                .sessionNotes(request.getSessionNotes())
-                .paymentMethod(request.getPaymentMethodChoice())
-                .build();
-
+        var command = storefrontMapper.toCheckoutCommand(request);
         var result = checkoutService.checkout(command);
-
-        var response = CheckoutResponse.builder()
-                .appointmentId(result.getAppointmentId())
-                .status(result.getStatus().name())
-                .stripeRedirectUrl(result.getStripeRedirectUrl())
-                .message(result.getMessage())
-                .benefitApplied(mapBenefit(result.getBenefitApplied()))
-                .build();
+        var response = storefrontMapper.toCheckoutResponse(result);
 
         return ResponseEntity.ok(response);
-    }
-
-    private CheckoutResponse.BenefitAppliedResponse mapBenefit(Checkout.BenefitApplied benefit) {
-        if (benefit == null) return null;
-        return CheckoutResponse.BenefitAppliedResponse.builder()
-                .type(benefit.getType())
-                .originalPrice(benefit.getOriginalPrice())
-                .finalPrice(benefit.getFinalPrice())
-                .build();
     }
 }
 

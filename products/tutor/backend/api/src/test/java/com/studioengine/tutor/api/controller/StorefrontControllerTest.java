@@ -6,9 +6,11 @@ import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
 import com.studioengine.tutor.api.dto.storefront.ReservationResponse;
 import com.studioengine.tutor.api.dto.storefront.ServiceCategoryResponse;
 import com.studioengine.tutor.api.dto.storefront.TimeSlotResponse;
+import com.studioengine.tutor.api.mapper.StorefrontMapper;
 import com.studioengine.tutor.catalog.AvailableService;
 import com.studioengine.tutor.catalog.ServiceCatalog;
 import com.studioengine.tutor.checkout.Checkout;
+import com.studioengine.tutor.checkout.CheckoutCommand;
 import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.checkout.PaymentMethodChoice;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
@@ -22,6 +24,7 @@ import com.studioengine.tutor.errors.exceptions.SlotConflictException;
 import com.studioengine.tutor.scheduling.AvailableSlot;
 import com.studioengine.tutor.scheduling.Reservation;
 import com.studioengine.tutor.scheduling.ReservationService;
+import com.studioengine.tutor.scheduling.ReserveSlotCommand;
 import com.studioengine.tutor.scheduling.TimeSlotService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,15 +38,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -64,6 +65,9 @@ class StorefrontControllerTest {
 
     @Mock
     private ServiceCatalog serviceCatalog;
+
+    @Mock
+    private StorefrontMapper storefrontMapper;
 
     @InjectMocks
     private StorefrontController storefrontController;
@@ -91,16 +95,10 @@ class StorefrontControllerTest {
     @Test
     void shouldReturnActiveServices() throws Exception {
         // given
-        var services = List.of(
-                AvailableService.builder()
-                        .id(UUID.randomUUID())
-                        .name("Matematika za osnovnu školu")
-                        .description("Pomoć s gradivom od 5. do 8. razreda")
-                        .price(new BigDecimal("25.00"))
-                        .currency("EUR")
-                        .build()
-        );
-        when(serviceCatalog.getActiveServices()).thenReturn(services);
+        var availableService = mock(AvailableService.class);
+        var serviceCategoryResponse = mock(ServiceCategoryResponse.class);
+        when(serviceCatalog.getActiveServices()).thenReturn(List.of(availableService));
+        when(storefrontMapper.toServiceCategoryResponseList(List.of(availableService))).thenReturn(List.of(serviceCategoryResponse));
 
         // when
         var response = mockMvc.perform(get("/api/v1/storefront/services"))
@@ -108,6 +106,8 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(serviceCatalog).getActiveServices();
+        verify(storefrontMapper).toServiceCategoryResponseList(List.of(availableService));
         var content = serviceCategoryResponseListJson.parse(response.getContentAsString());
         assertThat(content.getObject()).hasSize(1);
     }
@@ -116,6 +116,7 @@ class StorefrontControllerTest {
     void shouldReturnEmptyListWhenNoActiveServices() throws Exception {
         // given
         when(serviceCatalog.getActiveServices()).thenReturn(List.of());
+        when(storefrontMapper.toServiceCategoryResponseList(List.of())).thenReturn(List.of());
 
         // when
         var response = mockMvc.perform(get("/api/v1/storefront/services"))
@@ -123,6 +124,8 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(serviceCatalog).getActiveServices();
+        verify(storefrontMapper).toServiceCategoryResponseList(List.of());
         var content = serviceCategoryResponseListJson.parse(response.getContentAsString());
         assertThat(content.getObject()).isEmpty();
     }
@@ -131,19 +134,11 @@ class StorefrontControllerTest {
     @Test
     void shouldReturnAvailableSlots() throws Exception {
         // given
-        var slotId = UUID.randomUUID();
-        var date = LocalDate.of(2026, 6, 15);
-        var startTime = LocalTime.of(10, 0);
-        var endTime = LocalTime.of(11, 0);
-        var slots = List.of(
-                AvailableSlot.builder()
-                        .id(slotId)
-                        .date(date)
-                        .startTime(startTime)
-                        .endTime(endTime)
-                        .build()
-        );
-        when(timeSlotService.getAvailability(any(), any())).thenReturn(slots);
+        var slot = mock(AvailableSlot.class);
+
+        var timeSlotResponse = mock(TimeSlotResponse.class);
+        when(timeSlotService.getAvailability(any(), any())).thenReturn(List.of(slot));
+        when(storefrontMapper.toTimeSlotResponse(List.of(slot))).thenReturn(List.of(timeSlotResponse));
 
         // when
         var response = mockMvc.perform(get("/api/v1/storefront/availability")
@@ -153,19 +148,18 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(timeSlotService).getAvailability(any(), any());
+        verify(storefrontMapper).toTimeSlotResponse(List.of(slot));
+
         var content = timeSlotResponseJson.parse(response.getContentAsString());
         assertThat(content.getObject()).hasSize(1);
-        var slot = content.getObject().getFirst();
-        assertThat(slot.getId()).isEqualTo(slotId);
-        assertThat(slot.getDate()).isEqualTo(date);
-        assertThat(slot.getStartTime()).isEqualTo(startTime);
-        assertThat(slot.getEndTime()).isEqualTo(endTime);
     }
 
     @Test
     void shouldReturnEmptyListWhenNoSlotsAvailable() throws Exception {
         // given
         when(timeSlotService.getAvailability(any(), any())).thenReturn(List.of());
+        when(storefrontMapper.toTimeSlotResponse(List.of())).thenReturn(List.of());
 
         // when
         var response = mockMvc.perform(get("/api/v1/storefront/availability")
@@ -175,6 +169,8 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(timeSlotService).getAvailability(any(), any());
+        verify(storefrontMapper).toTimeSlotResponse(List.of());
         var content = timeSlotResponseJson.parse(response.getContentAsString());
         assertThat(content.getObject()).isEmpty();
     }
@@ -184,15 +180,15 @@ class StorefrontControllerTest {
     void shouldReserveSlotAndReturn201() throws Exception {
         // given
         var slotId = UUID.randomUUID();
-        var expiresAt = OffsetDateTime.now().plusMinutes(15);
-        var reservation = Reservation.builder()
-                .timeslotId(slotId)
-                .expiresAt(expiresAt)
-                .build();
-
-        when(reservationService.reserve(any())).thenReturn(reservation);
 
         var request = ReservationRequest.builder().timeSlotId(slotId).build();
+        var command = mock(ReserveSlotCommand.class);
+        var reservation = mock(Reservation.class);
+        var reservationResponse = mock(ReservationResponse.class);
+
+        when(storefrontMapper.toReserveSlotCommand(request)).thenReturn(command);
+        when(reservationService.reserve(command)).thenReturn(reservation);
+        when(storefrontMapper.toReservationResponse(reservation)).thenReturn(reservationResponse);
 
         // when
         var response = mockMvc.perform(post("/api/v1/storefront/reservations")
@@ -202,9 +198,11 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(storefrontMapper).toReserveSlotCommand(request);
+        verify(reservationService).reserve(command);
+        verify(storefrontMapper).toReservationResponse(reservation);
         var content = reservationResponseJson.parse(response.getContentAsString());
-        assertThat(content.getObject().getTimeSlotId()).isEqualTo(slotId);
-        assertThat(content.getObject().getExpiresAt()).isNotNull();
+        assertThat(content.getObject()).isNotNull();
     }
 
     @Test
@@ -212,22 +210,29 @@ class StorefrontControllerTest {
         // given
         var json = "{}";
 
-        // when / then
+        // when
         mockMvc.perform(post("/api/v1/storefront/reservations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
+
+        // then
+        verify(storefrontMapper, never()).toReserveSlotCommand(any());
+        verify(reservationService, never()).reserve(any());
+        verify(storefrontMapper, never()).toReservationResponse(any());
     }
 
     @Test
     void shouldNotReserveWhenTimeSlotNotExists() throws Exception {
         // given
         var slotId = UUID.randomUUID();
-
-        var reason = "TimeSlot not found: %s".formatted(slotId);
-        when(reservationService.reserve(any())).thenThrow(new ResourceNotFoundException(reason));
-
         var request = ReservationRequest.builder().timeSlotId(slotId).build();
+        var command = mock(ReserveSlotCommand.class);
+
+        when(storefrontMapper.toReserveSlotCommand(request)).thenReturn(command);
+        var reason = "TimeSlot not found: %s".formatted(slotId);
+        when(reservationService.reserve(command)).thenThrow(new ResourceNotFoundException(reason));
+
         var expectedError = ErrorResponse.builder()
                 .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
                 .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
@@ -242,7 +247,9 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(storefrontMapper).toReserveSlotCommand(request);
         verify(reservationService).reserve(any());
+        verify(storefrontMapper, never()).toReservationResponse(any());
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 
@@ -252,9 +259,11 @@ class StorefrontControllerTest {
         var slotId = UUID.randomUUID();
         var state = AppointmentState.RESERVED;
         var request = ReservationRequest.builder().timeSlotId(slotId).build();
+        var command = mock(ReserveSlotCommand.class);
 
+        when(storefrontMapper.toReserveSlotCommand(request)).thenReturn(command);
         var reason = "Slot %s is in state %s, expected AVAILABLE".formatted(slotId, state);
-        when(reservationService.reserve(any())).thenThrow(new SlotConflictException(reason));
+        when(reservationService.reserve(command)).thenThrow(new SlotConflictException(reason));
 
         var expectedError = ErrorResponse.builder()
                 .message(ErrorCode.SLOT_CONFLICT.getMessage())
@@ -270,23 +279,16 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
-        verify(reservationService).reserve(any());
+        verify(storefrontMapper).toReserveSlotCommand(request);
+        verify(reservationService).reserve(command);
+        verify(storefrontMapper, never()).toReservationResponse(any());
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 
     // --- POST /checkout ---
     @Test
-    void shouldCheckoutWithStripeAndReturn200() throws Exception {
+    void shouldCheckout() throws Exception {
         // given
-        var appointmentId = UUID.randomUUID();
-        var checkout = Checkout.builder()
-                .appointmentId(appointmentId)
-                .status(AppointmentState.RESERVED)
-                .stripeRedirectUrl("https://checkout.stripe.com/session123")
-                .build();
-
-        when(checkoutService.checkout(any())).thenReturn(checkout);
-
         var request = CheckoutRequest.builder()
                 .reservationId(UUID.randomUUID())
                 .serviceCategoryId(UUID.randomUUID())
@@ -297,6 +299,13 @@ class StorefrontControllerTest {
                         .build())
                 .paymentMethodChoice(PaymentMethodChoice.STRIPE)
                 .build();
+        var command = mock(CheckoutCommand.class);
+        var checkout = mock(Checkout.class);
+        var checkoutResponse = mock(CheckoutResponse.class);
+
+        when(storefrontMapper.toCheckoutCommand(request)).thenReturn(command);
+        when(checkoutService.checkout(command)).thenReturn(checkout);
+        when(storefrontMapper.toCheckoutResponse(checkout)).thenReturn(checkoutResponse);
 
         // when
         var response = mockMvc.perform(post("/api/v1/storefront/checkout")
@@ -306,48 +315,11 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
+        verify(storefrontMapper).toCheckoutCommand(request);
+        verify(checkoutService).checkout(command);
+        verify(storefrontMapper).toCheckoutResponse(checkout);
         var content = checkoutResponseJson.parse(response.getContentAsString());
-        assertThat(content.getObject().getAppointmentId()).isEqualTo(appointmentId);
-        assertThat(content.getObject().getStatus()).isEqualTo("RESERVED");
-        assertThat(content.getObject().getStripeRedirectUrl()).isEqualTo("https://checkout.stripe.com/session123");
-    }
-
-    @Test
-    void shouldCheckoutWithBankTransferAndReturn200() throws Exception {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var checkout = Checkout.builder()
-                .appointmentId(appointmentId)
-                .status(AppointmentState.PENDING_PAYMENT)
-                .message("Invoice sent to email")
-                .build();
-
-        when(checkoutService.checkout(any())).thenReturn(checkout);
-
-        var request = CheckoutRequest.builder()
-                .reservationId(UUID.randomUUID())
-                .serviceCategoryId(UUID.randomUUID())
-                .guest(CheckoutRequest.Guest.builder()
-                        .name("Ana Kovačević")
-                        .email("ana@test.com")
-                        .phone("+385 91 234 5678")
-                        .build())
-                .paymentMethodChoice(PaymentMethodChoice.BANK_TRANSFER)
-                .build();
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/storefront/checkout")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(checkoutRequestJson.write(request).getJson()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        var content = checkoutResponseJson.parse(response.getContentAsString());
-        assertThat(content.getObject().getAppointmentId()).isEqualTo(appointmentId);
-        assertThat(content.getObject().getStatus()).isEqualTo("PENDING_PAYMENT");
-        assertThat(content.getObject().getMessage()).isEqualTo("Invoice sent to email");
-        assertThat(content.getObject().getStripeRedirectUrl()).isNull();
+        assertThat(content.getObject()).isNotNull();
     }
 
     @Test
@@ -364,11 +336,16 @@ class StorefrontControllerTest {
                 .paymentMethodChoice(PaymentMethodChoice.STRIPE)
                 .build();
 
-        // when / then
+        // when
         mockMvc.perform(post("/api/v1/storefront/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(checkoutRequestJson.write(request).getJson()))
                 .andExpect(status().isBadRequest());
+
+        // then
+        verify(storefrontMapper, never()).toCheckoutCommand(any());
+        verify(checkoutService, never()).checkout(any());
+        verify(storefrontMapper, never()).toCheckoutResponse(any());
     }
 
     @Test
@@ -382,11 +359,16 @@ class StorefrontControllerTest {
               }
               """.formatted(UUID.randomUUID(), UUID.randomUUID());
 
-        // when / then
+        // when
         mockMvc.perform(post("/api/v1/storefront/checkout")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isBadRequest());
+
+        // then
+        verify(storefrontMapper, never()).toCheckoutCommand(any());
+        verify(checkoutService, never()).checkout(any());
+        verify(storefrontMapper, never()).toCheckoutResponse(any());
     }
 
     @Test
@@ -394,14 +376,6 @@ class StorefrontControllerTest {
         // given
         var slotId = UUID.randomUUID();
         var slotState = TimeSlotState.BOOKED;
-
-        var reason = "Slot %s is in state %s, expected RESERVED".formatted(slotId, slotState);
-        when(checkoutService.checkout(any())).thenThrow(new InvalidReservationException(reason));
-        var expectedError = ErrorResponse.builder()
-                .message(ErrorCode.INVALID_RESERVATION.getMessage())
-                .code(ErrorCode.INVALID_RESERVATION.getCode())
-                .reason(reason)
-                .build();
 
         var request = CheckoutRequest.builder()
                 .reservationId(UUID.randomUUID())
@@ -413,6 +387,17 @@ class StorefrontControllerTest {
                         .build())
                 .paymentMethodChoice(PaymentMethodChoice.STRIPE)
                 .build();
+        var command = mock(CheckoutCommand.class);
+
+        when(storefrontMapper.toCheckoutCommand(request)).thenReturn(command);
+        var reason = "Slot %s is in state %s, expected RESERVED".formatted(slotId, slotState);
+        when(checkoutService.checkout(any())).thenThrow(new InvalidReservationException(reason));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.INVALID_RESERVATION.getMessage())
+                .code(ErrorCode.INVALID_RESERVATION.getCode())
+                .reason(reason)
+                .build();
+
 
         // when
         var response = mockMvc.perform(post("/api/v1/storefront/checkout")
@@ -422,7 +407,9 @@ class StorefrontControllerTest {
                 .andReturn().getResponse();
 
         // then
-        verify(checkoutService).checkout(any());
+        verify(storefrontMapper).toCheckoutCommand(request);
+        verify(checkoutService).checkout(command);
+        verify(storefrontMapper, never()).toCheckoutResponse(any());
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
     }
 }

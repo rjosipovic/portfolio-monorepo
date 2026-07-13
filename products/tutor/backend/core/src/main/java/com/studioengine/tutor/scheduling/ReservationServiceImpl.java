@@ -33,7 +33,7 @@ public class ReservationServiceImpl implements ReservationService {
         var expiresAt = OffsetDateTime.now().plus(schedulingProperties.getReservationTimeout());
 
         return Reservation.builder()
-                .timeslotId(slotId)
+                .timeSlotId(slotId)
                 .expiresAt(expiresAt)
                 .build();
     }

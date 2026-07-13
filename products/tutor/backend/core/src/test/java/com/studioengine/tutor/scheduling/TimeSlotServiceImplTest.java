@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +42,9 @@ class TimeSlotServiceImplTest {
 
     @Mock
     private AppointmentRepository appointmentRepository;
+
+    @Mock
+    private TimeSlotServiceMapper timeSlotServiceMapper;
 
     @InjectMocks
     private TimeSlotServiceImpl timeSlotService;
@@ -63,9 +67,11 @@ class TimeSlotServiceImplTest {
                 ))
                 .build();
 
+        var createdSlot = mock(CreatedSlot.class);
         when(timeSlotRepository.existsBySlotDateAndStartTime(date1, time1)).thenReturn(false);
         when(timeSlotRepository.existsBySlotDateAndStartTime(date2, time2)).thenReturn(false);
         when(timeSlotRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(timeSlotServiceMapper.toCreatedSlot(any())).thenReturn(createdSlot);
 
         // when
         timeSlotService.createSlots(command);
@@ -74,6 +80,7 @@ class TimeSlotServiceImplTest {
         verify(timeSlotRepository).existsBySlotDateAndStartTime(date1, time1);
         verify(timeSlotRepository).existsBySlotDateAndStartTime(date2, time2);
         verify(timeSlotRepository).saveAll(slotsCaptor.capture());
+        verify(timeSlotServiceMapper, times(2)).toCreatedSlot(any());
 
         var slots = slotsCaptor.getValue();
         assertThat(slots).hasSize(2);

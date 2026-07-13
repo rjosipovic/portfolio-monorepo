@@ -13,6 +13,6 @@ import java.util.UUID;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Reservation {
 
-    UUID timeslotId;
+    UUID timeSlotId;
     OffsetDateTime expiresAt;
 }

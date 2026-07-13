@@ -32,6 +32,7 @@ public class DirectBookingServiceImpl implements DirectBookingService {
     private final ServiceCategoryRepository serviceCategoryRepository;
     private final AppointmentRepository appointmentRepository;
     private final TimeSlotStateMachine timeSlotStateMachine;
+    private final DirectBookingServiceMapper directBookingServiceMapper;
 
     @Override
     @Transactional
@@ -60,19 +61,7 @@ public class DirectBookingServiceImpl implements DirectBookingService {
         timeSlotStateMachine.transition(slot, TimeSlotState.PRE_BOOKED, "TUTOR");
         timeSlotRepository.save(slot);
 
-        return DirectBooking.builder()
-                .serviceCategoryId(category.getId())
-                .serviceCategoryName(category.getName())
-                .appointmentId(appointment.getId())
-                .studentId(student.getId())
-                .studentName(student.getName())
-                .studentEmail(student.getEmail())
-                .studentPhone(student.getPhone())
-                .state(appointment.getState())
-                .timeSlotId(slot.getId())
-                .slotDate(slot.getSlotDate())
-                .startTime(slot.getStartTime())
-                .build();
+        return directBookingServiceMapper.toDirectBooking(appointment, slot, student, category);
     }
 
     private TimeSlot findTimeSlot(UUID id) {

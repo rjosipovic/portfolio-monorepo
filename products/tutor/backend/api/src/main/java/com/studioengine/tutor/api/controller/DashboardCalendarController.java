@@ -1,12 +1,12 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.mapper.CalendarMapper;
 import com.studioengine.tutor.api.dto.calendar.CreateSlotsRequest;
 import com.studioengine.tutor.api.dto.calendar.DeleteSlotsRequest;
 import com.studioengine.tutor.api.dto.calendar.PublishSlotsRequest;
 import com.studioengine.tutor.api.dto.calendar.SlotResponse;
 import com.studioengine.tutor.api.dto.calendar.WithdrawSlotsRequest;
 import com.studioengine.tutor.scheduling.CreateSlotsCommand;
-import com.studioengine.tutor.scheduling.CreatedSlot;
 import com.studioengine.tutor.scheduling.DeleteSlotsCommand;
 import com.studioengine.tutor.scheduling.PublishSlotsCommand;
 import com.studioengine.tutor.scheduling.TimeSlotService;
@@ -32,24 +32,20 @@ import java.util.List;
 public class DashboardCalendarController {
 
     private final TimeSlotService timeSlotService;
+    private final CalendarMapper calendarMapper;
 
     @PostMapping
     public ResponseEntity<List<SlotResponse>> createSlots(@Valid @RequestBody CreateSlotsRequest request) {
         log.info("POST /dashboard/slots count={}", request.getSlots().size());
 
         var command = CreateSlotsCommand.builder()
-                .slots(request.getSlots().stream()
-                        .map(s -> CreateSlotsCommand.SlotDefinition.builder()
-                                .date(s.getDate())
-                                .startTime(s.getStartTime())
-                                .build())
-                        .toList())
+                .slots(calendarMapper.toSlotDefinitions(request.getSlots()))
                 .build();
 
         var created = timeSlotService.createSlots(command);
 
         var response = created.stream()
-                .map(this::toSlotResponse)
+                .map(calendarMapper::toSlotResponse)
                 .toList();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -66,7 +62,7 @@ public class DashboardCalendarController {
         var published = timeSlotService.publishSlots(command);
 
         var response = published.stream()
-                .map(this::toSlotResponse)
+                .map(calendarMapper::toSlotResponse)
                 .toList();
 
         return ResponseEntity.ok(response);
@@ -96,15 +92,5 @@ public class DashboardCalendarController {
         timeSlotService.deleteSlots(command);
 
         return ResponseEntity.noContent().build();
-    }
-
-    private SlotResponse toSlotResponse(CreatedSlot slot) {
-        return SlotResponse.builder()
-                .id(slot.getId())
-                .date(slot.getDate())
-                .startTime(slot.getStartTime())
-                .endTime(slot.getEndTime())
-                .state(slot.getState().name())
-                .build();
     }
 }

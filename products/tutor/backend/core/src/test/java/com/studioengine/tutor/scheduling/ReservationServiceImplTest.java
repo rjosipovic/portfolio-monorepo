@@ -54,7 +54,7 @@ class ReservationServiceImplTest {
         var result = reservationService.reserve(command);
 
         // then
-        assertThat(result.getTimeslotId()).isEqualTo(slotId);
+        assertThat(result.getTimeSlotId()).isEqualTo(slotId);
         assertThat(result.getExpiresAt()).isNotNull();
         verify(stateMachine).transition(slot, TimeSlotState.RESERVED, "GUEST");
         verify(timeSlotRepository).save(slot);

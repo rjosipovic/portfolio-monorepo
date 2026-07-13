@@ -24,8 +24,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -51,6 +49,8 @@ class DirectBookingServiceImplTest {
     private AppointmentRepository appointmentRepository;
     @Mock
     private TimeSlotStateMachine timeSlotStateMachine;
+    @Mock
+    private DirectBookingServiceMapper directBookingServiceMapper;
 
     @InjectMocks
     private DirectBookingServiceImpl directBookingService;
@@ -60,16 +60,10 @@ class DirectBookingServiceImplTest {
     void shouldBookWhenSlotInAllowedState(TimeSlotState allowedState) {
         // given
         var timeSlotId = UUID.randomUUID();
-        var slotDate = LocalDate.of(2026, 6, 22);
-        var startTime = LocalTime.of(10, 0);
         var timeSlot = mock(TimeSlot.class);
         var studentId = UUID.randomUUID();
-        var studentName = "Marko Markić";
-        var studentEmail = "marko.markic@example.com";
-        var studentPhone = "+38599123456";
         var student = mock(Student.class);
         var serviceCategoryId = UUID.randomUUID();
-        var serviceCategoryName = "Matematika za osnovnu školu";
         var serviceCategoryPrice = new BigDecimal(35);
         var serviceCategory = mock(ServiceCategory.class);
         var command = DirectBookingCommand.builder()
@@ -77,21 +71,14 @@ class DirectBookingServiceImplTest {
                 .studentId(studentId)
                 .serviceCategoryId(serviceCategoryId)
                 .build();
+        var directBooking = mock(DirectBooking.class);
 
         when(timeSlotRepository.findById(timeSlotId)).thenReturn(Optional.of(timeSlot));
-        when(timeSlot.getId()).thenReturn(timeSlotId);
         when(timeSlot.getState()).thenReturn(allowedState);
-        when(timeSlot.getSlotDate()).thenReturn(slotDate);
-        when(timeSlot.getStartTime()).thenReturn(startTime);
-        when(student.getId()).thenReturn(studentId);
-        when(student.getName()).thenReturn(studentName);
-        when(student.getEmail()).thenReturn(studentEmail);
-        when(student.getPhone()).thenReturn(studentPhone);
         when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
-        when(serviceCategory.getId()).thenReturn(serviceCategoryId);
-        when(serviceCategory.getName()).thenReturn(serviceCategoryName);
         when(serviceCategory.getPrice()).thenReturn(serviceCategoryPrice);
         when(serviceCategoryRepository.findById(serviceCategoryId)).thenReturn(Optional.of(serviceCategory));
+        when(directBookingServiceMapper.toDirectBooking(any(), any(), any(), any())).thenReturn(directBooking);
 
         // when
         var result = directBookingService.book(command);
@@ -111,6 +98,7 @@ class DirectBookingServiceImplTest {
 
         verify(timeSlotStateMachine).transition(timeSlot, TimeSlotState.PRE_BOOKED, "TUTOR");
         verify(timeSlotRepository).save(timeSlot);
+        verify(directBookingServiceMapper).toDirectBooking(any(), any(), any(), any());
 
         assertThat(result).isNotNull();
     }
