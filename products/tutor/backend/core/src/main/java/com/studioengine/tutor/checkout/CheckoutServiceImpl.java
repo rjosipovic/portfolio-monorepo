@@ -1,5 +1,6 @@
 package com.studioengine.tutor.checkout;
 
+import com.studioengine.tutor.benefit.BenefitService;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.ServiceCategory;
 import com.studioengine.tutor.dataaccess.entities.Student;
@@ -37,6 +38,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final TimeSlotStateMachine timeSlotStateMachine;
     private final AppointmentStateMachine appointmentStateMachine;
     private final PaymentService paymentService;
+    private final BenefitService benefitService;
 
     @Override
     @Transactional
@@ -44,25 +46,42 @@ public class CheckoutServiceImpl implements CheckoutService {
         var slot = findReservedSlot(command.getReservedSlotId());
         var category = findCategory(command.getServiceCategoryId());
         var student = findOrCreateStudent(command);
-        var price = category.getPrice();
-        var finalPrice = determineFinalPrice(price);
+        var originalPrice = category.getPrice();
         var sessionNotes = command.getSessionNotes();
+
+        var benefitApplication = benefitService.apply(student, originalPrice);
+        var finalPrice = benefitApplication.getFinalPrice();
+        var benefitApplied = benefitApplication.isApplied()
+                ? Checkout.BenefitApplied.builder()
+                .type(benefitApplication.getType().name())
+                .originalPrice(originalPrice)
+                .finalPrice(benefitApplication.getFinalPrice())
+                .build()
+                : null;
 
         var ctx = CheckoutContext.builder()
                 .slot(slot)
                 .category(category)
                 .student(student)
-                .originalPrice(price)
+                .originalPrice(originalPrice)
                 .finalPrice(finalPrice)
                 .sessionNotes(sessionNotes)
                 .paymentMethodChoice(command.getPaymentMethod())
+                .benefitApplied(benefitApplied)
                 .build();
 
+        Checkout result;
         if (isZeroPrice(finalPrice)) {
-            return handleZeroPriceCheckout(ctx);
+            result = handleZeroPriceCheckout(ctx);
         } else {
-            return handleNonZeroPriceCheckout(ctx);
+            result = handleNonZeroPriceCheckout(ctx);
         }
+
+        // Consume benefit after appointment is successfully created
+        var appointment = appointmentRepository.findById(result.getAppointmentId()).orElseThrow();
+        benefitService.consume(benefitApplication, appointment);
+
+        return result;
     }
 
     private TimeSlot findReservedSlot(UUID slotId) {
@@ -109,8 +128,6 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     private Checkout handleZeroPriceCheckout(CheckoutContext ctx) {
         var slot = ctx.getSlot();
-        var originalPrice = ctx.getOriginalPrice();
-        var finalPrice = ctx.getFinalPrice();
         var initialState = AppointmentState.RESERVED;
 
         var appointment = createAndSaveAppointment(ctx, initialState);
@@ -122,13 +139,9 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         return Checkout.builder()
                 .appointmentId(appointment.getId())
-                .status(initialState)
+                .status(appointment.getState())
                 .message("Benefit applied — no payment required")
-                .benefitApplied(Checkout.BenefitApplied.builder()
-                        .type("FREE_LESSON")
-                        .originalPrice(originalPrice)
-                        .finalPrice(finalPrice)
-                        .build())
+                .benefitApplied(ctx.getBenefitApplied())
                 .build();
     }
 
@@ -145,10 +158,5 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     private boolean isZeroPrice(BigDecimal price) {
         return price.compareTo(BigDecimal.ZERO) == 0;
-    }
-
-    // TODO: benefit application will be added later
-    private BigDecimal determineFinalPrice(BigDecimal price) {
-        return price;
     }
 }

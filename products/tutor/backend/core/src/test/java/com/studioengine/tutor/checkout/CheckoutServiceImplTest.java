@@ -1,9 +1,13 @@
 package com.studioengine.tutor.checkout;
 
+import com.studioengine.tutor.benefit.BenefitApplication;
+import com.studioengine.tutor.benefit.BenefitService;
+import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.ServiceCategory;
 import com.studioengine.tutor.dataaccess.entities.Student;
 import com.studioengine.tutor.dataaccess.entities.TimeSlot;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
+import com.studioengine.tutor.dataaccess.enums.BenefitType;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.ServiceCategoryRepository;
@@ -24,15 +28,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +57,8 @@ class CheckoutServiceImplTest {
     private AppointmentStateMachine appointmentStateMachine;
     @Mock
     private PaymentService paymentService;
+    @Mock
+    private BenefitService benefitService;
 
     @InjectMocks
     private CheckoutServiceImpl checkoutService;
@@ -63,36 +69,55 @@ class CheckoutServiceImplTest {
         // given
         var slotId = UUID.randomUUID();
         var categoryId = UUID.randomUUID();
-        var slot = createReservedSlot(slotId);
-        var category = createCategory(categoryId, new BigDecimal("30.00"));
-        var student = createStudent();
-        var command = defaultCommand(slotId, categoryId, PaymentMethodChoice.STRIPE);
+        var studentEmail = "ana@test.com";
+        var sessionNotes = "Help with integrals";
+        var categoryPrice = new BigDecimal(30);
+
+        var slot = mock(TimeSlot.class);
+        var category = mock(ServiceCategory.class);
+        var student = mock(Student.class);
+        var command = mock(CheckoutCommand.class);
+        var benefitApplication = mock(BenefitApplication.class);
+        var appointment = mock(Appointment.class);
+        var paymentInitiation = mock(PaymentInitiation.class);
+
+        when(command.getReservedSlotId()).thenReturn(slotId);
+        when(command.getServiceCategoryId()).thenReturn(categoryId);
+        when(command.getSessionNotes()).thenReturn(sessionNotes);
+        when(command.getPaymentMethod()).thenReturn(PaymentMethodChoice.STRIPE);
+        when(command.getGuestEmail()).thenReturn(studentEmail);
+        when(slot.getState()).thenReturn(TimeSlotState.RESERVED);
+        when(category.getPrice()).thenReturn(categoryPrice);
+        when(benefitApplication.isApplied()).thenReturn(false);
+        when(benefitApplication.getFinalPrice()).thenReturn(categoryPrice);
 
         when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
         when(serviceCategoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(studentRepository.findByEmail("ana@test.com")).thenReturn(Optional.of(student));
-        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(paymentService.initPayment(any())).thenReturn(
-                PaymentInitiation.builder()
-                        .appointmentId(UUID.randomUUID())
-                        .resultingState(AppointmentState.RESERVED)
-                        .build()
-        );
+        when(studentRepository.findByEmail(studentEmail)).thenReturn(Optional.of(student));
+        when(benefitService.apply(student, categoryPrice)).thenReturn(benefitApplication);
+        when(appointmentRepository.save(any())).thenReturn(appointment);
+        when(paymentService.initPayment(any())).thenReturn(paymentInitiation);
+        when(appointmentRepository.findById(any())).thenReturn(Optional.of(appointment));
 
         // when
         checkoutService.checkout(command);
 
         // then
+        verify(timeSlotRepository).findByIdForUpdate(slotId);
+        verify(serviceCategoryRepository).findById(categoryId);
+        verify(studentRepository).findByEmail(studentEmail);
+        verify(benefitService).apply(student, categoryPrice);
+        verify(appointmentRepository).save(any(Appointment.class));
+
         var captor = ArgumentCaptor.forClass(PaymentCommand.class);
         verify(paymentService).initPayment(captor.capture());
 
         var paymentCmd = captor.getValue();
         assertThat(paymentCmd.getPaymentMethod()).isEqualTo(PaymentMethodChoice.STRIPE);
-        assertThat(paymentCmd.getAppointment().getServiceCategory()).isEqualTo(category);
-        assertThat(paymentCmd.getAppointment().getStudent()).isEqualTo(student);
-        assertThat(paymentCmd.getAppointment().getTimeSlot()).isEqualTo(slot);
-        assertThat(paymentCmd.getAppointment().getFinalPrice()).isEqualByComparingTo(new BigDecimal("30.00"));
-        assertThat(paymentCmd.getAppointment().getState()).isEqualTo(AppointmentState.RESERVED);
+        assertThat(paymentCmd.getAppointment()).isEqualTo(appointment);
+
+        verify(appointmentRepository).findById(any());
+        verify(benefitService).consume(benefitApplication, appointment);
     }
 
     // --- Happy path: Bank transfer ---
@@ -101,36 +126,111 @@ class CheckoutServiceImplTest {
         // given
         var slotId = UUID.randomUUID();
         var categoryId = UUID.randomUUID();
-        var slot = createReservedSlot(slotId);
-        var category = createCategory(categoryId, new BigDecimal("30.00"));
-        var student = createStudent();
-        var command = defaultCommand(slotId, categoryId, PaymentMethodChoice.BANK_TRANSFER);
+        var studentEmail = "ana@test.com";
+        var sessionNotes = "Help with integrals";
+        var categoryPrice = new BigDecimal(30);
+
+        var slot = mock(TimeSlot.class);
+        var category = mock(ServiceCategory.class);
+        var student = mock(Student.class);
+        var command = mock(CheckoutCommand.class);
+        var benefitApplication = mock(BenefitApplication.class);
+        var appointment = mock(Appointment.class);
+        var paymentInitiation = mock(PaymentInitiation.class);
+
+        when(command.getReservedSlotId()).thenReturn(slotId);
+        when(command.getServiceCategoryId()).thenReturn(categoryId);
+        when(command.getSessionNotes()).thenReturn(sessionNotes);
+        when(command.getPaymentMethod()).thenReturn(PaymentMethodChoice.BANK_TRANSFER);
+        when(command.getGuestEmail()).thenReturn(studentEmail);
+        when(slot.getState()).thenReturn(TimeSlotState.RESERVED);
+        when(category.getPrice()).thenReturn(categoryPrice);
+        when(benefitApplication.isApplied()).thenReturn(false);
+        when(benefitApplication.getFinalPrice()).thenReturn(categoryPrice);
 
         when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
         when(serviceCategoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(studentRepository.findByEmail("ana@test.com")).thenReturn(Optional.of(student));
-        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(paymentService.initPayment(any())).thenReturn(
-                PaymentInitiation.builder()
-                        .appointmentId(UUID.randomUUID())
-                        .resultingState(AppointmentState.PENDING_PAYMENT)
-                        .build()
-        );
+        when(studentRepository.findByEmail(studentEmail)).thenReturn(Optional.of(student));
+        when(benefitService.apply(student, categoryPrice)).thenReturn(benefitApplication);
+        when(appointmentRepository.save(any())).thenReturn(appointment);
+
+        when(paymentService.initPayment(any())).thenReturn(paymentInitiation);
+        when(appointmentRepository.findById(any())).thenReturn(Optional.of(appointment));
 
         // when
         checkoutService.checkout(command);
 
         // then
+        verify(timeSlotRepository).findByIdForUpdate(slotId);
+        verify(serviceCategoryRepository).findById(categoryId);
+        verify(studentRepository).findByEmail(studentEmail);
+        verify(benefitService).apply(student, categoryPrice);
+        verify(appointmentRepository).save(any(Appointment.class));
         var captor = ArgumentCaptor.forClass(PaymentCommand.class);
         verify(paymentService).initPayment(captor.capture());
 
         var paymentCmd = captor.getValue();
         assertThat(paymentCmd.getPaymentMethod()).isEqualTo(PaymentMethodChoice.BANK_TRANSFER);
-        assertThat(paymentCmd.getAppointment().getServiceCategory()).isEqualTo(category);
-        assertThat(paymentCmd.getAppointment().getStudent()).isEqualTo(student);
-        assertThat(paymentCmd.getAppointment().getTimeSlot()).isEqualTo(slot);
-        assertThat(paymentCmd.getAppointment().getFinalPrice()).isEqualByComparingTo(new BigDecimal("30.00"));
-        assertThat(paymentCmd.getAppointment().getState()).isEqualTo(AppointmentState.RESERVED);
+        assertThat(paymentCmd.getAppointment()).isEqualTo(appointment);
+
+        verify(appointmentRepository).findById(any());
+        verify(benefitService).consume(benefitApplication, appointment);
+    }
+
+    // --- Zero Price checkout ---
+    @Test
+    void shouldCheckoutWithZeroPrice() {
+        // given
+        var slotId = UUID.randomUUID();
+        var categoryId = UUID.randomUUID();
+        var appointmentId = UUID.randomUUID();
+        var studentEmail = "ana@test.com";
+        var sessionNotes = "Help with integrals";
+        var categoryPrice = new BigDecimal(30);
+
+        var slot = mock(TimeSlot.class);
+        var category = mock(ServiceCategory.class);
+        var student = mock(Student.class);
+        var command = mock(CheckoutCommand.class);
+        var benefitApplication = mock(BenefitApplication.class);
+        var appointment = mock(Appointment.class);
+
+        when(command.getReservedSlotId()).thenReturn(slotId);
+        when(command.getServiceCategoryId()).thenReturn(categoryId);
+        when(command.getSessionNotes()).thenReturn(sessionNotes);
+        when(command.getPaymentMethod()).thenReturn(PaymentMethodChoice.STRIPE);
+        when(command.getGuestEmail()).thenReturn(studentEmail);
+        when(slot.getState()).thenReturn(TimeSlotState.RESERVED);
+        when(category.getPrice()).thenReturn(categoryPrice);
+        when(benefitApplication.isApplied()).thenReturn(true);
+        when(benefitApplication.getType()).thenReturn(BenefitType.FREE_LESSON);
+        when(benefitApplication.getFinalPrice()).thenReturn(BigDecimal.ZERO);
+        when(appointment.getId()).thenReturn(appointmentId);
+        when(appointment.getState()).thenReturn(AppointmentState.PAID);
+
+        when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
+        when(serviceCategoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(studentRepository.findByEmail(studentEmail)).thenReturn(Optional.of(student));
+        when(benefitService.apply(student, categoryPrice)).thenReturn(benefitApplication);
+        when(appointmentRepository.save(any(Appointment.class))).thenReturn(appointment);
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+        // when
+        checkoutService.checkout(command);
+
+        // then
+        verify(timeSlotRepository).findByIdForUpdate(slotId);
+        verify(serviceCategoryRepository).findById(categoryId);
+        verify(studentRepository).findByEmail(studentEmail);
+
+        verify(appointmentRepository, times(2)).save(any(Appointment.class));
+        verify(appointmentStateMachine).transition(appointment, AppointmentState.PAID, "SYSTEM_ZERO_PRICE");
+        verify(timeSlotStateMachine).transition(slot, TimeSlotState.BOOKED, "SYSTEM_ZERO_PRICE");
+        verify(timeSlotRepository).save(slot);
+
+        verify(appointmentRepository).findById(any());
+        verify(benefitService).consume(benefitApplication, appointment);
+        verify(paymentService, never()).initPayment(any());
     }
 
     // --- New student created ---
@@ -139,30 +239,68 @@ class CheckoutServiceImplTest {
         // given
         var slotId = UUID.randomUUID();
         var categoryId = UUID.randomUUID();
-        var slot = createReservedSlot(slotId);
-        var category = createCategory(categoryId, new BigDecimal("30.00"));
-        var command = defaultCommand(slotId, categoryId, PaymentMethodChoice.STRIPE);
+        var studentName = "Ana Kovačević";
+        var studentEmail = "ana@test.com";
+        var studentPhone = "+385 91 234 5678";
+        var sessionNotes = "Help with integrals";
+        var categoryPrice = new BigDecimal(30);
+
+        var slot = mock(TimeSlot.class);
+        var category = mock(ServiceCategory.class);
+        var student = mock(Student.class);
+        var command = mock(CheckoutCommand.class);
+        var benefitApplication = mock(BenefitApplication.class);
+        var appointment = mock(Appointment.class);
+        var paymentInitiation = mock(PaymentInitiation.class);
+
+        when(command.getReservedSlotId()).thenReturn(slotId);
+        when(command.getServiceCategoryId()).thenReturn(categoryId);
+        when(command.getSessionNotes()).thenReturn(sessionNotes);
+        when(command.getPaymentMethod()).thenReturn(PaymentMethodChoice.STRIPE);
+        when(command.getGuestName()).thenReturn(studentName);
+        when(command.getGuestEmail()).thenReturn(studentEmail);
+        when(command.getGuestPhone()).thenReturn(studentPhone);
+        when(slot.getState()).thenReturn(TimeSlotState.RESERVED);
+        when(category.getPrice()).thenReturn(categoryPrice);
+        when(benefitApplication.isApplied()).thenReturn(false);
+        when(benefitApplication.getFinalPrice()).thenReturn(categoryPrice);
 
         when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
         when(serviceCategoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
-        when(studentRepository.findByEmail("ana@test.com")).thenReturn(Optional.empty());
-        when(studentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(paymentService.initPayment(any())).thenReturn(
-                PaymentInitiation.builder()
-                        .appointmentId(UUID.randomUUID())
-                        .resultingState(AppointmentState.RESERVED)
-                        .build()
-        );
+        when(studentRepository.findByEmail(studentEmail)).thenReturn(Optional.empty());
+        when(studentRepository.save(any())).thenReturn(student);
+        when(benefitService.apply(student, categoryPrice)).thenReturn(benefitApplication);
+        when(appointmentRepository.save(any())).thenReturn(appointment);
+        when(paymentService.initPayment(any())).thenReturn(paymentInitiation);
+        when(appointmentRepository.findById(any())).thenReturn(Optional.of(appointment));
 
         // when
         checkoutService.checkout(command);
 
         // then
-        var captor = ArgumentCaptor.forClass(Student.class);
-        verify(studentRepository).save(captor.capture());
-        assertThat(captor.getValue().getEmail()).isEqualTo("ana@test.com");
-        assertThat(captor.getValue().getName()).isEqualTo("Ana Kovačević");
+        verify(timeSlotRepository).findByIdForUpdate(slotId);
+        verify(serviceCategoryRepository).findById(categoryId);
+        verify(studentRepository).findByEmail(studentEmail);
+
+        var studentCaptor = ArgumentCaptor.forClass(Student.class);
+        verify(studentRepository).save(studentCaptor.capture());
+        var studentToSave = studentCaptor.getValue();
+        assertThat(studentToSave.getName()).isEqualTo(studentName);
+        assertThat(studentToSave.getEmail()).isEqualTo(studentEmail);
+        assertThat(studentToSave.getPhone()).isEqualTo(studentPhone);
+
+        verify(benefitService).apply(student, categoryPrice);
+        verify(appointmentRepository).save(any(Appointment.class));
+
+        var captor = ArgumentCaptor.forClass(PaymentCommand.class);
+        verify(paymentService).initPayment(captor.capture());
+
+        var paymentCmd = captor.getValue();
+        assertThat(paymentCmd.getPaymentMethod()).isEqualTo(PaymentMethodChoice.STRIPE);
+        assertThat(paymentCmd.getAppointment()).isEqualTo(appointment);
+
+        verify(appointmentRepository).findById(any());
+        verify(benefitService).consume(benefitApplication, appointment);
     }
 
     // --- Slot not found ---
@@ -170,8 +308,9 @@ class CheckoutServiceImplTest {
     void shouldThrowWhenSlotNotFound() {
         // given
         var slotId = UUID.randomUUID();
-        var command = defaultCommand(slotId, UUID.randomUUID(), PaymentMethodChoice.STRIPE);
+        var command = mock(CheckoutCommand.class);
 
+        when(command.getReservedSlotId()).thenReturn(slotId);
         when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.empty());
 
         // when / then
@@ -185,8 +324,11 @@ class CheckoutServiceImplTest {
     void shouldThrowWhenSlotNotReserved() {
         // given
         var slotId = UUID.randomUUID();
-        var slot = createSlotInState(slotId, TimeSlotState.AVAILABLE);
-        var command = defaultCommand(slotId, UUID.randomUUID(), PaymentMethodChoice.STRIPE);
+        var slot = mock(TimeSlot.class);
+        var command = mock(CheckoutCommand.class);
+
+        when(command.getReservedSlotId()).thenReturn(slotId);
+        when(slot.getState()).thenReturn(TimeSlotState.AVAILABLE);
 
         when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
 
@@ -202,9 +344,12 @@ class CheckoutServiceImplTest {
         // given
         var slotId = UUID.randomUUID();
         var categoryId = UUID.randomUUID();
-        var slot = createReservedSlot(slotId);
-        var command = defaultCommand(slotId, categoryId, PaymentMethodChoice.STRIPE);
+        var slot = mock(TimeSlot.class);
+        var command = mock(CheckoutCommand.class);
 
+        when(command.getReservedSlotId()).thenReturn(slotId);
+        when(command.getServiceCategoryId()).thenReturn(categoryId);
+        when(slot.getState()).thenReturn(TimeSlotState.RESERVED);
         when(timeSlotRepository.findByIdForUpdate(slotId)).thenReturn(Optional.of(slot));
         when(serviceCategoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
@@ -225,40 +370,5 @@ class CheckoutServiceImplTest {
                 .sessionNotes("Help with integrals")
                 .paymentMethod(method)
                 .build();
-    }
-
-    private TimeSlot createReservedSlot(UUID id) {
-        return createSlotInState(id, TimeSlotState.RESERVED);
-    }
-
-    private TimeSlot createSlotInState(UUID id, TimeSlotState state) {
-        var slot = TimeSlot.create(LocalDate.of(2026, 6, 20), LocalTime.of(10, 0));
-        if (state != TimeSlotState.DRAFT) {
-            slot.transitionTo(state);
-        }
-        setId(slot, id);
-        return slot;
-    }
-
-    private ServiceCategory createCategory(UUID id, BigDecimal price) {
-        var category = ServiceCategory.create("Math Lesson", "Algebra basics", price, "EUR");
-        setId(category, id);
-        return category;
-    }
-
-    private Student createStudent() {
-        var student = Student.create("Ana Kovačević", "ana@test.com", "+385 91 234 5678");
-        setId(student, UUID.randomUUID());
-        return student;
-    }
-
-    private void setId(Object entity, UUID id) {
-        try {
-            var field = entity.getClass().getDeclaredField("id");
-            field.setAccessible(true);
-            field.set(entity, id);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

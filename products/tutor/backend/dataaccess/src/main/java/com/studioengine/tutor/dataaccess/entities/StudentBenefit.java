@@ -60,7 +60,7 @@ public class StudentBenefit {
     public static StudentBenefit create(Student student, BenefitType type, BigDecimal value, String note) {
         if (Objects.isNull(student)) throw new IllegalArgumentException("student must not be null");
         if (Objects.isNull(type)) throw new IllegalArgumentException("type must not be null");
-        if (Objects.isNull(value)) throw new IllegalArgumentException("value must not be null");
+        if (type != BenefitType.FREE_LESSON && (Objects.isNull(value) || value.compareTo(BigDecimal.ZERO) <= 0 )) throw new IllegalArgumentException("value is required for " + type);
         var entity = new StudentBenefit();
         entity.student = student;
         entity.type = type;

@@ -3,8 +3,10 @@ package com.studioengine.tutor.student;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.Student;
 import com.studioengine.tutor.dataaccess.entities.StudentNote;
+import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+@Mapper(componentModel = "spring")
 public interface StudentServiceMapper {
 
     @Mapping(target = "metrics", source = "metrics")

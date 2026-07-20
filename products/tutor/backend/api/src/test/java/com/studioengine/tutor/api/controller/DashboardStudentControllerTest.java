@@ -1,6 +1,8 @@
 package com.studioengine.tutor.api.controller;
 
 import com.studioengine.tutor.api.dto.student.AppointmentHistoryResponse;
+import com.studioengine.tutor.api.dto.student.AssignBenefitRequest;
+import com.studioengine.tutor.api.dto.student.BenefitResponse;
 import com.studioengine.tutor.api.dto.student.CreateStudentRequest;
 import com.studioengine.tutor.api.dto.student.NoteRequest;
 import com.studioengine.tutor.api.dto.student.NoteResponse;
@@ -8,7 +10,12 @@ import com.studioengine.tutor.api.dto.student.StudentProfileResponse;
 import com.studioengine.tutor.api.dto.student.UpdateStudentRequest;
 import com.studioengine.tutor.api.dto.summary.StudentSummary;
 import com.studioengine.tutor.api.mapper.StudentMapper;
+import com.studioengine.tutor.benefit.AssignBenefitCommand;
+import com.studioengine.tutor.benefit.AssignedBenefit;
+import com.studioengine.tutor.benefit.BenefitEntry;
+import com.studioengine.tutor.benefit.BenefitService;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
+import com.studioengine.tutor.dataaccess.enums.BenefitType;
 import com.studioengine.tutor.errors.ErrorCode;
 import com.studioengine.tutor.errors.ErrorResponse;
 import com.studioengine.tutor.errors.GlobalExceptionHandler;
@@ -24,6 +31,7 @@ import com.studioengine.tutor.student.StudentService;
 import com.studioengine.tutor.student.UpdateNoteCommand;
 import com.studioengine.tutor.student.UpdateStudentCommand;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +43,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -59,6 +68,9 @@ class DashboardStudentControllerTest {
     private StudentService studentService;
 
     @Mock
+    private BenefitService benefitService;
+
+    @Mock
     private StudentMapper studentMapper;
 
     @InjectMocks
@@ -75,6 +87,9 @@ class DashboardStudentControllerTest {
     private JacksonTester<NoteRequest> noteRequestJson;
     private JacksonTester<NoteResponse> noteResponseJson;
     private JacksonTester<List<NoteResponse>> noteResponseListJson;
+    private JacksonTester<AssignBenefitRequest> assignBenefitRequestJson;
+    private JacksonTester<BenefitResponse> benefitResponseJson;
+    private JacksonTester<List<BenefitResponse>> benefitResponseListJson;
 
     @BeforeEach
     void setUp() {
@@ -85,658 +100,769 @@ class DashboardStudentControllerTest {
                 .build();
     }
 
-    // GET dashboard/students
-    @Test
-    void shouldReturnSearchResults() throws Exception {
-        // given
-        var query = "ivan";
-        var studentId = UUID.randomUUID();
-        var studentName = "Marko Markić";
-        var studentEmail = "marko.markic@gmail.com";
-        var studentPhone = "+38599123456";
-        var student = mock(StudentSearchResult.class);
-        var students = List.of(student);
-        when(studentService.search(query)).thenReturn(students);
+    @Nested
+    class StudentCrudTests {
+        // GET dashboard/students
+        @Test
+        void shouldReturnSearchResults() throws Exception {
+            // given
+            var query = "ivan";
+            var studentId = UUID.randomUUID();
+            var studentName = "Marko Markić";
+            var studentEmail = "marko.markic@gmail.com";
+            var studentPhone = "+38599123456";
+            var student = mock(StudentSearchResult.class);
+            var students = List.of(student);
+            when(studentService.search(query)).thenReturn(students);
 
-        var studentSummary = StudentSummary.builder()
-                        .id(studentId)
-                        .name(studentName)
-                        .email(studentEmail)
-                        .phone(studentPhone)
-                .build();
-        when(studentMapper.toStudentSummary(student)).thenReturn(studentSummary);
+            var studentSummary = StudentSummary.builder()
+                    .id(studentId)
+                    .name(studentName)
+                    .email(studentEmail)
+                    .phone(studentPhone)
+                    .build();
+            when(studentMapper.toStudentSummary(student)).thenReturn(studentSummary);
 
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students")
-                .contentType(MediaType.APPLICATION_JSON)
-                        .queryParam("query", query))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .queryParam("query", query))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
 
-        // then
-        verify(studentService).search(query);
-        verify(studentMapper).toStudentSummary(student);
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(studentSummaryJson.write(List.of(studentSummary)).getJson());
+            // then
+            verify(studentService).search(query);
+            verify(studentMapper).toStudentSummary(student);
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(studentSummaryJson.write(List.of(studentSummary)).getJson());
+        }
+
+        @Test
+        void shouldReturnEmptySearchResults() throws Exception {
+            // given
+            var query = "ivan";
+            when(studentService.search(query)).thenReturn(List.of());
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .queryParam("query", query))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentService).search(query);
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(studentSummaryJson.write(List.of()).getJson());
+        }
+
+        // POST dashboard/students
+
+        @Test
+        void shouldCreateStudent() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+            var name = "Marko Markić";
+            var email = "marko.markic@gmail.com";
+            var phone = "+38599123456";
+            var createStudentRequest = CreateStudentRequest.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            var createStudentCommand = CreateStudentCommand.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toCreateStudentCommand(createStudentRequest)).thenReturn(createStudentCommand);
+
+            var studentProfile = StudentProfile.builder()
+                    .id(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentService.create(createStudentCommand)).thenReturn(studentProfile);
+
+            var studentProfileResponse = StudentProfileResponse.builder()
+                    .id(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toProfileResponse(studentProfile)).thenReturn(studentProfileResponse);
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/students")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(createStudentRequestJson.write(createStudentRequest).getJson()))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toCreateStudentCommand(createStudentRequest);
+            verify(studentService).create(createStudentCommand);
+            verify(studentMapper).toProfileResponse(studentProfile);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(studentProfileResponseJson.write(studentProfileResponse).getJson());
+            assertThat(response.getHeader("Location")).endsWith("/api/v1/dashboard/students/%s".formatted(id));
+        }
+
+        @Test
+        void shouldNotCreateStudentWhenEmailNotUnique() throws Exception {
+            // given
+            var name = "Marko Markić";
+            var email = "marko.markic@gmail.com";
+            var phone = "+38599123456";
+            var createStudentRequest = CreateStudentRequest.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            var createStudentCommand = CreateStudentCommand.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toCreateStudentCommand(createStudentRequest)).thenReturn(createStudentCommand);
+
+            var reason = "Email already in use: %s".formatted(email);
+            when(studentService.create(createStudentCommand)).thenThrow(new EmailAlreadyInUseException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.EMAIL_ALREADY_IN_USE.getMessage())
+                    .code(ErrorCode.EMAIL_ALREADY_IN_USE.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/students")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(createStudentRequestJson.write(createStudentRequest).getJson()))
+                    .andExpect(status().isBadRequest())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toCreateStudentCommand(createStudentRequest);
+            verify(studentService).create(createStudentCommand);
+            verify(studentMapper, never()).toProfileResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
+
+        @Test
+        void shouldUpdateStudent() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+            var name = "Marko Markić";
+            var email = "marko.markic@gmail.com";
+            var phone = "+38599123456";
+            var updateStudentRequest = UpdateStudentRequest.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            var updateStudentCommand = UpdateStudentCommand.builder()
+                    .studentId(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toUpdateStudentCommand(updateStudentRequest, id)).thenReturn(updateStudentCommand);
+
+            var studentProfile = StudentProfile.builder()
+                    .id(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentService.update(updateStudentCommand)).thenReturn(studentProfile);
+
+            var studentProfileResponse = StudentProfileResponse.builder()
+                    .id(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toProfileResponse(studentProfile)).thenReturn(studentProfileResponse);
+
+            // when
+            var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(updateStudentRequestJson.write(updateStudentRequest).getJson()))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toUpdateStudentCommand(updateStudentRequest, id);
+            verify(studentService).update(updateStudentCommand);
+            verify(studentMapper).toProfileResponse(studentProfile);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(studentProfileResponseJson.write(studentProfileResponse).getJson());
+        }
+
+        @Test
+        void shouldNotUpdateStudentWhenStudentNotExists() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+            var name = "Marko Markić";
+            var email = "marko.markic@gmail.com";
+            var phone = "+38599123456";
+            var updateStudentRequest = UpdateStudentRequest.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            var updateStudentCommand = UpdateStudentCommand.builder()
+                    .studentId(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toUpdateStudentCommand(updateStudentRequest, id)).thenReturn(updateStudentCommand);
+
+            var reason = "Student not found: %s".formatted(id);
+            when(studentService.update(updateStudentCommand)).thenThrow(new ResourceNotFoundException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(updateStudentRequestJson.write(updateStudentRequest).getJson()))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toUpdateStudentCommand(updateStudentRequest, id);
+            verify(studentService).update(updateStudentCommand);
+            verify(studentMapper, never()).toProfileResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
+
+        @Test
+        void shouldNotUpdateStudentWhenEmailNotUnique() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+            var name = "Marko Markić";
+            var email = "marko.markic@gmail.com";
+            var phone = "+38599123456";
+            var updateStudentRequest = UpdateStudentRequest.builder()
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            var updateStudentCommand = UpdateStudentCommand.builder()
+                    .studentId(id)
+                    .name(name)
+                    .email(email)
+                    .phone(phone)
+                    .build();
+            when(studentMapper.toUpdateStudentCommand(updateStudentRequest, id)).thenReturn(updateStudentCommand);
+
+            var reason = "Email already in use: %s".formatted(email);
+            when(studentService.update(updateStudentCommand)).thenThrow(new EmailAlreadyInUseException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.EMAIL_ALREADY_IN_USE.getMessage())
+                    .code(ErrorCode.EMAIL_ALREADY_IN_USE.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}", id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(updateStudentRequestJson.write(updateStudentRequest).getJson()))
+                    .andExpect(status().isBadRequest())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toUpdateStudentCommand(updateStudentRequest, id);
+            verify(studentService).update(updateStudentCommand);
+            verify(studentMapper, never()).toProfileResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
     }
 
-    @Test
-    void shouldReturnEmptySearchResults() throws Exception {
-        // given
-        var query = "ivan";
-        when(studentService.search(query)).thenReturn(List.of());
+    @Nested
+    class AppointmentHistoryTests {
+        @Test
+        void shouldGetAppointmentHistory() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+            var appointmentId = UUID.randomUUID();
+            var date = LocalDate.of(2026, 6, 22);
+            var startTime = LocalTime.of(12, 0);
+            var serviceCategory = "Pripreme za maturu";
+            var appointmentState = AppointmentState.COMPLETED;
+            var appointment = AppointmentHistory.builder()
+                    .appointmentId(appointmentId)
+                    .date(date)
+                    .startTime(startTime)
+                    .serviceCategoryName(serviceCategory)
+                    .state(appointmentState)
+                    .build();
+            var appointments = List.of(appointment);
+            when(studentService.getAppointmentHistory(id)).thenReturn(appointments);
 
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .queryParam("query", query))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
+            var appointmentHistoryResponse = AppointmentHistoryResponse.builder()
+                    .appointmentId(appointmentId)
+                    .date(date)
+                    .startTime(startTime)
+                    .serviceCategoryName(serviceCategory)
+                    .state(appointmentState.name())
+                    .build();
+            when(studentMapper.toAppointmentHistoryResponse(appointment)).thenReturn(appointmentHistoryResponse);
 
-        // then
-        verify(studentService).search(query);
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(studentSummaryJson.write(List.of()).getJson());
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/appointments", id)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentService).getAppointmentHistory(id);
+            verify(studentMapper).toAppointmentHistoryResponse(appointment);
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(appointmentHistoryResponseListJson.write(List.of(appointmentHistoryResponse)).getJson());
+        }
+
+        @Test
+        void shouldGetEmptyAppointmentHistory() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+
+            when(studentService.getAppointmentHistory(id)).thenReturn(List.of());
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/appointments", id)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentService).getAppointmentHistory(id);
+            verify(studentMapper, never()).toAppointmentHistoryResponse(any());
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(appointmentHistoryResponseListJson.write(List.of()).getJson());
+        }
+
+        @Test
+        void shouldNotGetAppointmentHistoryWhenStudentNotExists() throws Exception {
+            // given
+            var id = UUID.randomUUID();
+
+            var reason = "Student not found: %s".formatted(id);
+            when(studentService.getAppointmentHistory(id)).thenThrow(new ResourceNotFoundException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/appointments", id)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentService).getAppointmentHistory(id);
+            verify(studentMapper, never()).toAppointmentHistoryResponse(any());
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
     }
 
-    // POST dashboard/students
+    @Nested
+    class NoteTests {
+        @Test
+        void shouldAddNote() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var noteId = UUID.randomUUID();
+            var note = "Napomena o studentu";
+            var noteRequest = NoteRequest.builder()
+                    .content(note)
+                    .build();
+            var noteCommand = AddNoteCommand.builder()
+                    .studentId(studentId)
+                    .content(note)
+                    .build();
+            when(studentMapper.toAddNoteCommand(noteRequest, studentId)).thenReturn(noteCommand);
 
-    @Test
-    void shouldCreateStudent() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-        var name = "Marko Markić";
-        var email = "marko.markic@gmail.com";
-        var phone = "+38599123456";
-        var createStudentRequest = CreateStudentRequest.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        var createStudentCommand = CreateStudentCommand.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toCreateStudentCommand(createStudentRequest)).thenReturn(createStudentCommand);
+            var studentNote = NoteEntry.builder()
+                    .id(noteId)
+                    .content(note)
+                    .build();
+            when(studentService.addNote(noteCommand)).thenReturn(studentNote);
 
-        var studentProfile = StudentProfile.builder()
-                .id(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentService.create(createStudentCommand)).thenReturn(studentProfile);
+            var noteResponse = NoteResponse.builder()
+                    .content(note)
+                    .build();
+            when(studentMapper.toNoteResponse(studentNote)).thenReturn(noteResponse);
 
-        var studentProfileResponse = StudentProfileResponse.builder()
-                .id(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toProfileResponse(studentProfile)).thenReturn(studentProfileResponse);
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/students/{id}/notes", studentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(noteRequestJson.write(noteRequest).getJson()))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse();
 
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/students")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createStudentRequestJson.write(createStudentRequest).getJson()))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse();
+            // then
+            verify(studentMapper).toAddNoteCommand(noteRequest, studentId);
+            verify(studentService).addNote(noteCommand);
+            verify(studentMapper).toNoteResponse(studentNote);
 
-        // then
-        verify(studentMapper).toCreateStudentCommand(createStudentRequest);
-        verify(studentService).create(createStudentCommand);
-        verify(studentMapper).toProfileResponse(studentProfile);
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(noteResponseJson.write(noteResponse).getJson());
+        }
 
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(studentProfileResponseJson.write(studentProfileResponse).getJson());
-        assertThat(response.getHeader("Location")).endsWith("/api/v1/dashboard/students/%s".formatted(id));
+        @Test
+        void shouldNotAddNoteWhenStudentNotExists() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var note = "Napomena o studentu";
+            var noteRequest = NoteRequest.builder()
+                    .content(note)
+                    .build();
+            var noteCommand = AddNoteCommand.builder()
+                    .studentId(studentId)
+                    .content(note)
+                    .build();
+            when(studentMapper.toAddNoteCommand(noteRequest, studentId)).thenReturn(noteCommand);
+
+            var reason = "Student not found: %s".formatted(studentId);
+            when(studentService.addNote(noteCommand)).thenThrow(new ResourceNotFoundException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/students/{id}/notes", studentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(noteRequestJson.write(noteRequest).getJson()))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toAddNoteCommand(noteRequest, studentId);
+            verify(studentService).addNote(noteCommand);
+            verify(studentMapper, never()).toNoteResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
+
+        @Test
+        void shouldUpdateNote() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var noteId = UUID.randomUUID();
+            var note = "Nova napomena o studentu";
+            var noteRequest = NoteRequest.builder()
+                    .content(note)
+                    .build();
+            var noteCommand = UpdateNoteCommand.builder()
+                    .studentId(studentId)
+                    .noteId(noteId)
+                    .content(note)
+                    .build();
+            when(studentMapper.toUpdateNoteCommand(noteRequest, studentId, noteId)).thenReturn(noteCommand);
+
+            var studentNote = NoteEntry.builder()
+                    .id(noteId)
+                    .content(note)
+                    .build();
+            when(studentService.updateNote(noteCommand)).thenReturn(studentNote);
+
+            var noteResponse = NoteResponse.builder()
+                    .content(note)
+                    .build();
+            when(studentMapper.toNoteResponse(studentNote)).thenReturn(noteResponse);
+
+            // when
+            var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}/notes/{noteId}", studentId, noteId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(noteRequestJson.write(noteRequest).getJson()))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toUpdateNoteCommand(noteRequest, studentId, noteId);
+            verify(studentService).updateNote(noteCommand);
+            verify(studentMapper).toNoteResponse(studentNote);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(noteResponseJson.write(noteResponse).getJson());
+        }
+
+        @Test
+        void shouldNotUpdateNoteWhenStudentNotExists() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var noteId = UUID.randomUUID();
+            var note = "Nova napomena o studentu";
+            var noteRequest = NoteRequest.builder()
+                    .content(note)
+                    .build();
+            var noteCommand = UpdateNoteCommand.builder()
+                    .studentId(studentId)
+                    .noteId(noteId)
+                    .content(note)
+                    .build();
+            when(studentMapper.toUpdateNoteCommand(noteRequest, studentId, noteId)).thenReturn(noteCommand);
+
+            var reason = "Student not found: %s".formatted(studentId);
+            when(studentService.updateNote(noteCommand)).thenThrow(new ResourceNotFoundException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}/notes/{noteId}", studentId, noteId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(noteRequestJson.write(noteRequest).getJson()))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toUpdateNoteCommand(noteRequest, studentId, noteId);
+            verify(studentService).updateNote(noteCommand);
+            verify(studentMapper, never()).toNoteResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
+
+        @Test
+        void shouldNotUpdateNoteWhenNoteNotExistsOrInvalidOwnership() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var noteId = UUID.randomUUID();
+            var note = "Nova napomena o studentu";
+            var noteRequest = NoteRequest.builder()
+                    .content(note)
+                    .build();
+            var noteCommand = UpdateNoteCommand.builder()
+                    .studentId(studentId)
+                    .noteId(noteId)
+                    .content(note)
+                    .build();
+            when(studentMapper.toUpdateNoteCommand(noteRequest, studentId, noteId)).thenReturn(noteCommand);
+
+            var reason = "Note not found: %s".formatted(noteId);
+            when(studentService.updateNote(noteCommand)).thenThrow(new ResourceNotFoundException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}/notes/{noteId}", studentId, noteId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(noteRequestJson.write(noteRequest).getJson()))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toUpdateNoteCommand(noteRequest, studentId, noteId);
+            verify(studentService).updateNote(noteCommand);
+            verify(studentMapper, never()).toNoteResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
+
+        @Test
+        void shouldGetNotes() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var noteId = UUID.randomUUID();
+            var content = "Napomena";
+            var createdAt = OffsetDateTime.now().minusDays(1);
+            var updatedAt = OffsetDateTime.now().minusDays(1);
+            var noteEntry = NoteEntry.builder()
+                    .id(noteId)
+                    .content(content)
+                    .createdAt(createdAt)
+                    .updatedAt(updatedAt)
+                    .build();
+            var notes = List.of(noteEntry);
+            when(studentService.getNotes(studentId)).thenReturn(notes);
+
+            var noteResponse = NoteResponse.builder()
+                    .id(noteId)
+                    .content(content)
+                    .createdAt(createdAt)
+                    .updatedAt(updatedAt)
+                    .build();
+            when(studentMapper.toNoteResponse(noteEntry)).thenReturn(noteResponse);
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/notes", studentId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentService).getNotes(studentId);
+            verify(studentMapper).toNoteResponse(noteEntry);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(noteResponseListJson.write(List.of(noteResponse)).getJson());
+        }
+
+        @Test
+        void shouldNotGetNotesWhenStudentNotExists() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+
+            var reason = "Student not found: %s".formatted(studentId);
+            when(studentService.getNotes(studentId)).thenThrow(new ResourceNotFoundException(reason));
+
+            var errorResponse = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/notes", studentId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentService).getNotes(studentId);
+            verify(studentMapper, never()).toNoteResponse(any());
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
     }
 
-    @Test
-    void shouldNotCreateStudentWhenEmailNotUnique() throws Exception {
-        // given
-        var name = "Marko Markić";
-        var email = "marko.markic@gmail.com";
-        var phone = "+38599123456";
-        var createStudentRequest = CreateStudentRequest.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        var createStudentCommand = CreateStudentCommand.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toCreateStudentCommand(createStudentRequest)).thenReturn(createStudentCommand);
-
-        var reason = "Email already in use: %s".formatted(email);
-        when(studentService.create(createStudentCommand)).thenThrow(new EmailAlreadyInUseException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.EMAIL_ALREADY_IN_USE.getMessage())
-                .code(ErrorCode.EMAIL_ALREADY_IN_USE.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/students")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createStudentRequestJson.write(createStudentRequest).getJson()))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toCreateStudentCommand(createStudentRequest);
-        verify(studentService).create(createStudentCommand);
-        verify(studentMapper, never()).toProfileResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldUpdateStudent() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-        var name = "Marko Markić";
-        var email = "marko.markic@gmail.com";
-        var phone = "+38599123456";
-        var updateStudentRequest = UpdateStudentRequest.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        var updateStudentCommand = UpdateStudentCommand.builder()
-                .studentId(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toUpdateStudentCommand(updateStudentRequest, id)).thenReturn(updateStudentCommand);
-
-        var studentProfile = StudentProfile.builder()
-                .id(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentService.update(updateStudentCommand)).thenReturn(studentProfile);
-
-        var studentProfileResponse = StudentProfileResponse.builder()
-                .id(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toProfileResponse(studentProfile)).thenReturn(studentProfileResponse);
-
-        // when
-        var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}", id)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateStudentRequestJson.write(updateStudentRequest).getJson()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toUpdateStudentCommand(updateStudentRequest, id);
-        verify(studentService).update(updateStudentCommand);
-        verify(studentMapper).toProfileResponse(studentProfile);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(studentProfileResponseJson.write(studentProfileResponse).getJson());
-    }
-
-    @Test
-    void shouldNotUpdateStudentWhenStudentNotExists() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-        var name = "Marko Markić";
-        var email = "marko.markic@gmail.com";
-        var phone = "+38599123456";
-        var updateStudentRequest = UpdateStudentRequest.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        var updateStudentCommand = UpdateStudentCommand.builder()
-                .studentId(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toUpdateStudentCommand(updateStudentRequest, id)).thenReturn(updateStudentCommand);
-
-        var reason = "Student not found: %s".formatted(id);
-        when(studentService.update(updateStudentCommand)).thenThrow(new ResourceNotFoundException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}", id)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateStudentRequestJson.write(updateStudentRequest).getJson()))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toUpdateStudentCommand(updateStudentRequest, id);
-        verify(studentService).update(updateStudentCommand);
-        verify(studentMapper, never()).toProfileResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldNotUpdateStudentWhenEmailNotUnique() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-        var name = "Marko Markić";
-        var email = "marko.markic@gmail.com";
-        var phone = "+38599123456";
-        var updateStudentRequest = UpdateStudentRequest.builder()
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        var updateStudentCommand = UpdateStudentCommand.builder()
-                .studentId(id)
-                .name(name)
-                .email(email)
-                .phone(phone)
-                .build();
-        when(studentMapper.toUpdateStudentCommand(updateStudentRequest, id)).thenReturn(updateStudentCommand);
-
-        var reason = "Email already in use: %s".formatted(email);
-        when(studentService.update(updateStudentCommand)).thenThrow(new EmailAlreadyInUseException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.EMAIL_ALREADY_IN_USE.getMessage())
-                .code(ErrorCode.EMAIL_ALREADY_IN_USE.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}", id)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateStudentRequestJson.write(updateStudentRequest).getJson()))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toUpdateStudentCommand(updateStudentRequest, id);
-        verify(studentService).update(updateStudentCommand);
-        verify(studentMapper, never()).toProfileResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldGetAppointmentHistory() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-
-        var appointmentId = UUID.randomUUID();
-        var date = LocalDate.of(2026, 6, 22);
-        var startTime = LocalTime.of(12, 0);
-        var serviceCategory = "Pripreme za maturu";
-        var appointmentState = AppointmentState.COMPLETED;
-        var appointment = AppointmentHistory.builder()
-                .appointmentId(appointmentId)
-                .date(date)
-                .startTime(startTime)
-                .serviceCategoryName(serviceCategory)
-                .state(appointmentState)
-                .build();
-        var appointments = List.of(appointment);
-        when(studentService.getAppointmentHistory(id)).thenReturn(appointments);
-
-        var appointmentHistoryResponse = AppointmentHistoryResponse.builder()
-                .appointmentId(appointmentId)
-                .date(date)
-                .startTime(startTime)
-                .serviceCategoryName(serviceCategory)
-                .state(appointmentState.name())
-                .build();
-        when(studentMapper.toAppointmentHistoryResponse(appointment)).thenReturn(appointmentHistoryResponse);
-
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/appointments", id)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentService).getAppointmentHistory(id);
-        verify(studentMapper).toAppointmentHistoryResponse(appointment);
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(appointmentHistoryResponseListJson.write(List.of(appointmentHistoryResponse)).getJson());
-    }
-
-    @Test
-    void shouldGetEmptyAppointmentHistory() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-
-        when(studentService.getAppointmentHistory(id)).thenReturn(List.of());
-
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/appointments", id)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentService).getAppointmentHistory(id);
-        verify(studentMapper, never()).toAppointmentHistoryResponse(any());
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(appointmentHistoryResponseListJson.write(List.of()).getJson());
-    }
-
-    @Test
-    void shouldNotGetAppointmentHistoryWhenStudentNotExists() throws Exception {
-        // given
-        var id = UUID.randomUUID();
-
-        var reason = "Student not found: %s".formatted(id);
-        when(studentService.getAppointmentHistory(id)).thenThrow(new ResourceNotFoundException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/appointments", id)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentService).getAppointmentHistory(id);
-        verify(studentMapper, never()).toAppointmentHistoryResponse(any());
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldAddNote() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-        var noteId = UUID.randomUUID();
-        var note = "Napomena o studentu";
-        var noteRequest = NoteRequest.builder()
-                .content(note)
-                .build();
-        var noteCommand = AddNoteCommand.builder()
-                .studentId(studentId)
-                .content(note)
-                .build();
-        when(studentMapper.toAddNoteCommand(noteRequest, studentId)).thenReturn(noteCommand);
-
-        var studentNote = NoteEntry.builder()
-                .id(noteId)
-                .content(note)
-                .build();
-        when(studentService.addNote(noteCommand)).thenReturn(studentNote);
-
-        var noteResponse = NoteResponse.builder()
-                .content(note)
-                .build();
-        when(studentMapper.toNoteResponse(studentNote)).thenReturn(noteResponse);
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/students/{id}/notes", studentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noteRequestJson.write(noteRequest).getJson()))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toAddNoteCommand(noteRequest, studentId);
-        verify(studentService).addNote(noteCommand);
-        verify(studentMapper).toNoteResponse(studentNote);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(noteResponseJson.write(noteResponse).getJson());
-    }
-
-    @Test
-    void shouldNotAddNoteWhenStudentNotExists() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-        var note = "Napomena o studentu";
-        var noteRequest = NoteRequest.builder()
-                .content(note)
-                .build();
-        var noteCommand = AddNoteCommand.builder()
-                .studentId(studentId)
-                .content(note)
-                .build();
-        when(studentMapper.toAddNoteCommand(noteRequest, studentId)).thenReturn(noteCommand);
-
-        var reason = "Student not found: %s".formatted(studentId);
-        when(studentService.addNote(noteCommand)).thenThrow(new ResourceNotFoundException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/students/{id}/notes", studentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noteRequestJson.write(noteRequest).getJson()))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toAddNoteCommand(noteRequest, studentId);
-        verify(studentService).addNote(noteCommand);
-        verify(studentMapper, never()).toNoteResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldUpdateNote() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-        var noteId = UUID.randomUUID();
-        var note = "Nova napomena o studentu";
-        var noteRequest = NoteRequest.builder()
-                .content(note)
-                .build();
-        var noteCommand = UpdateNoteCommand.builder()
-                .studentId(studentId)
-                .noteId(noteId)
-                .content(note)
-                .build();
-        when(studentMapper.toUpdateNoteCommand(noteRequest, studentId, noteId)).thenReturn(noteCommand);
-
-        var studentNote = NoteEntry.builder()
-                .id(noteId)
-                .content(note)
-                .build();
-        when(studentService.updateNote(noteCommand)).thenReturn(studentNote);
-
-        var noteResponse = NoteResponse.builder()
-                .content(note)
-                .build();
-        when(studentMapper.toNoteResponse(studentNote)).thenReturn(noteResponse);
-
-        // when
-        var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}/notes/{noteId}", studentId, noteId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noteRequestJson.write(noteRequest).getJson()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toUpdateNoteCommand(noteRequest, studentId, noteId);
-        verify(studentService).updateNote(noteCommand);
-        verify(studentMapper).toNoteResponse(studentNote);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(noteResponseJson.write(noteResponse).getJson());
-    }
-
-    @Test
-    void shouldNotUpdateNoteWhenStudentNotExists() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-        var noteId = UUID.randomUUID();
-        var note = "Nova napomena o studentu";
-        var noteRequest = NoteRequest.builder()
-                .content(note)
-                .build();
-        var noteCommand = UpdateNoteCommand.builder()
-                .studentId(studentId)
-                .noteId(noteId)
-                .content(note)
-                .build();
-        when(studentMapper.toUpdateNoteCommand(noteRequest, studentId, noteId)).thenReturn(noteCommand);
-
-        var reason = "Student not found: %s".formatted(studentId);
-        when(studentService.updateNote(noteCommand)).thenThrow(new ResourceNotFoundException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}/notes/{noteId}", studentId, noteId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noteRequestJson.write(noteRequest).getJson()))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toUpdateNoteCommand(noteRequest, studentId, noteId);
-        verify(studentService).updateNote(noteCommand);
-        verify(studentMapper, never()).toNoteResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldNotUpdateNoteWhenNoteNotExistsOrInvalidOwnership() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-        var noteId = UUID.randomUUID();
-        var note = "Nova napomena o studentu";
-        var noteRequest = NoteRequest.builder()
-                .content(note)
-                .build();
-        var noteCommand = UpdateNoteCommand.builder()
-                .studentId(studentId)
-                .noteId(noteId)
-                .content(note)
-                .build();
-        when(studentMapper.toUpdateNoteCommand(noteRequest, studentId, noteId)).thenReturn(noteCommand);
-
-        var reason = "Note not found: %s".formatted(noteId);
-        when(studentService.updateNote(noteCommand)).thenThrow(new ResourceNotFoundException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(put("/api/v1/dashboard/students/{id}/notes/{noteId}", studentId, noteId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(noteRequestJson.write(noteRequest).getJson()))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentMapper).toUpdateNoteCommand(noteRequest, studentId, noteId);
-        verify(studentService).updateNote(noteCommand);
-        verify(studentMapper, never()).toNoteResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
-    }
-
-    @Test
-    void shouldGetNotes() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-        var noteId = UUID.randomUUID();
-        var content = "Napomena";
-        var createdAt = OffsetDateTime.now().minusDays(1);
-        var updatedAt = OffsetDateTime.now().minusDays(1);
-        var noteEntry = NoteEntry.builder()
-                .id(noteId)
-                .content(content)
-                .createdAt(createdAt)
-                .updatedAt(updatedAt)
-                .build();
-        var notes = List.of(noteEntry);
-        when(studentService.getNotes(studentId)).thenReturn(notes);
-
-        var noteResponse = NoteResponse.builder()
-                .id(noteId)
-                .content(content)
-                .createdAt(createdAt)
-                .updatedAt(updatedAt)
-                .build();
-        when(studentMapper.toNoteResponse(noteEntry)).thenReturn(noteResponse);
-
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/notes", studentId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentService).getNotes(studentId);
-        verify(studentMapper).toNoteResponse(noteEntry);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(noteResponseListJson.write(List.of(noteResponse)).getJson());
-    }
-
-    @Test
-    void shouldNotGetNotesWhenStudentNotExists() throws Exception {
-        // given
-        var studentId = UUID.randomUUID();
-
-        var reason = "Student not found: %s".formatted(studentId);
-        when(studentService.getNotes(studentId)).thenThrow(new ResourceNotFoundException(reason));
-
-        var errorResponse = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/notes", studentId)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(studentService).getNotes(studentId);
-        verify(studentMapper, never()).toNoteResponse(any());
-
-        assertThat(response).isNotNull();
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+    @Nested
+    class BenefitTests {
+
+        @Test
+        void shouldAssignBenefit() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var benefitType = BenefitType.FIXED_AMOUNT_OFF;
+            var benefitValue = BigDecimal.TEN;
+            var benefitNote = "Napomena";
+            var request = AssignBenefitRequest.builder()
+                    .benefitType(benefitType)
+                    .value(benefitValue)
+                    .note(benefitNote)
+                    .build();
+            var command = mock(AssignBenefitCommand.class);
+            var assignedBenefit = mock(AssignedBenefit.class);
+            var benefitResponse = mock(BenefitResponse.class);
+
+            when(studentMapper.toAssignBenefitCommand(request, studentId)).thenReturn(command);
+            when(benefitService.assign(command)).thenReturn(assignedBenefit);
+            when(studentMapper.toBenefitResponse(assignedBenefit)).thenReturn(benefitResponse);
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/students/{id}/benefits", studentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(assignBenefitRequestJson.write(request).getJson()))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toAssignBenefitCommand(request, studentId);
+            verify(benefitService).assign(command);
+            verify(studentMapper).toBenefitResponse(assignedBenefit);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(benefitResponseJson.write(benefitResponse).getJson());
+        }
+
+        @Test
+        void shouldNotAssignWhenStudentNotExists() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var benefitType = BenefitType.FIXED_AMOUNT_OFF;
+            var benefitValue = BigDecimal.TEN;
+            var benefitNote = "Napomena";
+            var request = AssignBenefitRequest.builder()
+                    .benefitType(benefitType)
+                    .value(benefitValue)
+                    .note(benefitNote)
+                    .build();
+            var command = mock(AssignBenefitCommand.class);
+            var assignedBenefit = mock(AssignedBenefit.class);
+
+            var reason = "Student not found: %s".formatted(studentId);
+            var errorResponse = ErrorResponse.builder()
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .reason(reason)
+                    .build();
+
+            when(studentMapper.toAssignBenefitCommand(request, studentId)).thenReturn(command);
+            when(benefitService.assign(command)).thenThrow(new ResourceNotFoundException(reason));
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/students/{id}/benefits", studentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(assignBenefitRequestJson.write(request).getJson()))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(studentMapper).toAssignBenefitCommand(request, studentId);
+            verify(benefitService).assign(command);
+            verify(studentMapper, never()).toBenefitResponse(assignedBenefit);
+
+            assertThat(response).isNotNull();
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(errorResponse).getJson());
+        }
+
+        @Test
+        void shouldGetBenefits() throws Exception {
+            // given
+            var studentId = UUID.randomUUID();
+            var benefitEntry = mock(BenefitEntry.class);
+            var benefitResponse = mock(BenefitResponse.class);
+            when(benefitService.getBenefits(studentId)).thenReturn(List.of(benefitEntry));
+            when(studentMapper.toBenefitResponseList(List.of(benefitEntry))).thenReturn(List.of(benefitResponse));
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/dashboard/students/{id}/benefits", studentId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
+
+            // then
+            verify(benefitService).getBenefits(studentId);
+            verify(studentMapper).toBenefitResponseList(List.of(benefitEntry));
+
+            assertThat(response).isNotNull();
+        }
     }
 }

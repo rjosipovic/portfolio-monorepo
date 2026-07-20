@@ -1,6 +1,8 @@
 package com.studioengine.tutor.api.controller;
 
 import com.studioengine.tutor.api.dto.student.AppointmentHistoryResponse;
+import com.studioengine.tutor.api.dto.student.AssignBenefitRequest;
+import com.studioengine.tutor.api.dto.student.BenefitResponse;
 import com.studioengine.tutor.api.dto.student.CreateStudentRequest;
 import com.studioengine.tutor.api.dto.student.NoteRequest;
 import com.studioengine.tutor.api.dto.student.NoteResponse;
@@ -8,6 +10,7 @@ import com.studioengine.tutor.api.dto.student.StudentProfileResponse;
 import com.studioengine.tutor.api.dto.student.UpdateStudentRequest;
 import com.studioengine.tutor.api.dto.summary.StudentSummary;
 import com.studioengine.tutor.api.mapper.StudentMapper;
+import com.studioengine.tutor.benefit.BenefitService;
 import com.studioengine.tutor.student.StudentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,7 @@ import java.util.UUID;
 public class DashboardStudentController {
 
     private final StudentService studentService;
+    private final BenefitService benefitService;
     private final StudentMapper studentMapper;
 
     @GetMapping
@@ -125,5 +129,25 @@ public class DashboardStudentController {
                 .map(studentMapper::toNoteResponse)
                 .toList();
         return ResponseEntity.ok(responseNotes);
+    }
+
+    @GetMapping("/{id}/benefits")
+    public ResponseEntity<List<BenefitResponse>> getBenefits(@PathVariable(name = "id") UUID studentId) {
+        log.info("GET /dashboard/students/{}/benefits", studentId);
+
+        var benefits = benefitService.getBenefits(studentId);
+        var response = studentMapper.toBenefitResponseList(benefits);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/benefits")
+    public ResponseEntity<BenefitResponse> assignBenefit(
+            @PathVariable(name = "id") UUID studentId,
+            @Valid @RequestBody AssignBenefitRequest request) {
+
+        var command = studentMapper.toAssignBenefitCommand(request, studentId);
+        var assignedBenefit = benefitService.assign(command);
+        var response = studentMapper.toBenefitResponse(assignedBenefit);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
