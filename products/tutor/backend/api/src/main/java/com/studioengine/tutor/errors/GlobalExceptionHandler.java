@@ -4,8 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -45,6 +47,32 @@ public class GlobalExceptionHandler {
                 .message("Validation failed")
                 .code("VALIDATION")
                 .reason(details)
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex) {
+        log.warn("Missing request parameter: {}", ex.getParameterName());
+
+        var response = ErrorResponse.builder()
+                .message("Missing required parameter")
+                .code("VALIDATION")
+                .reason("Parameter '%s' is required".formatted(ex.getParameterName()))
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Type mismatch: {}", ex.getMessage());
+
+        var response = ErrorResponse.builder()
+                .message("Invalid parameter type")
+                .code("VALIDATION")
+                .reason("Parameter '%s' must be of type %s".formatted(ex.getName(), ex.getRequiredType().getSimpleName()))
                 .build();
 
         return ResponseEntity.badRequest().body(response);
