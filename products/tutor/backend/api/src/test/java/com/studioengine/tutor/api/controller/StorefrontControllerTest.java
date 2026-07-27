@@ -1,5 +1,6 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.dto.storefront.BrandingConfigurationResponse;
 import com.studioengine.tutor.api.dto.storefront.CheckoutRequest;
 import com.studioengine.tutor.api.dto.storefront.CheckoutResponse;
 import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
@@ -13,6 +14,7 @@ import com.studioengine.tutor.checkout.Checkout;
 import com.studioengine.tutor.checkout.CheckoutCommand;
 import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.checkout.PaymentMethodChoice;
+import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.errors.ErrorCode;
@@ -69,6 +71,9 @@ class StorefrontControllerTest {
     @Mock
     private StorefrontMapper storefrontMapper;
 
+    @Mock
+    private BrandProperties brandProperties;
+
     @InjectMocks
     private StorefrontController storefrontController;
 
@@ -81,6 +86,7 @@ class StorefrontControllerTest {
     private JacksonTester<CheckoutResponse> checkoutResponseJson;
     private JacksonTester<ErrorResponse> errorResponseJson;
     private JacksonTester<List<ServiceCategoryResponse>> serviceCategoryResponseListJson;
+    private JacksonTester<BrandingConfigurationResponse> brandingConfigurationResponseJson;
 
     @BeforeEach
     void setUp() {
@@ -411,5 +417,40 @@ class StorefrontControllerTest {
         verify(checkoutService).checkout(command);
         verify(storefrontMapper, never()).toCheckoutResponse(any());
         assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
+
+    @Test
+    void shouldReturnBrandProperties() throws Exception {
+        // given
+        var brandName = "Math Studio";
+        var logoUri = "http://logo.uri";
+        var primaryColor = "#FF0000";
+        var locale = "hr-HR";
+        var currency = "EUR";
+        var timezone = "Europe/Zagreb";
+        when(brandProperties.getName()).thenReturn(brandName);
+        when(brandProperties.getLogoUrl()).thenReturn(logoUri);
+        when(brandProperties.getPrimaryColor()).thenReturn(primaryColor);
+        when(brandProperties.getLocale()).thenReturn(locale);
+        when(brandProperties.getCurrency()).thenReturn(currency);
+        when(brandProperties.getTimezone()).thenReturn(timezone);
+
+        var expected = BrandingConfigurationResponse.builder()
+                .name(brandName)
+                .logoUrl(logoUri)
+                .primaryColor(primaryColor)
+                .locale(locale)
+                .currency(currency)
+                .timezone(timezone)
+                .build();
+
+        // when
+        var response = mockMvc.perform(get("/api/v1/storefront/config/branding"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getContentAsString()).isEqualTo(brandingConfigurationResponseJson.write(expected).getJson());
     }
 }

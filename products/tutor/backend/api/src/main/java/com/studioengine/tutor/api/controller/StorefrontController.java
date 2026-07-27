@@ -1,5 +1,6 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.dto.storefront.BrandingConfigurationResponse;
 import com.studioengine.tutor.api.dto.storefront.CheckoutRequest;
 import com.studioengine.tutor.api.dto.storefront.CheckoutResponse;
 import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
@@ -9,6 +10,7 @@ import com.studioengine.tutor.api.dto.storefront.TimeSlotResponse;
 import com.studioengine.tutor.api.mapper.StorefrontMapper;
 import com.studioengine.tutor.catalog.ServiceCatalog;
 import com.studioengine.tutor.checkout.CheckoutService;
+import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.scheduling.ReservationService;
 import com.studioengine.tutor.scheduling.TimeSlotService;
 import jakarta.validation.Valid;
@@ -37,6 +39,7 @@ public class StorefrontController {
     private final CheckoutService checkoutService;
     private final ServiceCatalog serviceCatalog;
     private final StorefrontMapper storefrontMapper;
+    private final BrandProperties brandProperties;
 
     @GetMapping("/services")
     public ResponseEntity<List<ServiceCategoryResponse>> getServices() {
@@ -79,6 +82,20 @@ public class StorefrontController {
         var command = storefrontMapper.toCheckoutCommand(request);
         var result = checkoutService.checkout(command);
         var response = storefrontMapper.toCheckoutResponse(result);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/config/branding")
+    public ResponseEntity<BrandingConfigurationResponse> getBranding() {
+        var response = BrandingConfigurationResponse.builder()
+                .name(brandProperties.getName())
+                .logoUrl(brandProperties.getLogoUrl())
+                .primaryColor(brandProperties.getPrimaryColor())
+                .locale(brandProperties.getLocale())
+                .currency(brandProperties.getCurrency())
+                .timezone(brandProperties.getTimezone())
+                .build();
 
         return ResponseEntity.ok(response);
     }
