@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +35,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findByStatesAndSlotDateBetween(Collection<AppointmentState> states, LocalDate from, LocalDate to);
 
     @Query("SELECT a FROM Appointment a JOIN a.timeSlot t WHERE a.state IN :states AND (t.slotDate < :date OR (t.slotDate = :date AND t.endTime <=:endTime))")
-    List<Appointment> findUnclosedPastAppointments(Collection<AppointmentState> states, LocalDate date, java.time.LocalTime endTime);
+    List<Appointment> findUnclosedPastAppointments(Collection<AppointmentState> states, LocalDate date, LocalTime endTime);
 
     List<Appointment> findByTimeSlotIdInAndStateIn(List<UUID> timeSlotIds, Collection<AppointmentState> states);
 }
