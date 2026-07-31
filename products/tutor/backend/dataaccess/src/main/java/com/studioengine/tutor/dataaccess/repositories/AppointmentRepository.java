@@ -38,4 +38,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findUnclosedPastAppointments(Collection<AppointmentState> states, LocalDate date, LocalTime endTime);
 
     List<Appointment> findByTimeSlotIdInAndStateIn(List<UUID> timeSlotIds, Collection<AppointmentState> states);
+
+    Optional<Appointment> findByTimeSlotIdAndStateIn(UUID timeslotId, Collection<AppointmentState> states);
 }
