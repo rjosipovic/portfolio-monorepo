@@ -4,6 +4,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
 import com.studioengine.tutor.dataaccess.repositories.NotificationLogRepository;
+import com.studioengine.tutor.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DailyReminderHandler {
 
     private final NotificationLogRepository notificationLogRepository;
+    private final EmailService emailService;
 
     @Transactional
     public void handle(Appointment appointment) {
@@ -29,7 +31,7 @@ public class DailyReminderHandler {
             return;
         }
 
-        // TODO: sent reminder email to student via EmailService
+        emailService.sendReminder(appointment);
         var notificationLog = NotificationLog.create(appointment, NotificationType.REMINDER);
         notificationLogRepository.save(notificationLog);
     }

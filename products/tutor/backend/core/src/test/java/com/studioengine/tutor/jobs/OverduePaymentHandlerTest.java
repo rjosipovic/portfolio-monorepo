@@ -4,6 +4,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
 import com.studioengine.tutor.dataaccess.repositories.NotificationLogRepository;
+import com.studioengine.tutor.email.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -27,6 +28,8 @@ class OverduePaymentHandlerTest {
 
     @Mock
     private NotificationLogRepository notificationLogRepository;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private OverduePaymentHandler overduePaymentHandler;
@@ -46,6 +49,8 @@ class OverduePaymentHandlerTest {
         overduePaymentHandler.handle(appointment);
 
         // then
+        verify(emailService).sendOverdueNotificationToTutor(appointment);
+        verify(emailService).sendOverdueNotificationToStudent(appointment);
         var captor = ArgumentCaptor.forClass(NotificationLog.class);
         verify(notificationLogRepository, times(2)).save(captor.capture());
         var savedLogs = captor.getAllValues();
@@ -69,6 +74,8 @@ class OverduePaymentHandlerTest {
         overduePaymentHandler.handle(appointment);
 
         // then
+        verify(emailService, never()).sendOverdueNotificationToTutor(appointment);
+        verify(emailService).sendOverdueNotificationToStudent(appointment);
         var captor = ArgumentCaptor.forClass(NotificationLog.class);
         verify(notificationLogRepository, times(1)).save(captor.capture());
         assertThat(captor.getValue().getNotificationType()).isEqualTo(NotificationType.OVERDUE_STUDENT);
@@ -89,6 +96,8 @@ class OverduePaymentHandlerTest {
         overduePaymentHandler.handle(appointment);
 
         // then
+        verify(emailService).sendOverdueNotificationToTutor(appointment);
+        verify(emailService, never()).sendOverdueNotificationToStudent(appointment);
         var captor = ArgumentCaptor.forClass(NotificationLog.class);
         verify(notificationLogRepository, times(1)).save(captor.capture());
         assertThat(captor.getValue().getNotificationType()).isEqualTo(NotificationType.OVERDUE_TUTOR);
@@ -109,6 +118,8 @@ class OverduePaymentHandlerTest {
         overduePaymentHandler.handle(appointment);
 
         // then
+        verify(emailService, never()).sendOverdueNotificationToTutor(appointment);
+        verify(emailService, never()).sendOverdueNotificationToStudent(appointment);
         verify(notificationLogRepository, never()).save(any());
     }
 }

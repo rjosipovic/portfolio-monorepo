@@ -4,6 +4,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
 import com.studioengine.tutor.dataaccess.repositories.NotificationLogRepository;
+import com.studioengine.tutor.email.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +26,8 @@ class DailyReminderHandlerTest {
 
     @Mock
     private NotificationLogRepository notificationLogRepository;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private DailyReminderHandler dailyReminderHandler;
@@ -42,6 +45,7 @@ class DailyReminderHandlerTest {
         dailyReminderHandler.handle(appointment);
 
         // then
+        verify(emailService).sendReminder(appointment);
         var captor = ArgumentCaptor.forClass(NotificationLog.class);
         verify(notificationLogRepository).save(captor.capture());
         assertThat(captor.getValue().getNotificationType()).isEqualTo(NotificationType.REMINDER);
@@ -60,6 +64,7 @@ class DailyReminderHandlerTest {
         dailyReminderHandler.handle(appointment);
 
         // then
+        verify(emailService, never()).sendReminder(appointment);
         verify(notificationLogRepository, never()).save(any());
     }
 }

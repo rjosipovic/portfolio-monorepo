@@ -4,6 +4,7 @@ import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
+import com.studioengine.tutor.email.EmailService;
 import com.studioengine.tutor.errors.exceptions.MissingCancellationReasonException;
 import com.studioengine.tutor.errors.exceptions.PrematureClosureException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
@@ -25,6 +26,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentStateMachine appointmentStateMachine;
     private final BrandProperties brandProperties;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -35,8 +37,9 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentStateMachine.transition(appointment, targetState, "TUTOR");
         appointmentRepository.save(appointment);
 
-        // TODO: send follow-up email when EmailService is implemented
-        // if (command.isSendFollowup() && targetState == AppointmentState.COMPLETED) { ... }
+        if (command.isSendFollowup() && targetState == AppointmentState.COMPLETED) {
+            emailService.sendFollowUp(appointment);
+        }
 
         return ClosedAppointment.builder()
                 .appointmentId(appointment.getId())
@@ -48,11 +51,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Transactional
     public CanceledAppointment cancel(CancelAppointmentCommand command) {
         var appointment = findAppointment(command.getAppointmentId());
-        verifyReasonProvided(command.getReason());
+        var reason = command.getReason();
+        verifyReasonProvided(reason);
         appointmentStateMachine.transition(appointment, AppointmentState.CANCELLED, "TUTOR");
         appointmentRepository.save(appointment);
 
-        // TODO: send cancellation notification email when EmailService is implemented
+        emailService.sendCancellationNotification(appointment, reason);
 
         return CanceledAppointment.builder()
                 .appointmentId(appointment.getId())

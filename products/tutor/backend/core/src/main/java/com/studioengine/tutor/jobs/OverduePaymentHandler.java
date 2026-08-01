@@ -4,6 +4,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
 import com.studioengine.tutor.dataaccess.repositories.NotificationLogRepository;
+import com.studioengine.tutor.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import java.time.OffsetDateTime;
 public class OverduePaymentHandler {
 
     private final NotificationLogRepository notificationLogRepository;
+    private final EmailService emailService;
 
     @Transactional
     public void handle(Appointment appointment) {
@@ -41,14 +43,14 @@ public class OverduePaymentHandler {
         }
 
         if (!tutorNotified) {
-            // TODO: send overdue notification to tutor via EmailService
+            emailService.sendOverdueNotificationToTutor(appointment);
             var notificationLog = NotificationLog.create(appointment, NotificationType.OVERDUE_TUTOR);
             notificationLogRepository.save(notificationLog);
             log.info("Sent overdue notification to tutor for appointment {}", appointmentId);
         }
 
         if (!studentNotified) {
-            // TODO: send overdue notification to student via EmailService
+            emailService.sendOverdueNotificationToStudent(appointment);
             var notificationLog = NotificationLog.create(appointment, NotificationType.OVERDUE_STUDENT);
             notificationLogRepository.save(notificationLog);
             log.info("Sent overdue notification to student for appointment {}", appointmentId);

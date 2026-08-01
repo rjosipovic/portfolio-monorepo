@@ -2,10 +2,14 @@ package com.studioengine.tutor.payment;
 
 import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
+import com.studioengine.tutor.dataaccess.entities.PaymentRecord;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
+import com.studioengine.tutor.dataaccess.enums.PaymentMethod;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
+import com.studioengine.tutor.dataaccess.repositories.PaymentRecordRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
+import com.studioengine.tutor.email.EmailService;
 import com.studioengine.tutor.errors.exceptions.WebhookVerificationException;
 import com.studioengine.tutor.payment.provider.ProviderRequest;
 import com.studioengine.tutor.payment.provider.ProviderResult;
@@ -17,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Service
@@ -30,6 +35,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final AppointmentStateMachine appointmentStateMachine;
     private final TimeSlotStateMachine timeSlotStateMachine;
     private final BrandProperties brandProperties;
+    private final EmailService emailService;
+    private final PaymentRecordRepository paymentRecordRepository;
 
 
     @Override
@@ -71,7 +78,7 @@ public class PaymentServiceImpl implements PaymentService {
         appointmentStateMachine.transition(appointment, AppointmentState.PENDING_PAYMENT, "SYSTEM_BANK_TRANSFER");
         appointmentRepository.save(appointment);
 
-        // TODO: trigger PDF generation + email when we build EmailService
+        emailService.sendPendingPaymentEmail(appointment);
 
         return PaymentInitiation.builder()
                 .appointmentId(appointment.getId())
@@ -86,7 +93,15 @@ public class PaymentServiceImpl implements PaymentService {
             timeSlotStateMachine.transition(appointment.getTimeSlot(), TimeSlotState.BOOKED, "STRIPE_WEBHOOK");
             appointmentRepository.save(appointment);
             timeSlotRepository.save(appointment.getTimeSlot());
-            // TODO: create PaymentRecord + send confirmation email when those services exist
+            var paymentRecord = PaymentRecord.create(
+                    appointment,
+                    appointment.getFinalPrice(),
+                    PaymentMethod.STRIPE,
+                    LocalDate.now(),
+                    appointment.getStripeSessionId()
+            );
+            paymentRecordRepository.save(paymentRecord);
+            emailService.sendConfirmationEmail(appointment);
         });
     }
 

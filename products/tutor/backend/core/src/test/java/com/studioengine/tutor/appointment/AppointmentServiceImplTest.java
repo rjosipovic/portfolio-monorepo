@@ -5,6 +5,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.TimeSlot;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
+import com.studioengine.tutor.email.EmailService;
 import com.studioengine.tutor.errors.exceptions.MissingCancellationReasonException;
 import com.studioengine.tutor.errors.exceptions.PrematureClosureException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
@@ -41,13 +42,15 @@ class AppointmentServiceImplTest {
     private AppointmentStateMachine appointmentStateMachine;
     @Mock
     private BrandProperties brandProperties;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AppointmentServiceImpl appointmentService;
 
     @ParameterizedTest
-    @MethodSource("closedOutcome")
-    void shouldClose(CloseAppointmentCommand.CloseOutcome closeOutcome) {
+    @MethodSource("closeScenarios")
+    void shouldClose(CloseScenario closeScenario) {
         // given
         var appointmentId = UUID.randomUUID();
         var appointment = mock(Appointment.class);
@@ -56,8 +59,8 @@ class AppointmentServiceImplTest {
         var startTime = LocalTime.of(10, 0);
         var command = CloseAppointmentCommand.builder()
                 .appointmentId(appointmentId)
-                .outcome(closeOutcome)
-                .sendFollowup(true)
+                .outcome(closeScenario.outcome)
+                .sendFollowup(closeScenario.sendFollowup)
                 .build();
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(appointment.getId()).thenReturn(appointmentId);
@@ -65,7 +68,7 @@ class AppointmentServiceImplTest {
         when(timeSlot.getSlotDate()).thenReturn(date);
         when(timeSlot.getEndTime()).thenReturn(startTime.plusHours(1));
         when(brandProperties.getTimezone()).thenReturn(String.valueOf(TimeZone.getDefault().toZoneId()));
-        var expectedState = switch (closeOutcome) {
+        var expectedState = switch (closeScenario.outcome) {
             case COMPLETED -> AppointmentState.COMPLETED;
             case NO_SHOW -> AppointmentState.NO_SHOW;
         };
@@ -75,6 +78,11 @@ class AppointmentServiceImplTest {
         var result = appointmentService.close(command);
 
         // then
+        if (closeScenario.expectEmail) {
+            verify(emailService).sendFollowUp(appointment);
+        } else {
+            verify(emailService, never()).sendFollowUp(appointment);
+        }
         verify(appointmentStateMachine).transition(appointment, expectedState, "TUTOR");
         verify(brandProperties).getTimezone();
         verify(appointmentRepository).save(appointment);
@@ -83,8 +91,15 @@ class AppointmentServiceImplTest {
         assertThat(result.getState()).isEqualTo(expectedState);
     }
 
-    private static Stream<CloseAppointmentCommand.CloseOutcome> closedOutcome() {
-        return Stream.of(CloseAppointmentCommand.CloseOutcome.values());
+    record CloseScenario(CloseAppointmentCommand.CloseOutcome outcome, boolean sendFollowup, boolean expectEmail) {}
+
+    private static Stream<CloseScenario> closeScenarios() {
+        return Stream.of(
+                new CloseScenario(CloseAppointmentCommand.CloseOutcome.COMPLETED, true, true),
+                new CloseScenario(CloseAppointmentCommand.CloseOutcome.COMPLETED, false, false),
+                new CloseScenario(CloseAppointmentCommand.CloseOutcome.NO_SHOW, true, false),
+                new CloseScenario(CloseAppointmentCommand.CloseOutcome.NO_SHOW, false, false)
+        );
     }
 
     @Test
@@ -115,7 +130,7 @@ class AppointmentServiceImplTest {
         verify(brandProperties).getTimezone();
         verify(appointmentRepository, never()).save(any());
         verify(appointmentStateMachine, never()).transition(any(), any(), any());
-
+        verify(emailService, never()).sendFollowUp(any());
     }
 
     @Test
@@ -137,6 +152,7 @@ class AppointmentServiceImplTest {
         verify(brandProperties, never()).getTimezone();
         verify(appointmentRepository, never()).save(any());
         verify(appointmentStateMachine, never()).transition(any(), any(), any());
+        verify(emailService, never()).sendFollowUp(any());
     }
 
     @Test
@@ -158,6 +174,8 @@ class AppointmentServiceImplTest {
         // then
         verify(appointmentStateMachine).transition(appointment, AppointmentState.CANCELLED, "TUTOR");
         verify(appointmentRepository).save(appointment);
+        verify(emailService).sendCancellationNotification(appointment, "Conflict");
+
         assertThat(result).isNotNull();
         assertThat(result.getAppointmentId()).isEqualTo(appointment.getId());
         assertThat(result.getState()).isEqualTo(appointment.getState());
@@ -178,6 +196,7 @@ class AppointmentServiceImplTest {
         verify(appointmentRepository).findById(appointmentId);
         verify(appointmentStateMachine, never()).transition(any(), any(), any());
         verify(appointmentRepository, never()).save(any());
+        verify(emailService, never()).sendCancellationNotification(any(), any());
     }
 
     @Test
@@ -196,5 +215,6 @@ class AppointmentServiceImplTest {
         verify(appointmentRepository).findById(appointmentId);
         verify(appointmentStateMachine, never()).transition(any(), any(), any());
         verify(appointmentRepository, never()).save(any());
+        verify(emailService, never()).sendCancellationNotification(any(), any());
     }
 }

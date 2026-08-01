@@ -5,6 +5,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
 import com.studioengine.tutor.dataaccess.repositories.NotificationLogRepository;
+import com.studioengine.tutor.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public class TutorNudgeHandler {
 
     private final SchedulingProperties schedulingProperties;
     private final NotificationLogRepository notificationLogRepository;
+    private final EmailService emailService;
 
     @Transactional
     public void handle(Appointment appointment) {
@@ -37,7 +39,7 @@ public class TutorNudgeHandler {
             return;
         }
 
-        // TODO: send nudge email via EmailService
+        emailService.sendNudge(appointment);
         var notificationLog = NotificationLog.create(appointment, NotificationType.NUDGE);
         notificationLogRepository.save(notificationLog);
         log.info("Sent nudge for appointment {}", appointmentId);

@@ -5,6 +5,7 @@ import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
 import com.studioengine.tutor.dataaccess.repositories.NotificationLogRepository;
+import com.studioengine.tutor.email.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +31,8 @@ class TutorNudgeHandlerTest {
     private SchedulingProperties schedulingProperties;
     @Mock
     private NotificationLogRepository notificationLogRepository;
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private TutorNudgeHandler tutorNudgeHandler;
@@ -48,6 +51,7 @@ class TutorNudgeHandlerTest {
         tutorNudgeHandler.handle(appointment);
 
         // then
+        verify(emailService).sendNudge(appointment);
         var captor = ArgumentCaptor.forClass(NotificationLog.class);
         verify(notificationLogRepository).save(captor.capture());
         assertThat(captor.getValue().getNotificationType()).isEqualTo(NotificationType.NUDGE);
@@ -67,6 +71,7 @@ class TutorNudgeHandlerTest {
         tutorNudgeHandler.handle(appointment);
 
         // then
+        verify(emailService, never()).sendNudge(appointment);
         verify(notificationLogRepository, never()).save(any());
     }
 }

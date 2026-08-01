@@ -3,14 +3,18 @@ package com.studioengine.tutor.payment;
 import com.studioengine.tutor.checkout.PaymentMethodChoice;
 import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
+import com.studioengine.tutor.dataaccess.entities.PaymentRecord;
 import com.studioengine.tutor.dataaccess.entities.ServiceCategory;
 import com.studioengine.tutor.dataaccess.entities.Student;
 import com.studioengine.tutor.dataaccess.entities.TimeSlot;
 import com.studioengine.tutor.dataaccess.enums.AppointmentOrigin;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
+import com.studioengine.tutor.dataaccess.enums.PaymentMethod;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
+import com.studioengine.tutor.dataaccess.repositories.PaymentRecordRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
+import com.studioengine.tutor.email.EmailService;
 import com.studioengine.tutor.errors.exceptions.WebhookVerificationException;
 import com.studioengine.tutor.payment.provider.ProviderRequest;
 import com.studioengine.tutor.payment.provider.ProviderResult;
@@ -52,6 +56,10 @@ class PaymentServiceImplTest {
     private TimeSlotStateMachine timeSlotStateMachine;
     @Mock
     private BrandProperties brandProperties;
+    @Mock
+    private EmailService emailService;
+    @Mock
+    private PaymentRecordRepository paymentRecordRepository;
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
@@ -98,11 +106,12 @@ class PaymentServiceImplTest {
                 .paymentMethod(PaymentMethodChoice.BANK_TRANSFER)
                 .build();
         // when
-        var result = paymentService.initPayment(command);
+        paymentService.initPayment(command);
 
         // then
         verify(appointmentStateMachine).transition(appointment, AppointmentState.PENDING_PAYMENT, "SYSTEM_BANK_TRANSFER");
         verify(appointmentRepository).save(appointment);
+        verify(emailService).sendPendingPaymentEmail(appointment);
     }
 
     // --- Webhook confirmation: happy path ---
@@ -112,6 +121,7 @@ class PaymentServiceImplTest {
         var appointmentId = UUID.randomUUID();
         var sessionId = "cs_test_123";
         var appointment = createAppointment(AppointmentState.RESERVED);
+        appointment.updateStripeSessionId(sessionId);
         setId(appointment, appointmentId);
         var slot = appointment.getTimeSlot();
 
@@ -133,6 +143,17 @@ class PaymentServiceImplTest {
         verify(timeSlotStateMachine).transition(slot, TimeSlotState.BOOKED, "STRIPE_WEBHOOK");
         verify(appointmentRepository).save(appointment);
         verify(timeSlotRepository).save(slot);
+
+        var captor = ArgumentCaptor.forClass(PaymentRecord.class);
+        verify(paymentRecordRepository).save(captor.capture());
+        var paymentRecord = captor.getValue();
+        assertThat(paymentRecord.getAppointment()).isEqualTo(appointment);
+        assertThat(paymentRecord.getAmount()).isEqualTo(appointment.getFinalPrice());
+        assertThat(paymentRecord.getPaymentMethod()).isEqualTo(PaymentMethod.STRIPE);
+        assertThat(paymentRecord.getPaymentDate()).isEqualTo(LocalDate.now());
+        assertThat(paymentRecord.getStripePaymentId()).isEqualTo(sessionId);
+
+        verify(emailService).sendConfirmationEmail(appointment);
     }
 
     // --- Webhook confirmation: idempotent (already PAID) ---
