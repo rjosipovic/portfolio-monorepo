@@ -1,8 +1,13 @@
 package com.studioengine.tutor.api.controller;
 
+import com.studioengine.tutor.api.dto.storefront.AppointmentCancellationRequest;
+import com.studioengine.tutor.api.dto.storefront.AppointmentCancellationResponse;
+import com.studioengine.tutor.api.dto.storefront.AppointmentDetailsResponse;
+import com.studioengine.tutor.api.dto.storefront.AppointmentRescheduleRequest;
 import com.studioengine.tutor.api.dto.storefront.BrandingConfigurationResponse;
 import com.studioengine.tutor.api.dto.storefront.CheckoutRequest;
 import com.studioengine.tutor.api.dto.storefront.CheckoutResponse;
+import com.studioengine.tutor.api.dto.storefront.RescheduleInitiationResponse;
 import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
 import com.studioengine.tutor.api.dto.storefront.ReservationResponse;
 import com.studioengine.tutor.api.dto.storefront.ServiceCategoryResponse;
@@ -13,6 +18,7 @@ import com.studioengine.tutor.checkout.CheckoutService;
 import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.scheduling.ReservationService;
 import com.studioengine.tutor.scheduling.TimeSlotService;
+import com.studioengine.tutor.selfservice.SelfServiceManager;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +46,7 @@ public class StorefrontController {
     private final ServiceCatalog serviceCatalog;
     private final StorefrontMapper storefrontMapper;
     private final BrandProperties brandProperties;
+    private final SelfServiceManager selfServiceManager;
 
     @GetMapping("/services")
     public ResponseEntity<List<ServiceCategoryResponse>> getServices() {
@@ -97,6 +104,35 @@ public class StorefrontController {
                 .timezone(brandProperties.getTimezone())
                 .build();
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/appointments")
+    public ResponseEntity<AppointmentDetailsResponse> validateSelfServiceToken(
+            @RequestParam(name = "token", required = true) String token
+    ) {
+        var result = selfServiceManager.validateToken(token);
+        var response = storefrontMapper.toAppointmentDetailsResponse(result);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/appointments/cancel")
+    public ResponseEntity<AppointmentCancellationResponse> cancelAppointment(
+            @RequestBody @Valid AppointmentCancellationRequest request
+            ) {
+        var token = request.getToken();
+        var result = selfServiceManager.confirmCancellation(token);
+        var response = storefrontMapper.toAppointmentCancellationResponse(result);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/appointments/reschedule")
+    public ResponseEntity<RescheduleInitiationResponse> rescheduleAppointment(
+            @RequestBody @Valid AppointmentRescheduleRequest request
+            ) {
+        var token = request.getToken();
+        var result = selfServiceManager.confirmReschedule(token);
+        var response = storefrontMapper.toRescheduleInitiationResponse(result);
         return ResponseEntity.ok(response);
     }
 }

@@ -1,7 +1,10 @@
 package com.studioengine.tutor.api.mapper;
 
+import com.studioengine.tutor.api.dto.storefront.AppointmentCancellationResponse;
+import com.studioengine.tutor.api.dto.storefront.AppointmentDetailsResponse;
 import com.studioengine.tutor.api.dto.storefront.CheckoutRequest;
 import com.studioengine.tutor.api.dto.storefront.CheckoutResponse;
+import com.studioengine.tutor.api.dto.storefront.RescheduleInitiationResponse;
 import com.studioengine.tutor.api.dto.storefront.ReservationRequest;
 import com.studioengine.tutor.api.dto.storefront.ReservationResponse;
 import com.studioengine.tutor.api.dto.storefront.ServiceCategoryResponse;
@@ -12,6 +15,9 @@ import com.studioengine.tutor.checkout.CheckoutCommand;
 import com.studioengine.tutor.scheduling.AvailableSlot;
 import com.studioengine.tutor.scheduling.Reservation;
 import com.studioengine.tutor.scheduling.ReserveSlotCommand;
+import com.studioengine.tutor.selfservice.AppointmentCancellation;
+import com.studioengine.tutor.selfservice.AppointmentDetails;
+import com.studioengine.tutor.selfservice.RescheduleInitiation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -39,4 +45,8 @@ public interface StorefrontMapper {
     CheckoutResponse toCheckoutResponse(Checkout checkout);
 
     CheckoutResponse.BenefitAppliedResponse toBenefitResponse(Checkout.BenefitApplied benefit);
+
+    AppointmentDetailsResponse toAppointmentDetailsResponse(AppointmentDetails appointmentDetails);
+    AppointmentCancellationResponse toAppointmentCancellationResponse(AppointmentCancellation appointmentCancellation);
+    RescheduleInitiationResponse toRescheduleInitiationResponse(RescheduleInitiation rescheduleInitiation);
 }

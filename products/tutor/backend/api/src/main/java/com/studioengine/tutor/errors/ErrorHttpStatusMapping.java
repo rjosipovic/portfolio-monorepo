@@ -21,7 +21,6 @@ import static com.studioengine.tutor.errors.ErrorCode.TOKEN_EXPIRED;
 import static com.studioengine.tutor.errors.ErrorCode.WEBHOOK_VERIFICATION_FAILED;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.GONE;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -34,7 +33,7 @@ public final class ErrorHttpStatusMapping {
             Map.entry(INVALID_RESERVATION, BAD_REQUEST),
             Map.entry(INVALID_STATE_TRANSITION, BAD_REQUEST),
             Map.entry(WEBHOOK_VERIFICATION_FAILED, BAD_REQUEST),
-            Map.entry(DEADLINE_PASSED, FORBIDDEN),
+            Map.entry(DEADLINE_PASSED, BAD_REQUEST),
             Map.entry(TOKEN_EXPIRED, GONE),
             Map.entry(SLOT_WITHDRAWAL_BLOCKED, BAD_REQUEST),
             Map.entry(PREMATURE_CLOSURE, BAD_REQUEST),

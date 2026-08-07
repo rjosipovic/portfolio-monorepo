@@ -358,17 +358,4 @@ class CheckoutServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class);
         verify(appointmentRepository, never()).save(any());
     }
-
-    // --- Helpers ---
-    private CheckoutCommand defaultCommand(UUID slotId, UUID categoryId, PaymentMethodChoice method) {
-        return CheckoutCommand.builder()
-                .reservedSlotId(slotId)
-                .serviceCategoryId(categoryId)
-                .guestName("Ana Kovačević")
-                .guestEmail("ana@test.com")
-                .guestPhone("+385 91 234 5678")
-                .sessionNotes("Help with integrals")
-                .paymentMethod(method)
-                .build();
-    }
 }
