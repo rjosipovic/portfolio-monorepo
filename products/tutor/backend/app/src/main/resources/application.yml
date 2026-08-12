@@ -77,3 +77,5 @@ app:
     notification-log-retention: ${CLEANUP_NOTIFICATION_LOG_RETENTION:90d}
     state-log-retention: ${CLEANUP_STATE_LOG_RETENTION:365d}
     state-log-enabled: ${CLEANUP_STATE_LOG_ENABLED:false}
+  email:
+    enabled: ${EMAIL_ENABLED:true}

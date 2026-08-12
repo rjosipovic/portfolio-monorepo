@@ -2,8 +2,10 @@ package com.studioengine.tutor.email;
 
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+@ConditionalOnProperty(name = "app.email.enabled", havingValue = "false")
 @Component
 @Slf4j
 public class NoOpEmailService implements EmailService {
