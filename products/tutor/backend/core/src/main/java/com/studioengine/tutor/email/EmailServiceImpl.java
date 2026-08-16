@@ -1,5 +1,6 @@
 package com.studioengine.tutor.email;
 
+import com.studioengine.tutor.config.AuthProperties;
 import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.config.InstanceProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
@@ -30,6 +31,7 @@ public class EmailServiceImpl implements EmailService {
     private final InstanceProperties instanceProperties;
     private final PdfGeneratorService pdfGeneratorService;
     private final IcsGeneratorService icsGeneratorService;
+    private final AuthProperties authProperties;
 
     @Override
     public void sendConfirmationEmail(Appointment appointment) {
@@ -239,6 +241,18 @@ public class EmailServiceImpl implements EmailService {
         sendHtmlEmail(student.getEmail(), subject, body, null, null);
     }
 
+    @Override
+    public void sendOtpEmail(String email, String otp) {
+        var subject = "%s - Vaš kod za prijavu".formatted(brandProperties.getName());
+        var body = """
+                <h2>Prijava</h2>
+                <p>Kod za prijavu: <strong>%s</strong></p>
+                <p>Ovaj kod je validan 10 minuta</p>
+                """.formatted(otp);
+
+        sendHtmlEmail(email, subject, body, null, null);
+    }
+
     // --- Private helpers ---
     private void sendHtmlEmail(String to, String subject, String htmlBody, byte[] icsAttachment, byte[] pdfAttachment) {
         try {
@@ -267,7 +281,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String getTutorEmail() {
-        // TODO: get from AuthProperties.instructorEmail once wired
-        return "tutor@example.com";
+        return authProperties.getInstructorEmail();
     }
 }

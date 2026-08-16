@@ -19,4 +19,6 @@ public interface EmailService {
     void sendFollowUp(Appointment appointment);
 
     void sendCancellationNotification(Appointment appointment, String reason);
+
+    void sendOtpEmail(String email, String otp);
 }

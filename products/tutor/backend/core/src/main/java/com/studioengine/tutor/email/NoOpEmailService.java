@@ -49,4 +49,9 @@ public class NoOpEmailService implements EmailService {
     public void sendCancellationNotification(Appointment appointment, String reason) {
         log.info("[NO-OP] Cancellation notification for appointment {}, reason: {}", appointment.getId(), reason);
     }
+
+    @Override
+    public void sendOtpEmail(String email, String otp) {
+        log.info("[NO-OP] Sending OTP {} to {}", otp, email);
+    }
 }
