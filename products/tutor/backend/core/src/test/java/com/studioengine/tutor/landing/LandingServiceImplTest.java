@@ -142,7 +142,7 @@ class LandingServiceImplTest {
             var serviceCategoryName = "Fakultetska matematika";
             var finalPrice = BigDecimal.valueOf(40);
             var slotDate = LocalDate.now();
-            var startTime = LocalTime.now().plusHours(2);
+            var startTime = LocalTime.of(23, 59);
             var appointment = mockAppointment(appointmentId, studentName, serviceCategoryName, slotDate, startTime, finalPrice);
 
             when(brandProperties.getTimezone()).thenReturn("Europe/Zagreb");
@@ -171,7 +171,7 @@ class LandingServiceImplTest {
             );
             var futureAppointment = mockAppointment(
                     UUID.randomUUID(), "Future Student", "Math",
-                    LocalDate.now(), LocalTime.now().plusHours(2), BigDecimal.TEN
+                    LocalDate.now(), LocalTime.of(23, 59), BigDecimal.TEN
             );
 
             when(brandProperties.getTimezone()).thenReturn("Europe/Zagreb");

@@ -220,7 +220,7 @@ class SelfServiceManagerImplTest {
             var token = UUID.randomUUID().toString();
             var appointmentId = UUID.randomUUID();
             var timeSlotDate = LocalDate.now().plusDays(1);
-            var timeSlotStartTime = LocalTime.now().plusHours(2);
+            var timeSlotStartTime = LocalTime.of(23, 59);
             var cancellationToken = mock(CancellationToken.class);
             var appointment = mock(Appointment.class);
             var slot = mock(TimeSlot.class);
