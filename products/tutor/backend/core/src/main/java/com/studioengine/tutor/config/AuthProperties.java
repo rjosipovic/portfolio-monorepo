@@ -12,7 +12,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties
+@ConfigurationProperties(prefix = "app.auth")
 public class AuthProperties {
 
     private String jwtSecret;
