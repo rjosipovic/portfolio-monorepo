@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tutor_math_db
+    username: tutor
+    password: tutor
+  liquibase:
+    contexts: math
+  mail:
+    host: localhost
+    port: 1025
+
+app:
+  brand:
+    name: Math Studio Local
+    locale: hr-HR
+    currency: EUR
+    timezone: Europe/Zagreb
+  auth:
+    jwt-secret: local-dev-secret-at-least-32-characters-long
+    instructor-email: tutor@local.dev
+  payment:
+    stripe-secret-key: sk_test_placeholder
+    stripe-webhook-secret: whsec_placeholder
+    stripe-success-url: http://localhost:3000/success
+    stripe-cancel-url: http://localhost:3000/cancel
+    bank-iban: HR1210010051863000160
+    bank-model: HR00
+    bank-recipient-name: Math Studio d.o.o.
+  scheduling:
+    reservation-timeout: 900s
+    payment-overdue-threshold: 48h
+    cancellation-deadline: 24h
+    nudge-delay: 2h
+    nudge-cooldown: 24h
+  instance:
+    base-url: http://localhost:8080
+  email:
+    enabled: true

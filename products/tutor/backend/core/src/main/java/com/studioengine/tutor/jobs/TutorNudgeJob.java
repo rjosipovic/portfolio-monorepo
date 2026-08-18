@@ -32,7 +32,7 @@ public class TutorNudgeJob {
     private final TutorNudgeHandler tutorNudgeHandler;
 
     @Scheduled(fixedRate = 1_800_000) // every 30 min
-    @SchedulerLock(name = "tutorNudgeJob", lockAtLeastFor = "5min", lockAtMostFor = "25m")
+    @SchedulerLock(name = "tutorNudgeJob", lockAtLeastFor = "PT5M", lockAtMostFor = "PT25M")
     public void nudgeTutor() {
         var timezone = ZoneId.of(brandProperties.getTimezone());
         var now = LocalTime.now(timezone);

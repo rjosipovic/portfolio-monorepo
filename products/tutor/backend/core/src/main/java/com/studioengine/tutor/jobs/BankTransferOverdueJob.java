@@ -20,7 +20,7 @@ public class BankTransferOverdueJob {
     private final OverduePaymentHandler overduePaymentHandler;
 
     @Scheduled(fixedRate = 900_000)
-    @SchedulerLock(name = "bankTransferOverdueJob", lockAtLeastFor = "5m", lockAtMostFor = "14m")
+    @SchedulerLock(name = "bankTransferOverdueJob", lockAtLeastFor = "PT5M", lockAtMostFor = "PT14M")
     public void notifyOverduePayments() {
 
         var cutoff = OffsetDateTime.now().minus(schedulingProperties.getPaymentOverdueThreshold());

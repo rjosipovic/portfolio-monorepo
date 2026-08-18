@@ -29,7 +29,7 @@ public class DailyReminderJob {
     private final DailyReminderHandler dailyReminderHandler;
 
     @Scheduled(cron = "0 0 0 * * *", zone = "${app.brand.timezone}")
-    @SchedulerLock(name = "dailyReminderJob", lockAtLeastFor = "5m", lockAtMostFor = "30m")
+    @SchedulerLock(name = "dailyReminderJob", lockAtLeastFor = "PT5M", lockAtMostFor = "PT30M")
     public void sendReminders() {
         var timezone = ZoneId.of(brandProperties.getTimezone());
         var today = LocalDate.now(timezone);

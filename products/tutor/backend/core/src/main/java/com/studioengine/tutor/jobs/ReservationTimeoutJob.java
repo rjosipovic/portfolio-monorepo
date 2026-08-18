@@ -20,7 +20,7 @@ public class ReservationTimeoutJob {
     private final ExpiredTimeSlotHandler expiredTimeSlotHandler;
 
     @Scheduled(fixedRate = 60_000)
-    @SchedulerLock(name = "reservationsTimeoutJob", lockAtLeastFor = "30s", lockAtMostFor = "5m")
+    @SchedulerLock(name = "reservationsTimeoutJob", lockAtLeastFor = "PT30S", lockAtMostFor = "PT5M")
     public void releaseExpiredReservations() {
         var cutoff = OffsetDateTime.now().minus(schedulingProperties.getReservationTimeout());
         var expiredSlots = timeSlotRepository.findExpiredReservations(cutoff);
