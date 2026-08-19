@@ -18,6 +18,7 @@ app:
   auth:
     jwt-secret: local-dev-secret-at-least-32-characters-long
     instructor-email: tutor@local.dev
+    otp-expiration: 60s
   payment:
     stripe-secret-key: sk_test_placeholder
     stripe-webhook-secret: whsec_placeholder

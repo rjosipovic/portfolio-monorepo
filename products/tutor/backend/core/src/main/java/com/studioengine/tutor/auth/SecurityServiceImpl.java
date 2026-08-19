@@ -41,6 +41,13 @@ public class SecurityServiceImpl implements SecurityService {
             return;
         }
 
+        if (isLockedOut(email)) {
+            log.warn("OTP request for locked account, ignoring");
+            return;
+        }
+
+        otpRecordRepository.invalidateAllByEmail(email);
+
         var otp = generateOtp();
         var otpHash = hashOtp(otp);
         var expiresAt = OffsetDateTime.now().plus(authProperties.getOtpExpiration());
@@ -65,10 +72,7 @@ public class SecurityServiceImpl implements SecurityService {
         checkLockout(email);
 
         var otpRecord = otpRecordRepository.findByEmailAndUsedFalseAndExpiresAtAfter(email, OffsetDateTime.now())
-                .orElseThrow(() -> {
-                    recordFailedAttempt(email);
-                    return new OtpVerificationException("OTP expired or not found");
-                });
+                .orElseThrow(() -> new OtpVerificationException("OTP expired or not found"));
 
         if (!verifyHash(otp, otpRecord.getOtpHash())) {
             recordFailedAttempt(email);
@@ -121,12 +125,15 @@ public class SecurityServiceImpl implements SecurityService {
     }
 
     private void checkLockout(String email) {
-        var since = OffsetDateTime.now().minus(authProperties.getOtpLockoutWindow());
-        var failedAttempts = loginAttemptRepository.countFailedAttemptsSince(email, since);
-
-        if (failedAttempts >= authProperties.getOtpMaxAttempts()) {
+        if (isLockedOut(email)) {
             throw new OtpVerificationException("Account locked. Try again later");
         }
+    }
+
+    private boolean isLockedOut(String email) {
+        var since = OffsetDateTime.now().minus(authProperties.getOtpLockoutWindow());
+        var failedAttempts = loginAttemptRepository.countFailedAttemptsSince(email, since);
+        return failedAttempts >= authProperties.getOtpMaxAttempts();
     }
 
     private void recordFailedAttempt(String email) {

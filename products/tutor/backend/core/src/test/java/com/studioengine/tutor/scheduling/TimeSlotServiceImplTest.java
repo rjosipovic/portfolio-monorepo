@@ -5,6 +5,7 @@ import com.studioengine.tutor.dataaccess.entities.TimeSlot;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
+import com.studioengine.tutor.dataaccess.repositories.TimeSlotStateLogRepository;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
 import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
@@ -45,6 +46,9 @@ class TimeSlotServiceImplTest {
 
     @Mock
     private TimeSlotServiceMapper timeSlotServiceMapper;
+
+    @Mock
+    private TimeSlotStateLogRepository timeSlotStateLogRepository;
 
     @InjectMocks
     private TimeSlotServiceImpl timeSlotService;
@@ -227,6 +231,7 @@ class TimeSlotServiceImplTest {
         timeSlotService.deleteSlots(command);
 
         // then
+        verify(timeSlotStateLogRepository).deleteAllByTimeSlotIdIn(ids);
         verify(timeSlotRepository).deleteAll(List.of(slot1, slot2));
     }
 
@@ -246,6 +251,45 @@ class TimeSlotServiceImplTest {
         assertThatThrownBy(() -> timeSlotService.deleteSlots(command))
                 .isInstanceOf(SlotWithdrawalBlockedException.class);
         verify(timeSlotRepository, never()).deleteAll(any());
+    }
+
+    // --- getSlotsByDateRange ---
+    @Test
+    void shouldGetSlotsByDateRange() {
+        // given
+        var from = LocalDate.of(2026, 8, 18);
+        var to = LocalDate.of(2026, 8, 24);
+        var slot1 = createSlot(TimeSlotState.DRAFT);
+        var slot2 = createSlot(TimeSlotState.AVAILABLE);
+        var createdSlot = mock(CreatedSlot.class);
+
+        when(timeSlotRepository.findBySlotDateBetween(from, to)).thenReturn(List.of(slot1, slot2));
+        when(timeSlotServiceMapper.toCreatedSlot(any())).thenReturn(createdSlot);
+
+        // when
+        var result = timeSlotService.getSlotsByDateRange(from, to);
+
+        // then
+        verify(timeSlotRepository).findBySlotDateBetween(from, to);
+        verify(timeSlotServiceMapper, times(2)).toCreatedSlot(any());
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoSlotsInDateRange() {
+        // given
+        var from = LocalDate.of(2026, 8, 18);
+        var to = LocalDate.of(2026, 8, 24);
+
+        when(timeSlotRepository.findBySlotDateBetween(from, to)).thenReturn(List.of());
+
+        // when
+        var result = timeSlotService.getSlotsByDateRange(from, to);
+
+        // then
+        verify(timeSlotRepository).findBySlotDateBetween(from, to);
+        verify(timeSlotServiceMapper, never()).toCreatedSlot(any());
+        assertThat(result).isEmpty();
     }
 
     // --- Helper ---

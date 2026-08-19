@@ -2,7 +2,6 @@ package com.studioengine.tutor.api.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +17,7 @@ public class OtpVerificationRequest {
 
     @NotBlank @Email
     String email;
-    @NotBlank @Positive
+    @NotBlank
     String otp;
 
     @JsonPOJOBuilder(withPrefix = "")

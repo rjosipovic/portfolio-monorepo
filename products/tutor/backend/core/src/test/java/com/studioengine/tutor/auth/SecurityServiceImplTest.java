@@ -59,10 +59,15 @@ class SecurityServiceImplTest {
             var email = "tutor.tutic@gmail.com";
             var otpLength = 6;
             var command = OtpRequestCommand.builder().email(email).build();
+            var lockoutWindow = Duration.ofMinutes(30);
+            var maxAttempts = 5;
 
             when(authProperties.getInstructorEmail()).thenReturn(email);
             when(authProperties.getOtpLength()).thenReturn(otpLength);
             when(authProperties.getOtpExpiration()).thenReturn(Duration.ofMinutes(5));
+            when(authProperties.getOtpMaxAttempts()).thenReturn(maxAttempts);
+            when(authProperties.getOtpLockoutWindow()).thenReturn(lockoutWindow);
+            when(loginAttemptRepository.countFailedAttemptsSince(eq(email), any(OffsetDateTime.class))).thenReturn(0L);
 
             // when
             securityService.requestOtp(command);
@@ -70,6 +75,10 @@ class SecurityServiceImplTest {
             // then
             verify(authProperties).getInstructorEmail();
             verify(authProperties).getOtpLength();
+            verify(authProperties).getOtpLockoutWindow();
+            verify(authProperties).getOtpMaxAttempts();
+            verify(loginAttemptRepository).countFailedAttemptsSince(eq(email), any(OffsetDateTime.class));
+            verify(otpRecordRepository).invalidateAllByEmail(email);
             verify(authProperties).getOtpExpiration();
 
             var captor = ArgumentCaptor.forClass(OtpRecord.class);
@@ -95,8 +104,30 @@ class SecurityServiceImplTest {
             securityService.requestOtp(command);
 
             // then
+            verify(otpRecordRepository, never()).invalidateAllByEmail(any());
             verify(otpRecordRepository, never()).save(any());
             verify(emailService, never()).sendOtpEmail(any(), any());
+        }
+
+        @Test
+        void shouldNotSendOtpWhenAccountIsLocked() {
+            // given
+            var email = "tutor.tutic@gmail.com";
+            var lockoutWindow = Duration.ofMinutes(30);
+
+            var command = OtpRequestCommand.builder().email(email).build();
+
+            when(authProperties.getInstructorEmail()).thenReturn(email);
+            when(authProperties.getOtpLockoutWindow()).thenReturn(lockoutWindow);
+            when(loginAttemptRepository.countFailedAttemptsSince(eq(email), any(OffsetDateTime.class))).thenReturn(5L);
+
+            // when
+            securityService.requestOtp(command);
+
+            // then
+            verify(authProperties).getInstructorEmail();
+            verify(loginAttemptRepository).countFailedAttemptsSince(eq(email), any(OffsetDateTime.class));
+            verify(otpRecordRepository, never()).invalidateAllByEmail(any());
         }
     }
 
@@ -205,9 +236,7 @@ class SecurityServiceImplTest {
             verify(otpRecordRepository).findByEmailAndUsedFalseAndExpiresAtAfter(eq(email), any(OffsetDateTime.class));
             verify(otpRecordRepository, never()).save(any());
 
-            var captor = ArgumentCaptor.forClass(LoginAttempt.class);
-            verify(loginAttemptRepository).save(captor.capture());
-            assertThat(captor.getValue().isSuccessful()).isFalse();
+            verify(loginAttemptRepository, never()).save(any());
         }
 
         @Test

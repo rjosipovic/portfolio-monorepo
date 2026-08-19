@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface TimeSlotStateLogRepository extends JpaRepository<TimeSlotStateLog, UUID> {
 
-    List<TimeSlotStateLog> findByTimeSlotIdOrderByTransitionedAtAsc(UUID timeSlotId);
+    void deleteAllByTimeSlotIdIn(List<UUID> timeSlotIds);
 }

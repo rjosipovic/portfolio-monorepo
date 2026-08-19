@@ -5,6 +5,7 @@ import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
+import com.studioengine.tutor.dataaccess.repositories.TimeSlotStateLogRepository;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
 import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
@@ -31,6 +32,14 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final TimeSlotStateMachine stateMachine;
     private final AppointmentRepository appointmentRepository;
     private final TimeSlotServiceMapper timeSlotServiceMapper;
+    private final TimeSlotStateLogRepository timeSlotStateLogRepository;
+
+    @Override
+    public List<CreatedSlot> getSlotsByDateRange(LocalDate from, LocalDate to) {
+        return timeSlotRepository.findBySlotDateBetween(from, to).stream()
+                .map(timeSlotServiceMapper::toCreatedSlot)
+                .toList();
+    }
 
     @Override
     public List<AvailableSlot> getAvailability(LocalDate from, LocalDate to) {
@@ -83,6 +92,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     public void deleteSlots(DeleteSlotsCommand command) {
         var slots = findAllByIds(command.getSlotIds());
         verifyNoActiveAppointments(slots);
+        var slotIds = slots.stream().map(TimeSlot::getId).toList();
+        timeSlotStateLogRepository.deleteAllByTimeSlotIdIn(slotIds);
         timeSlotRepository.deleteAll(slots);
     }
 

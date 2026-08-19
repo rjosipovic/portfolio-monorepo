@@ -45,6 +45,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -405,5 +406,76 @@ class DashboardCalendarControllerTest {
                         .content(deleteSlotsRequestJson.write(request).getJson()))
                 .andExpect(status().isBadRequest());
         verify(timeSlotService, never()).deleteSlots(any());
+    }
+
+    // --- GET /dashboard/slots ---
+    @Test
+    void shouldGetSlots() throws Exception {
+        // given
+        var from = "2026-08-18";
+        var to = "2026-08-24";
+        var createdSlot = mock(CreatedSlot.class);
+        var slotResponse = mock(SlotResponse.class);
+
+        when(timeSlotService.getSlotsByDateRange(any(), any())).thenReturn(List.of(createdSlot));
+        when(calendarMapper.toSlotResponses(List.of(createdSlot))).thenReturn(List.of(slotResponse));
+
+        // when
+        var response = mockMvc.perform(get("/api/v1/dashboard/slots")
+                        .param("from", from)
+                        .param("to", to))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        verify(timeSlotService).getSlotsByDateRange(any(), any());
+        verify(calendarMapper).toSlotResponses(List.of(createdSlot));
+
+        var content = slotResponseListJson.parse(response.getContentAsString());
+        assertThat(content.getObject()).hasSize(1);
+    }
+
+    @Test
+    void shouldGetEmptySlots() throws Exception {
+        // given
+        var from = "2026-08-18";
+        var to = "2026-08-24";
+
+        when(timeSlotService.getSlotsByDateRange(any(), any())).thenReturn(List.of());
+        when(calendarMapper.toSlotResponses(List.of())).thenReturn(List.of());
+
+        // when
+        var response = mockMvc.perform(get("/api/v1/dashboard/slots")
+                        .param("from", from)
+                        .param("to", to))
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+
+        // then
+        verify(timeSlotService).getSlotsByDateRange(any(), any());
+        var content = slotResponseListJson.parse(response.getContentAsString());
+        assertThat(content.getObject()).isEmpty();
+    }
+
+    @Test
+    void shouldNotGetSlotsWhenFromMissing() throws Exception {
+        // given
+        mockMvc.perform(get("/api/v1/dashboard/slots")
+                        .param("to", "2026-08-24"))
+                .andExpect(status().isBadRequest());
+
+        // then
+        verify(timeSlotService, never()).getSlotsByDateRange(any(), any());
+    }
+
+    @Test
+    void shouldNotGetSlotsWhenToMissing() throws Exception {
+        // given
+        mockMvc.perform(get("/api/v1/dashboard/slots")
+                        .param("from", "2026-08-18"))
+                .andExpect(status().isBadRequest());
+
+        // then
+        verify(timeSlotService, never()).getSlotsByDateRange(any(), any());
     }
 }

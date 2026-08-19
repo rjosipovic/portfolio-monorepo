@@ -5,6 +5,8 @@ import java.util.List;
 
 public interface TimeSlotService {
 
+    List<CreatedSlot> getSlotsByDateRange(LocalDate from, LocalDate to);
+
     List<AvailableSlot> getAvailability(LocalDate from, LocalDate to);
 
     List<CreatedSlot> createSlots(CreateSlotsCommand command);

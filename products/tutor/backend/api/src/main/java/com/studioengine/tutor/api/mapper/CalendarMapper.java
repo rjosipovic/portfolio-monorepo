@@ -15,6 +15,8 @@ public interface CalendarMapper {
     @Mapping(source = "state", target = "state")
     SlotResponse toSlotResponse(CreatedSlot slot);
 
+    List<SlotResponse> toSlotResponses(List<CreatedSlot> slots);
+
     CreateSlotsCommand.SlotDefinition toSlotDefinition(CreateSlotsRequest.SlotDefinition definition);
 
     List<CreateSlotsCommand.SlotDefinition> toSlotDefinitions(List<CreateSlotsRequest.SlotDefinition> definitions);

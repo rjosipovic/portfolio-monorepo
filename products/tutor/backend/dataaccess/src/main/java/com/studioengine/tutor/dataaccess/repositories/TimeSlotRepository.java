@@ -18,8 +18,6 @@ import java.util.UUID;
 @Repository
 public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
 
-    List<TimeSlot> findByStateAndSlotDateGreaterThanEqual(TimeSlotState state, LocalDate fromDate);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM TimeSlot t WHERE t.id = :id")
     Optional<TimeSlot> findByIdForUpdate(UUID id);
