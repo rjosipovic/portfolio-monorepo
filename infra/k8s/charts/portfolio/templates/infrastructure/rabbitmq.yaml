@@ -22,7 +22,17 @@ spec:
       initContainers:
         - name: fix-permissions
           image: busybox:1.31
-          command: ['sh', '-c', 'chown -R 999:999 /data']
+          command:
+            - sh
+            - -c
+            - |
+              chown -R 999:999 /data
+              # Erlang refuses to boot if the cookie is not owner-only (0600).
+              # Repair any pre-existing cookie left with broader permissions.
+              if [ -f /data/.erlang.cookie ]; then
+                chown 999:999 /data/.erlang.cookie
+                chmod 600 /data/.erlang.cookie
+              fi
           securityContext:
             runAsUser: 0
           volumeMounts:
