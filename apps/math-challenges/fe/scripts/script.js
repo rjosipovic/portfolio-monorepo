@@ -273,7 +273,7 @@ function setupGameRound(data) {
             problemString = `${num1} + ${num2}`;
             break;
         case 'subtraction':
-            if (num1 < num2) [num1, num2] = [num2, num1];
+            //if (num1 < num2) [num1, num2] = [num2, num1];
             problemString = `${num1} - ${num2}`;
             break;
         case 'multiplication':
