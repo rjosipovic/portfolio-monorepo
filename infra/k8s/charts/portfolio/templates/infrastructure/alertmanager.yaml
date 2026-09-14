@@ -21,12 +21,14 @@ data:
 
     receivers:
       - name: 'email-notifications'
+    {{- if .Values.observability.alertmanager.smtp.to }}
         email_configs:
           - to: '{{ .Values.observability.alertmanager.smtp.to }}'
             send_resolved: true
             headers:
               subject: 'Alertmanager: {{`{{ .CommonAnnotations.summary }}`}}'
             html: '{{`{{ template "email.default.html" . }}`}}'
+    {{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
