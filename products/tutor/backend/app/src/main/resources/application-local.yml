@@ -18,7 +18,8 @@ app:
   auth:
     jwt-secret: ${JWT_SECRET:local-dev-secret-at-least-32-characters-long}
     instructor-email: tutor@local.dev
-    otp-expiration: 60s
+    otp-expiration: 5m
+    otp-lockout-window: 3m
   payment:
     stripe-secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
     stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
