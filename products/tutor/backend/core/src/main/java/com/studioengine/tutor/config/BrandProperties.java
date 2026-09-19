@@ -17,4 +17,6 @@ public class BrandProperties {
     private String locale;
     private String currency;
     private String timezone;
+    private int workingHoursStart;
+    private int workingHoursEnd;
 }

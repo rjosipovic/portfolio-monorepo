@@ -469,12 +469,16 @@ class StorefrontControllerTest {
             var locale = "hr-HR";
             var currency = "EUR";
             var timezone = "Europe/Zagreb";
+            var workingHoursStart = 7;
+            var workingHoursEnd = 21;
             when(brandProperties.getName()).thenReturn(brandName);
             when(brandProperties.getLogoUrl()).thenReturn(logoUri);
             when(brandProperties.getPrimaryColor()).thenReturn(primaryColor);
             when(brandProperties.getLocale()).thenReturn(locale);
             when(brandProperties.getCurrency()).thenReturn(currency);
             when(brandProperties.getTimezone()).thenReturn(timezone);
+            when(brandProperties.getWorkingHoursStart()).thenReturn(workingHoursStart);
+            when(brandProperties.getWorkingHoursEnd()).thenReturn(workingHoursEnd);
 
             var expected = BrandingConfigurationResponse.builder()
                     .name(brandName)
@@ -483,6 +487,8 @@ class StorefrontControllerTest {
                     .locale(locale)
                     .currency(currency)
                     .timezone(timezone)
+                    .workingHoursStart(workingHoursStart)
+                    .workingHoursEnd(workingHoursEnd)
                     .build();
 
             // when

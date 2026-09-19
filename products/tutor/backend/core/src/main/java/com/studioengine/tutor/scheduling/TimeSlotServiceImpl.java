@@ -7,6 +7,7 @@ import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotStateLogRepository;
+import com.studioengine.tutor.errors.exceptions.InvalidSlotTimeException;
 import com.studioengine.tutor.errors.exceptions.PastSlotException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
@@ -78,6 +79,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         rejectDuplicatedIfExist(slotDefinitions);
 
         slotDefinitions.forEach(slotDefinition -> {
+            verifyOnTheHour(slotDefinition.getStartTime());
             verifySlotNotExists(slotDefinition);
             verifyNotInPast(slotDefinition.getDate(), slotDefinition.getStartTime());
         });
@@ -141,6 +143,12 @@ public class TimeSlotServiceImpl implements TimeSlotService {
             throw new SlotWithdrawalBlockedException(
                     "Slot %s has an active appointment".formatted(blockedSlotId)
             );
+        }
+    }
+
+    private void verifyOnTheHour(LocalTime startTime) {
+        if (startTime.getMinute() != 0 || startTime.getSecond() != 0) {
+            throw new InvalidSlotTimeException("Slot must start on the full hour %s".formatted(startTime));
         }
     }
 

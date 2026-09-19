@@ -7,6 +7,7 @@ import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotStateLogRepository;
+import com.studioengine.tutor.errors.exceptions.InvalidSlotTimeException;
 import com.studioengine.tutor.errors.exceptions.PastSlotException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
@@ -105,6 +106,25 @@ class TimeSlotServiceImplTest {
         assertThat(secondSlot.getStartTime()).isEqualTo(time2);
         assertThat(secondSlot.getEndTime()).isEqualTo(time2.plusHours(1));
         assertThat(secondSlot.getState()).isEqualTo(TimeSlotState.DRAFT);
+    }
+
+    @Test
+    void shouldNotCreateSlotsWhenNotOnFullHour() {
+        // given
+        var date = LocalDate.now().plusDays(1);
+        var time = LocalTime.of(10, 31);
+        var command = CreateSlotsCommand.builder()
+                .slots(List.of(
+                        CreateSlotsCommand.SlotDefinition.builder().date(date).startTime(time).build()
+                ))
+                .build();
+
+        // when
+        assertThatThrownBy(() -> timeSlotService.createSlots(command)).isInstanceOf(InvalidSlotTimeException.class);
+
+        // then
+        verify(timeSlotRepository, never()).existsBySlotDateAndStartTime(any(), any());
+        verify(timeSlotRepository, never()).saveAll(any());
     }
 
     @Test

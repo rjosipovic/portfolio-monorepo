@@ -19,6 +19,8 @@ public class BrandingConfigurationResponse {
     String locale;
     String currency;
     String timezone;
+    int workingHoursStart;
+    int workingHoursEnd;
 
     @JsonPOJOBuilder(withPrefix = "")
     public static class BrandingConfigurationResponseBuilder {}

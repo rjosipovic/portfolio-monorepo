@@ -7,6 +7,9 @@ import { closeAppointment } from '../actions/appointmentActions.js';
   let cancelAppointmentId = null;
   
   export async function renderCalendar(container) {
+      let cfg = await loadConfig();
+      const hourOptions = buildHourOptions(cfg.workingHoursStart, cfg.workingHoursEnd);
+
       container.innerHTML = `
           <h1 class="mb-2">Kalendar</h1>
   
@@ -19,7 +22,7 @@ import { closeAppointment } from '../actions/appointmentActions.js';
                   </div>
                   <div class="form-group" style="margin-bottom: 0;">
                       <label for="slot-time">Početak</label>
-                      <input type="time" id="slot-time" step="3600" />
+                      <select id="slot-time">${hourOptions}</select>
                   </div>
                   <button id="add-slot-btn" class="btn btn-primary">Dodaj</button>
               </div>
@@ -67,6 +70,9 @@ import { closeAppointment } from '../actions/appointmentActions.js';
           </div>
           <div id="booking-overlay" class="hidden" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:999;"></div>
       `;
+     const todayIso = new Date().toISOString().split('T')[0];
+     document.getElementById('slot-date').setAttribute('min', todayIso);
+
   
       const pendingSlots = [];
   
@@ -75,6 +81,12 @@ import { closeAppointment } from '../actions/appointmentActions.js';
           const date = document.getElementById('slot-date').value;
           const time = document.getElementById('slot-time').value;
           if (!date || !time) return;
+
+          const start = new Date(`${date}T${time}`);
+          if (start <= new Date()) {
+            alert('Termin ne može biti u prošlosti');
+            return;
+          }
   
           pendingSlots.push({ date, startTime: time });
           renderPendingSlots(pendingSlots);
@@ -376,6 +388,17 @@ import { closeAppointment } from '../actions/appointmentActions.js';
     document.getElementById('booking-overlay').classList.add('hidden');
     cancelAppointmentId = null;
   }
+
+  async function loadConfig() {
+    const defaults = {workingHoursStart: 7, workingHoursEnd: 21};
+      try {
+          const config = await api.get('/storefront/config/branding');
+          return {...defaults, ...config};
+      } catch (err) {
+          console.warn('Unable to load configuration, using defaults. Reason: ' + (err.reason || err.message));
+          return defaults;
+      }
+  }
   
   // --- Helpers ---
   
@@ -402,5 +425,23 @@ import { closeAppointment } from '../actions/appointmentActions.js';
     // slot.date (YYYY-MM-DD) + slot.startTime (HH:mm) vs now, local time
     const slotStart = new Date(`${slot.date}T${slot.startTime}`);
     return slotStart <= new Date();
+  }
+
+  function buildHourOptions(startH, endH) {
+    const working = [];
+    const other = [];
+    for (let h = 0; h < 24; h++) {
+        const label = String(h).padStart(2, '0') + ":00";
+        const opt = `<option value="${label}">${label}</option>`;
+        if (h >= startH && h <= endH) {
+            working.push(opt);
+        } else {
+            other.push(opt);
+        }
+    }
+    return `
+        <optgroup label="Radno vrijeme">${working.join('')}</optgroup>
+        <optgroup label="Izvan radnog vremena">${other.join('')}</optgroup>
+    `;
   }
 

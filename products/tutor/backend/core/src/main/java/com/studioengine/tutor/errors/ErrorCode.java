@@ -22,7 +22,8 @@ public enum ErrorCode {
     PRE_BOOKED_SELF_SERVICE("T013", "Self-service not available for direct bookings"),
     CHECKOUT_VALIDATION_FAILED("T014", "Checkout validation failed"),
     EMAIL_ALREADY_IN_USE("T15", "Email already in use"),
-    SLOT_IN_PAST("T16", "Cannot use a slot in past");
+    SLOT_IN_PAST("T16", "Cannot use a slot in past"),
+    SLOT_NOT_ON_THE_HOUR("T17", "Slot must start on the full hour");
 
     private final String code;
     private final String message;

@@ -103,6 +103,8 @@ public class StorefrontController {
                 .locale(brandProperties.getLocale())
                 .currency(brandProperties.getCurrency())
                 .timezone(brandProperties.getTimezone())
+                .workingHoursStart(brandProperties.getWorkingHoursStart())
+                .workingHoursEnd(brandProperties.getWorkingHoursEnd())
                 .build();
 
         return ResponseEntity.ok(response);

@@ -47,6 +47,8 @@ app:
     locale: ${BRAND_LOCALE:hr-HR}
     currency: ${BRAND_CURRENCY:EUR}
     timezone: ${BRAND_TIMEZONE:Europe/Zagreb}
+    working-hours-start: ${WORKING_HOURS_START:17}
+    working-hours-end: ${WORKING_HOURS_END:20}
   auth:
     jwt-secret: ${AUTH_JWT_SECRET:}
     jwt-expiration: ${AUTH_JWT_EXPIRATION:3600s}
