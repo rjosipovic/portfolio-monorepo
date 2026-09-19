@@ -29,7 +29,7 @@ import { closeAppointment } from '../actions/appointmentActions.js';
   
           attachClosureHandlers(container);
       } catch (err) {
-          container.innerHTML = `<p style="color: #dc2626;">Greška: ${escapeHtml(err.message || 'Neuspjelo učitavanje')}</p>`;
+          container.innerHTML = `<p style="color: #dc2626;">Greška pri učitavanju</p>`;
       }
   }
   
