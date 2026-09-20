@@ -1,5 +1,6 @@
 package com.studioengine.tutor.jobs;
 
+import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.TimeSlot;
 import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.dataaccess.enums.TimeSlotState;
@@ -21,7 +22,6 @@ import java.util.UUID;
 public class ExpiredTimeSlotHandler {
 
     private static final String TRIGGERED_BY = "SYSTEM_TIMEOUT";
-    private static final Set<AppointmentState> SKIP_STATES = Set.of(AppointmentState.PENDING_PAYMENT);
 
     private final AppointmentRepository appointmentRepository;
     private final TimeSlotRepository timeSlotRepository;
@@ -30,29 +30,33 @@ public class ExpiredTimeSlotHandler {
 
     @Transactional
     public void handle(UUID timeSlotId) {
-
         var timeSlot = findTimeSlot(timeSlotId);
-        var shouldSkip = appointmentRepository.findByTimeSlotIdAndStateIn(timeSlot.getId(), SKIP_STATES).isPresent();
-
-        if (shouldSkip) {
-            log.debug("Skipping slot {} - appointment in [{}]", timeSlot.getId(), SKIP_STATES);
-            return;
-        }
-
-        timeSlotStateMachine.transition(timeSlot, TimeSlotState.AVAILABLE, TRIGGERED_BY);
-        timeSlotRepository.save(timeSlot);
-
-        // Cancel RESERVED appointment if exists
-        appointmentRepository.findByTimeSlotIdAndStateIn(timeSlot.getId(), Set.of(AppointmentState.RESERVED))
-                .ifPresent(a -> {
-                    appointmentStateMachine.transition(a, AppointmentState.CANCELLED, TRIGGERED_BY);
-                    appointmentRepository.save(a);
-                    log.info("Released slot {} and canceled appointment {}", timeSlot.getId(), a.getId());
-                });
+        appointmentRepository.findByTimeSlotIdAndStateIn(timeSlot.getId(), Set.of(AppointmentState.RESERVED, AppointmentState.PENDING_PAYMENT))
+                .ifPresentOrElse(
+                        appointment -> {
+                            if (appointment.getState() == AppointmentState.RESERVED) {
+                                makeTimeSlotAvailable(timeSlot);
+                                makeAppointmentCanceled(appointment);
+                                log.info("Released slot {} and canceled appointment {}", timeSlot.getId(), appointment.getId());
+                            } else if (appointment.getState() == AppointmentState.PENDING_PAYMENT) {
+                                log.debug("Skipping slot {} - appointment in [{}]", timeSlot.getId(), AppointmentState.PENDING_PAYMENT);
+                            }
+                        },
+                        () -> makeTimeSlotAvailable(timeSlot));
     }
 
     private TimeSlot findTimeSlot(UUID timeSlotId) {
         return timeSlotRepository.findById(timeSlotId)
                 .orElseThrow(() -> new IllegalStateException("TimeSlot not found: " + timeSlotId));
+    }
+
+    private void makeTimeSlotAvailable(TimeSlot timeSlot) {
+        timeSlotStateMachine.transition(timeSlot, TimeSlotState.AVAILABLE, TRIGGERED_BY);
+        timeSlotRepository.save(timeSlot);
+    }
+
+    private void makeAppointmentCanceled(Appointment appointment) {
+        appointmentStateMachine.transition(appointment, AppointmentState.CANCELLED, TRIGGERED_BY);
+        appointmentRepository.save(appointment);
     }
 }

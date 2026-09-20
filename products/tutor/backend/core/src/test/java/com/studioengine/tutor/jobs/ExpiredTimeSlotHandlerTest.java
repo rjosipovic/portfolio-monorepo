@@ -46,22 +46,20 @@ class ExpiredTimeSlotHandlerTest {
         var timeSlotId = UUID.randomUUID();
         var timeSlot = mock(TimeSlot.class);
         when(timeSlot.getId()).thenReturn(timeSlotId);
-        var skipStates = Set.of(AppointmentState.PENDING_PAYMENT);
-        var reservedStateSet = Set.of(AppointmentState.RESERVED);
+        var lookupStates = Set.of(AppointmentState.RESERVED, AppointmentState.PENDING_PAYMENT);
         var reservedAppointment = mock(Appointment.class);
+        when(reservedAppointment.getState()).thenReturn(AppointmentState.RESERVED);
         when(timeSlotRepository.findById(timeSlotId)).thenReturn(Optional.of(timeSlot));
-        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, skipStates)).thenReturn(Optional.empty());
-        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, reservedStateSet)).thenReturn(Optional.of(reservedAppointment));
+        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, lookupStates)).thenReturn(Optional.of(reservedAppointment));
 
         // when
         expiredTimeSlotHandler.handle(timeSlotId);
 
         // then
         verify(timeSlotRepository).findById(timeSlotId);
-        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, skipStates);
+        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, lookupStates);
         verify(timeSlotStateMachine).transition(timeSlot, TimeSlotState.AVAILABLE, "SYSTEM_TIMEOUT");
         verify(timeSlotRepository).save(timeSlot);
-        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, reservedStateSet);
         verify(appointmentStateMachine).transition(reservedAppointment, AppointmentState.CANCELLED, "SYSTEM_TIMEOUT");
         verify(appointmentRepository).save(reservedAppointment);
     }
@@ -88,18 +86,20 @@ class ExpiredTimeSlotHandlerTest {
         var timeSlotId = UUID.randomUUID();
         var timeSlot = mock(TimeSlot.class);
         when(timeSlot.getId()).thenReturn(timeSlotId);
-        var skipStates = Set.of(AppointmentState.PENDING_PAYMENT);
+        var lookupStates = Set.of(AppointmentState.RESERVED, AppointmentState.PENDING_PAYMENT);
         var pendingPaymentAppointment = mock(Appointment.class);
+        when(pendingPaymentAppointment.getState()).thenReturn(AppointmentState.PENDING_PAYMENT);
         when(timeSlotRepository.findById(timeSlotId)).thenReturn(Optional.of(timeSlot));
-        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, skipStates)).thenReturn(Optional.of(pendingPaymentAppointment));
+        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, lookupStates)).thenReturn(Optional.of(pendingPaymentAppointment));
 
         // when
         expiredTimeSlotHandler.handle(timeSlotId);
 
         // then
         verify(timeSlotRepository).findById(timeSlotId);
-        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, skipStates);
+        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, lookupStates);
         verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+        verify(appointmentStateMachine, never()).transition(any(), any(), any());
     }
 
     @Test
@@ -108,21 +108,18 @@ class ExpiredTimeSlotHandlerTest {
         var timeSlotId = UUID.randomUUID();
         var timeSlot = mock(TimeSlot.class);
         when(timeSlot.getId()).thenReturn(timeSlotId);
-        var skipStates = Set.of(AppointmentState.PENDING_PAYMENT);
-        var reservedStateSet = Set.of(AppointmentState.RESERVED);
+        var lookupStates = Set.of(AppointmentState.RESERVED, AppointmentState.PENDING_PAYMENT);
         when(timeSlotRepository.findById(timeSlotId)).thenReturn(Optional.of(timeSlot));
-        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, skipStates)).thenReturn(Optional.empty());
-        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, reservedStateSet)).thenReturn(Optional.empty());
+        when(appointmentRepository.findByTimeSlotIdAndStateIn(timeSlotId, lookupStates)).thenReturn(Optional.empty());
 
         // when
         expiredTimeSlotHandler.handle(timeSlotId);
 
         // then
         verify(timeSlotRepository).findById(timeSlotId);
-        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, skipStates);
+        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, lookupStates);
         verify(timeSlotStateMachine).transition(timeSlot, TimeSlotState.AVAILABLE, "SYSTEM_TIMEOUT");
         verify(timeSlotRepository).save(timeSlot);
-        verify(appointmentRepository).findByTimeSlotIdAndStateIn(timeSlotId, reservedStateSet);
         verify(appointmentStateMachine, never()).transition(any(), any(), any());
     }
 }
