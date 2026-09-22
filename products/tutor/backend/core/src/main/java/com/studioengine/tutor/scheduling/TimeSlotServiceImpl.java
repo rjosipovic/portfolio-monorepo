@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -44,6 +45,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     private final TimeSlotServiceMapper timeSlotServiceMapper;
     private final TimeSlotStateLogRepository timeSlotStateLogRepository;
     private final BrandProperties brandProperties;
+    private final Clock clock;
 
     @Override
     public List<CalendarSlot> getSlotsByDateRange(LocalDate from, LocalDate to) {
@@ -67,6 +69,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     public List<AvailableSlot> getAvailability(LocalDate from, LocalDate to) {
         return timeSlotRepository.findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE)
                 .stream()
+                .filter(ts -> !isInPast(ts.getSlotDate(), ts.getStartTime()))
                 .map(timeSlotServiceMapper::toAvailableSlot)
                 .toList();
     }
@@ -161,10 +164,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     private void verifyNotInPast(LocalDate date, LocalTime startTime) {
-        var timezone = ZoneId.of(brandProperties.getTimezone());
-        var now = LocalDateTime.now(timezone);
-        var slotStart = date.atTime(startTime);
-        if (!slotStart.isAfter(now)) {   // start <= now → reject
+        if (isInPast(date, startTime)) {
             throw new PastSlotException("Cannot create or publish a slot in the past: %s %s".formatted(date, startTime));
         }
     }
@@ -177,6 +177,11 @@ public class TimeSlotServiceImpl implements TimeSlotService {
                 throw new SlotConflictException("Duplicate slot in request: %s %s".formatted(def.getDate(), def.getStartTime()) );
             }
         });
+    }
+
+    private boolean isInPast(LocalDate date, LocalTime startTime) {
+        var now = LocalDateTime.now(clock.withZone(ZoneId.of(brandProperties.getTimezone())));
+        return !date.atTime(startTime).isAfter(now);
     }
 }
 

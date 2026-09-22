@@ -12,16 +12,19 @@ import com.studioengine.tutor.errors.exceptions.PastSlotException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
 import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,6 +40,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TimeSlotServiceImplTest {
+
+    private static final String ZONE_ID = "Europe/Zagreb";
 
     @Mock
     private TimeSlotRepository timeSlotRepository;
@@ -56,11 +61,21 @@ class TimeSlotServiceImplTest {
     @Mock
     private BrandProperties brandProperties;
 
-    @InjectMocks
+    private Clock clock;
+
     private TimeSlotServiceImpl timeSlotService;
 
     @Captor
     private ArgumentCaptor<List<TimeSlot>> slotsCaptor;
+
+    @BeforeEach
+    void initNow() {
+        var zone = ZoneId.of(ZONE_ID);
+        var fixedNow = LocalDateTime.of(2026, 9, 22, 12, 0).atZone(zone).toInstant();
+        clock = Clock.fixed(fixedNow, zone);
+        timeSlotService = new TimeSlotServiceImpl(timeSlotRepository, stateMachine, appointmentRepository,
+        timeSlotServiceMapper, timeSlotStateLogRepository, brandProperties, clock);
+    }
 
     // --- createSlots ---
     @Test
@@ -80,7 +95,7 @@ class TimeSlotServiceImplTest {
         var createdSlot = mock(CreatedSlot.class);
         when(timeSlotRepository.existsBySlotDateAndStartTime(date1, time1)).thenReturn(false);
         when(timeSlotRepository.existsBySlotDateAndStartTime(date2, time2)).thenReturn(false);
-        when(brandProperties.getTimezone()).thenReturn("Europe/Zagreb");
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
         when(timeSlotRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
         when(timeSlotServiceMapper.toCreatedSlot(any())).thenReturn(createdSlot);
 
@@ -141,7 +156,7 @@ class TimeSlotServiceImplTest {
                 ))
                 .build();
         when(timeSlotRepository.existsBySlotDateAndStartTime(date1, time1)).thenReturn(false);
-        when(brandProperties.getTimezone()).thenReturn("Europe/Zagreb");
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
 
         // when
         assertThatThrownBy(() -> timeSlotService.createSlots(command)).isInstanceOf(PastSlotException.class);
@@ -207,7 +222,7 @@ class TimeSlotServiceImplTest {
         var command = PublishSlotsCommand.builder().slotIds(ids).build();
 
         when(timeSlotRepository.findAllByIdForUpdate(ids)).thenReturn(slots);
-        when(brandProperties.getTimezone()).thenReturn("Europe/Zagreb");
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
         when(timeSlotRepository.saveAll(slots)).thenAnswer(inv -> inv.getArgument(0));
 
         // when
@@ -231,7 +246,7 @@ class TimeSlotServiceImplTest {
         var command = PublishSlotsCommand.builder().slotIds(ids).build();
 
         when(timeSlotRepository.findAllByIdForUpdate(ids)).thenReturn(slots);
-        when(brandProperties.getTimezone()).thenReturn("Europe/Zagreb");
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
 
         // when
         assertThatThrownBy(() -> timeSlotService.publishSlots(command)).isInstanceOf(PastSlotException.class);
@@ -417,11 +432,84 @@ class TimeSlotServiceImplTest {
         assertThat(result).isEmpty();
     }
 
+    // --- getAvailability
+    @Test
+    void shouldGetAvailabilitySlots() {
+        // given
+        var from = LocalDate.now();
+        var to = from.plusDays(14);
+        var slot1 = createSlot(TimeSlotState.AVAILABLE,false);
+        var slot2 = createSlot(TimeSlotState.AVAILABLE,false);
+        var slots = List.of(slot1, slot2);
+        var availableSlot1 = mock(AvailableSlot.class);
+        var availableSlot2 = mock(AvailableSlot.class);
+
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
+        when(timeSlotRepository.findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE)).thenReturn(slots);
+        when(timeSlotServiceMapper.toAvailableSlot(slot1)).thenReturn(availableSlot1);
+        when(timeSlotServiceMapper.toAvailableSlot(slot2)).thenReturn(availableSlot2);
+
+        // when
+        var result = timeSlotService.getAvailability(from, to);
+
+        // then
+        verify(timeSlotRepository).findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE);
+        verify(timeSlotServiceMapper).toAvailableSlot(slot1);
+        verify(timeSlotServiceMapper).toAvailableSlot(slot2);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0)).isEqualTo(availableSlot1);
+        assertThat(result.get(1)).isEqualTo(availableSlot2);
+    }
+
+    @Test
+    void shouldGetAvailabilityWithEmptySlots() {
+        // given
+        var from = LocalDate.now();
+        var to = from.plusDays(14);
+
+        when(timeSlotRepository.findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE)).thenReturn(List.of());
+
+        // when
+        var result = timeSlotService.getAvailability(from, to);
+
+        // then
+        verify(timeSlotRepository).findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE);
+        verify(timeSlotServiceMapper, never()).toAvailableSlot(any());
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldGetAvailabilityReturnOnlyFutureSlots() {
+        // given
+        var from = LocalDate.now();
+        var to = from.plusDays(14);
+        var pastSlot = createSlot(TimeSlotState.AVAILABLE,true);
+        var futureSlot = createSlot(TimeSlotState.AVAILABLE,false);
+        var slots = List.of(pastSlot, futureSlot);
+        var availableSlot = mock(AvailableSlot.class);
+
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
+        when(timeSlotRepository.findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE)).thenReturn(slots);
+        when(timeSlotServiceMapper.toAvailableSlot(futureSlot)).thenReturn(availableSlot);
+
+        // when
+        var result = timeSlotService.getAvailability(from, to);
+
+        // then
+        verify(brandProperties, times(2)).getTimezone(); // for each slot returned form repo
+        verify(timeSlotRepository).findBySlotDateBetweenAndStateOrderBySlotDateAscStartTimeAsc(from, to, TimeSlotState.AVAILABLE);
+        verify(timeSlotServiceMapper).toAvailableSlot(futureSlot);
+        verify(timeSlotServiceMapper, never()).toAvailableSlot(pastSlot);
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst()).isEqualTo(availableSlot);
+    }
+
     // --- Helper ---
 
     private TimeSlot createSlot(TimeSlotState state, boolean inPast) {
-        var date = inPast ? LocalDate.now().minusDays(5) : LocalDate.now().plusDays(5);
-        var time = LocalTime.of(10, 0);
+        var date = LocalDate.of(2026, 9, 22);
+        var time = inPast ? LocalTime.of(9, 0) : LocalTime.of(15, 0);
         var slot = TimeSlot.create(date, time);
         if (state != TimeSlotState.DRAFT) {
             slot.transitionTo(state);
