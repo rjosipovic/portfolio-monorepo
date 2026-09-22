@@ -160,3 +160,32 @@ databaseChangeLog:
               - column:
                   name: created_at
                   valueDate: "2025-03-20T09:00:00+01:00"
+  - changeSet:
+      id: seed-math-004-service-categpries
+      author: studioengine
+      context: math
+      changes:
+        - insert:
+            tableName: service_category
+            columns:
+              - column:
+                  name: id
+                  value: "ce036d9c-82cc-45f2-aa5b-c1e7c3f0c67d"
+              - column:
+                  name: name
+                  value: "Matematika za one koji žele znati više"
+              - column:
+                  name: description
+                  value: "Matematika za one koji žele znati više i pripreme za natjecanja."
+              - column:
+                  name: price
+                  valueNumeric: 35.00
+              - column:
+                  name: currency
+                  value: "EUR"
+              - column:
+                  name: active
+                  valueBoolean: true
+              - column:
+                  name: created_at
+                  valueDate: "2025-01-01T00:00:00+01:00"
