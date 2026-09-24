@@ -19,7 +19,7 @@ import { api } from './api.js';
   
               <div class="services-grid" id="services-grid">
                   ${services.map(s => `
-                      <div class="service-card" data-service-id="${s.id}" data-service-name="${escapeHtml(s.name)}" data-service-price="${s.price}">
+                      <div class="service-card" data-service-id="${s.id}">
                           <h3>${escapeHtml(s.name)}</h3>
                           <p class="text-muted mb-1">${escapeHtml(s.description)}</p>
                           <p class="price">${formatCurrency(s.price)}</p>
@@ -35,12 +35,17 @@ import { api } from './api.js';
                   // Select this one
                   card.classList.add('selected');
   
+                  // Look up the service by id from the fetched list (avoids putting
+                  // user-controlled name/price into HTML attributes)
+                  const service = services.find(s => s.id === card.dataset.serviceId);
+                  if (!service) return;
+  
                   // Navigate to availability with selected service
                   setTimeout(() => {
                       navigateTo('availability', {
-                          serviceId: card.dataset.serviceId,
-                          serviceName: card.dataset.serviceName,
-                          servicePrice: card.dataset.servicePrice
+                          serviceId: service.id,
+                          serviceName: service.name,
+                          servicePrice: service.price
                       });
                   }, 300);
               });
