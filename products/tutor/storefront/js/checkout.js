@@ -89,9 +89,7 @@ import { api } from './api.js';
                   renderConfirmation(container, result, data);
               }
           } catch (err) {
-              showError(errorEl, err.reason || 'Greška pri rezervaciji');
-              btn.disabled = false;
-              btn.textContent = 'Rezerviraj termin';
+            renderCheckoutError(container, data);
           }
       });
   }
@@ -114,6 +112,23 @@ import { api } from './api.js';
               <button class="btn btn-primary mt-2" onclick="location.reload()">Nova rezervacija</button>
           </div>
       `;
+  }
+
+  function renderCheckoutError(container, data) {
+    container.innerHTML = `
+        <div class="card">
+              <h2>Rezervacija nije uspjela</h2>
+              <p class="mt-2">Došlo je do pogreške pri rezervaciji. Vaša rezervacija termina možda je istekla. Molimo odaberite termin ponovno.</p>
+              <button id="retry-btn" class="btn btn-primary mt-2">Odaberite termin ponovno</button>
+          </div>
+    `;
+    document.getElementById('retry-btn').addEventListener('click', () => {
+        navigateTo('availability', {
+            serviceId: data.serviceId,
+            serviceName: data.serviceName,
+            servicePrice: data.servicePrice
+        });
+    });
   }
   
   function showError(el, msg) {
