@@ -15,6 +15,8 @@ import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -27,6 +29,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,6 +45,11 @@ import static org.mockito.Mockito.when;
 class TimeSlotServiceImplTest {
 
     private static final String ZONE_ID = "Europe/Zagreb";
+    private static final int YEAR_NOW = 2026;
+    private static final int MONTH_NOW = 9;
+    private static final int DAY_NOW = 22;
+    private static final int HOUR_NOW = 12;
+    private static final int MIN_NOW = 0;
 
     @Mock
     private TimeSlotRepository timeSlotRepository;
@@ -71,7 +79,7 @@ class TimeSlotServiceImplTest {
     @BeforeEach
     void initNow() {
         var zone = ZoneId.of(ZONE_ID);
-        var fixedNow = LocalDateTime.of(2026, 9, 22, 12, 0).atZone(zone).toInstant();
+        var fixedNow = LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW, HOUR_NOW, MIN_NOW).atZone(zone).toInstant();
         clock = Clock.fixed(fixedNow, zone);
         timeSlotService = new TimeSlotServiceImpl(timeSlotRepository, stateMachine, appointmentRepository,
         timeSlotServiceMapper, timeSlotStateLogRepository, brandProperties, clock);
@@ -142,28 +150,35 @@ class TimeSlotServiceImplTest {
         verify(timeSlotRepository, never()).saveAll(any());
     }
 
-    @Test
-    void shouldNotCreateSlotsWhenInPast() {
+    @ParameterizedTest
+    @MethodSource("pastDateTimes")
+    void shouldNotCreateSlotsWhenInPast(LocalDateTime dateTime) {
         // given
-        var date1 = LocalDate.now().minusDays(1);
-        var time1 = LocalTime.of(10, 0);
-        var date2 = LocalDate.now().minusDays(1);
-        var time2 = LocalTime.of(11, 0);
+        var date = dateTime.toLocalDate();
+        var time = dateTime.toLocalTime();
         var command = CreateSlotsCommand.builder()
                 .slots(List.of(
-                        CreateSlotsCommand.SlotDefinition.builder().date(date1).startTime(time1).build(),
-                        CreateSlotsCommand.SlotDefinition.builder().date(date2).startTime(time2).build()
+                        CreateSlotsCommand.SlotDefinition.builder().date(date).startTime(time).build()
                 ))
                 .build();
-        when(timeSlotRepository.existsBySlotDateAndStartTime(date1, time1)).thenReturn(false);
+        when(timeSlotRepository.existsBySlotDateAndStartTime(date, time)).thenReturn(false);
         when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
 
         // when
         assertThatThrownBy(() -> timeSlotService.createSlots(command)).isInstanceOf(PastSlotException.class);
 
         // then
-        verify(timeSlotRepository).existsBySlotDateAndStartTime(date1, time1);
+        verify(timeSlotRepository).existsBySlotDateAndStartTime(date, time);
         verify(timeSlotRepository, never()).saveAll(any());
+    }
+
+    static Stream<LocalDateTime> pastDateTimes() {
+        return Stream.of(
+                LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW, HOUR_NOW - 1, MIN_NOW),
+                LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW - 1, HOUR_NOW + 1, MIN_NOW),
+                LocalDateTime.of(YEAR_NOW, MONTH_NOW - 1, DAY_NOW + 1, HOUR_NOW, MIN_NOW),
+                LocalDateTime.of(YEAR_NOW - 1, MONTH_NOW + 1, DAY_NOW, HOUR_NOW, MIN_NOW)
+        );
     }
 
     @Test
