@@ -27,6 +27,7 @@ import com.studioengine.tutor.errors.ErrorResponse;
 import com.studioengine.tutor.errors.GlobalExceptionHandler;
 import com.studioengine.tutor.errors.exceptions.DeadlinePassedException;
 import com.studioengine.tutor.errors.exceptions.InvalidReservationException;
+import com.studioengine.tutor.errors.exceptions.PaymentProviderException;
 import com.studioengine.tutor.errors.exceptions.PreBookedSelfServiceException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
@@ -455,6 +456,37 @@ class StorefrontControllerTest {
             verify(storefrontMapper, never()).toCheckoutResponse(any());
             assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
         }
+
+        @Test
+        void shouldReturn503WhenPaymentProviderFails() throws Exception {
+            // given
+            var request = CheckoutRequest.builder()
+                    .reservationId(UUID.randomUUID())
+                    .serviceCategoryId(UUID.randomUUID())
+                    .guest(CheckoutRequest.Guest.builder()
+                            .name("Ana Kovačević")
+                            .email("ana@test.com")
+                            .phone("+385 91 234 5678")
+                            .build())
+                    .paymentMethodChoice(PaymentMethodChoice.STRIPE)
+                    .build();
+            when(checkoutService.checkout(any())).thenThrow(new PaymentProviderException("Stripe session creation failed"));
+            var expectedError = ErrorResponse.builder()
+                    .message(ErrorCode.PAYMENT_PROVIDER_ERROR.getMessage())
+                    .code(ErrorCode.PAYMENT_PROVIDER_ERROR.getCode())
+                    .reason("Stripe session creation failed")
+                    .build();
+
+            // when / then
+            var response = mockMvc.perform(post("/api/v1/storefront/checkout")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(checkoutRequestJson.write(request).getJson()))
+                    .andExpect(status().isServiceUnavailable())  // 503
+                    .andReturn().getResponse();
+
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+        }
+
     }
 
     @Nested

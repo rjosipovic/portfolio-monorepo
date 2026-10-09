@@ -36,7 +36,7 @@
         <!-- .ics calendar file generation for email attachments -->
         <ical4j.version>4.0.7</ical4j.version>
         <!-- Payment processing provider SDK -->
-        <stripe.version>28.2.0</stripe.version>
+        <stripe.version>33.4.2</stripe.version>
         <!-- JWT creation and HMAC signature verification -->
         <nimbus-jose.version>9.47</nimbus-jose.version>
         <!-- Distributed lock for scheduled tasks (prevents duplicate execution) -->

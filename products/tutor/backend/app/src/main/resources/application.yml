@@ -61,12 +61,13 @@ app:
     stripe-secret-key: ${STRIPE_SECRET_KEY:}
     stripe-webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
     stripe-success-url: ${STRIPE_SUCCESS_URL:}
+    stripe-session-expiry: ${STRIPE_SESSION_EXPIRY:35m}
     stripe-cancel-url: ${STRIPE_CANCEL_URL:}
     bank-iban: ${PAYMENT_BANK_IBAN:}
     bank-model: ${PAYMENT_BANK_MODEL:HR00}
     bank-recipient-name: ${PAYMENT_BANK_RECIPIENT:}
   scheduling:
-    reservation-timeout: ${SCHEDULING_RESERVATION_TIMEOUT:900s}
+    reservation-timeout: ${SCHEDULING_RESERVATION_TIMEOUT:35m}
     payment-overdue-threshold: ${SCHEDULING_PAYMENT_OVERDUE_THRESHOLD:48h}
     cancellation-deadline: ${SCHEDULING_CANCELLATION_DEADLINE:24h}
     nudge-delay: ${SCHEDULING_NUDGE_DELAY:2h}

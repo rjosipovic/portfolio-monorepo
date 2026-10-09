@@ -23,7 +23,9 @@ public enum ErrorCode {
     CHECKOUT_VALIDATION_FAILED("T014", "Checkout validation failed"),
     EMAIL_ALREADY_IN_USE("T15", "Email already in use"),
     SLOT_IN_PAST("T16", "Cannot use a slot in past"),
-    SLOT_NOT_ON_THE_HOUR("T17", "Slot must start on the full hour");
+    SLOT_NOT_ON_THE_HOUR("T17", "Slot must start on the full hour"),
+    WEBHOOK_DESERIALIZATION_FAILED("T18", "Webhook payload deserialization failed"),
+    PAYMENT_PROVIDER_ERROR("T19", "Payment provider error");
 
     private final String code;
     private final String message;

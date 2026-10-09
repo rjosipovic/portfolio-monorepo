@@ -3,6 +3,7 @@ package com.studioengine.tutor.api.controller;
 import com.studioengine.tutor.errors.ErrorCode;
 import com.studioengine.tutor.errors.ErrorResponse;
 import com.studioengine.tutor.errors.GlobalExceptionHandler;
+import com.studioengine.tutor.errors.exceptions.WebhookDeserializationException;
 import com.studioengine.tutor.errors.exceptions.WebhookVerificationException;
 import com.studioengine.tutor.payment.PaymentProvider;
 import com.studioengine.tutor.payment.PaymentService;
@@ -61,7 +62,6 @@ class StripeWebhookControllerTest {
         var result = ProviderResult.builder()
                 .sessionId("cs_test_123")
                 .appointmentId(UUID.randomUUID())
-                .outcome(ProviderResult.PaymentOutcome.SUCCESS)
                 .amount(new BigDecimal("30.00"))
                 .build();
 
@@ -95,7 +95,6 @@ class StripeWebhookControllerTest {
     @Test
     void shouldNotProcessWhenValidationFailed() throws Exception {
         // given
-
         var reason = "Stripe webhook processing failed";
         when(paymentProvider.processCallback(any(), eq("sig_valid"))).thenThrow(new WebhookVerificationException(reason));
         var expectedError = ErrorResponse.builder()
@@ -110,6 +109,29 @@ class StripeWebhookControllerTest {
                         .content("{\"type\": \"checkout.session.completed\"}")
                         .header("Stripe-Signature", "sig_valid"))
                 .andExpect(status().isBadRequest())
+                .andReturn().getResponse();
+
+        verify(paymentService, never()).handleStripeWebhookConfirmation(any());
+        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+    }
+
+    @Test
+    void shouldNotProcessWhenDeserializationFailed() throws Exception {
+        // given
+        var reason = "Failed to deserialize Stripe checkout session for event 1234";
+        when(paymentProvider.processCallback(any(), eq("sig_valid"))).thenThrow(new WebhookDeserializationException(reason));
+        var expectedError = ErrorResponse.builder()
+                .message(ErrorCode.WEBHOOK_DESERIALIZATION_FAILED.getMessage())
+                .code(ErrorCode.WEBHOOK_DESERIALIZATION_FAILED.getCode())
+                .reason(reason)
+                .build();
+
+        // when / then
+        var response = mockMvc.perform(post("/api/v1/webhooks/stripe")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\": \"checkout.session.completed\"}")
+                        .header("Stripe-Signature", "sig_valid"))
+                .andExpect(status().isInternalServerError())
                 .andReturn().getResponse();
 
         verify(paymentService, never()).handleStripeWebhookConfirmation(any());

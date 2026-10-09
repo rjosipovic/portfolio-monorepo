@@ -15,13 +15,13 @@ import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.PaymentRecordRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
 import com.studioengine.tutor.email.EmailService;
-import com.studioengine.tutor.errors.exceptions.WebhookVerificationException;
 import com.studioengine.tutor.payment.provider.ProviderRequest;
 import com.studioengine.tutor.payment.provider.ProviderResult;
 import com.studioengine.tutor.payment.provider.ProviderSession;
 import com.studioengine.tutor.scheduling.AppointmentStateMachine;
 import com.studioengine.tutor.scheduling.TimeSlotStateMachine;
 import com.studioengine.tutor.selfservice.TokenService;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -67,149 +66,199 @@ class PaymentServiceImplTest {
     @InjectMocks
     private PaymentServiceImpl paymentService;
 
-    // --- Stripe initiation ---
-    @Test
-    void shouldCreateStripeSessionAndAttachToAppointment() {
-        // given
-        var appointment = createAppointment(AppointmentState.RESERVED);
-        var command = PaymentCommand.builder()
-                .appointment(appointment)
-                .paymentMethod(PaymentMethodChoice.STRIPE)
-                .build();
+    @Nested
+    class InitPayment {
+        // --- Stripe initiation ---
+        @Test
+        void shouldCreateStripeSessionAndAttachToAppointment() {
+            // given
+            var appointment = createAppointment(AppointmentState.RESERVED);
+            var command = PaymentCommand.builder()
+                    .appointment(appointment)
+                    .paymentMethod(PaymentMethodChoice.STRIPE)
+                    .build();
 
-        when(brandProperties.getCurrency()).thenReturn("EUR");
-        when(paymentProvider.createSession(any())).thenReturn(
-                ProviderSession.builder()
-                        .sessionId("cs_test_123")
-                        .redirectUrl("https://checkout.stripe.com/cs_test_123")
-                        .build()
-        );
+            when(brandProperties.getCurrency()).thenReturn("EUR");
+            when(paymentProvider.createSession(any())).thenReturn(
+                    ProviderSession.builder()
+                            .sessionId("cs_test_123")
+                            .redirectUrl("https://checkout.stripe.com/cs_test_123")
+                            .build()
+            );
 
-        // when
-        var result = paymentService.initPayment(command);
+            // when
+            var result = paymentService.initPayment(command);
 
-        // then
-        assertThat(result.getStripeRedirectUrl()).isEqualTo("https://checkout.stripe.com/cs_test_123");
-        assertThat(appointment.getStripeSessionId()).isEqualTo("cs_test_123");
-        verify(appointmentRepository).save(appointment);
+            // then
+            assertThat(result.getStripeRedirectUrl()).isEqualTo("https://checkout.stripe.com/cs_test_123");
+            assertThat(appointment.getStripeSessionId()).isEqualTo("cs_test_123");
+            verify(appointmentRepository).save(appointment);
 
-        var captor = ArgumentCaptor.forClass(ProviderRequest.class);
-        verify(paymentProvider).createSession(captor.capture());
-        assertThat(captor.getValue().getAmount()).isEqualByComparingTo(new BigDecimal("30.00"));
-        assertThat(captor.getValue().getCurrency()).isEqualTo("EUR");
+            var captor = ArgumentCaptor.forClass(ProviderRequest.class);
+            verify(paymentProvider).createSession(captor.capture());
+            assertThat(captor.getValue().getAmount()).isEqualByComparingTo(new BigDecimal("30.00"));
+            assertThat(captor.getValue().getCurrency()).isEqualTo("EUR");
+        }
+
+        // --- Bank transfer ---
+        @Test
+        void shouldTransitionToPendingPaymentForBankTransfer() {
+            // given
+            var appointment = createAppointment(AppointmentState.RESERVED);
+            var command = PaymentCommand.builder()
+                    .appointment(appointment)
+                    .paymentMethod(PaymentMethodChoice.BANK_TRANSFER)
+                    .build();
+            when(tokenService.generateManageLink(appointment)).thenReturn("http://localhost:8080/manage.html?token=x");
+
+            // when
+            paymentService.initPayment(command);
+
+            // then
+            verify(appointmentStateMachine).transition(appointment, AppointmentState.PENDING_PAYMENT, "SYSTEM_BANK_TRANSFER");
+            verify(appointmentRepository).save(appointment);
+            verify(tokenService).generateManageLink(appointment);
+            verify(emailService).sendPendingPaymentEmail(appointment, "http://localhost:8080/manage.html?token=x");
+        }
     }
 
-    // --- Bank transfer ---
-    @Test
-    void shouldTransitionToPendingPaymentForBankTransfer() {
-        // given
-        var appointment = createAppointment(AppointmentState.RESERVED);
-        var command = PaymentCommand.builder()
-                .appointment(appointment)
-                .paymentMethod(PaymentMethodChoice.BANK_TRANSFER)
-                .build();
-        when(tokenService.generateManageLink(appointment)).thenReturn("http://localhost:8080/manage.html?token=x");
+    @Nested
+    class WebhookConfirmation {
+        // --- Webhook confirmation: happy path ---
+        @Test
+        void shouldTransitionToPaidOnWebhookConfirmation() {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sessionId = "cs_test_123";
+            var amount = new BigDecimal(30L);
+            var manageLink = "http://localhost:8080/manage.html?token=x";
+            var appointment = createAppointment(AppointmentState.RESERVED);
+            appointment.updateStripeSessionId(sessionId);
+            setId(appointment, appointmentId);
+            var slot = appointment.getTimeSlot();
+            when(tokenService.generateManageLink(appointment)).thenReturn(manageLink);
 
-        // when
-        paymentService.initPayment(command);
+            var providerResult = ProviderResult.builder()
+                    .appointmentId(appointmentId)
+                    .sessionId(sessionId)
+                    .amount(amount)
+                    .build();
 
-        // then
-        verify(appointmentStateMachine).transition(appointment, AppointmentState.PENDING_PAYMENT, "SYSTEM_BANK_TRANSFER");
-        verify(appointmentRepository).save(appointment);
-        verify(tokenService).generateManageLink(appointment);
-        verify(emailService).sendPendingPaymentEmail(appointment, "http://localhost:8080/manage.html?token=x");
-    }
+            when(appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId))
+                    .thenReturn(Optional.of(appointment));
 
-    // --- Webhook confirmation: happy path ---
-    @Test
-    void shouldTransitionToPaidOnWebhookConfirmation() {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var sessionId = "cs_test_123";
-        var appointment = createAppointment(AppointmentState.RESERVED);
-        appointment.updateStripeSessionId(sessionId);
-        setId(appointment, appointmentId);
-        var slot = appointment.getTimeSlot();
-        when(tokenService.generateManageLink(appointment)).thenReturn("http://localhost:8080/manage.html?token=x");
+            // when
+            paymentService.handleStripeWebhookConfirmation(providerResult);
 
-        var providerResult = ProviderResult.builder()
-                .appointmentId(appointmentId)
-                .sessionId(sessionId)
-                .outcome(ProviderResult.PaymentOutcome.SUCCESS)
-                .amount(new BigDecimal("30.00"))
-                .build();
+            // then
+            verify(appointmentRepository).findByIdAndStripeSessionId(appointmentId, sessionId);
+            verify(appointmentStateMachine).transition(appointment, AppointmentState.PAID, "STRIPE_WEBHOOK");
+            verify(timeSlotStateMachine).transition(slot, TimeSlotState.BOOKED, "STRIPE_WEBHOOK");
+            verify(appointmentRepository).save(appointment);
+            verify(timeSlotRepository).save(slot);
 
-        when(appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId))
-                .thenReturn(Optional.of(appointment));
+            var captor = ArgumentCaptor.forClass(PaymentRecord.class);
+            verify(paymentRecordRepository).save(captor.capture());
+            var paymentRecord = captor.getValue();
+            assertThat(paymentRecord.getAppointment()).isEqualTo(appointment);
+            assertThat(paymentRecord.getAmount()).isEqualTo(appointment.getFinalPrice());
+            assertThat(paymentRecord.getPaymentMethod()).isEqualTo(PaymentMethod.STRIPE);
+            assertThat(paymentRecord.getPaymentDate()).isEqualTo(LocalDate.now());
+            assertThat(paymentRecord.getStripePaymentId()).isEqualTo(sessionId);
 
-        // when
-        paymentService.handleStripeWebhookConfirmation(providerResult);
+            verify(tokenService).generateManageLink(appointment);
+            verify(emailService).sendConfirmationEmail(appointment, manageLink);
+        }
 
-        // then
-        verify(appointmentStateMachine).transition(appointment, AppointmentState.PAID, "STRIPE_WEBHOOK");
-        verify(timeSlotStateMachine).transition(slot, TimeSlotState.BOOKED, "STRIPE_WEBHOOK");
-        verify(appointmentRepository).save(appointment);
-        verify(timeSlotRepository).save(slot);
+        // --- Webhook confirmation: appointment not found ---
+        @Test
+        void shouldSendOrphanPaymentAlertWhenAppointmentNotFound() {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sessionId = "cs_unknown";
+            var amount = new BigDecimal(30L);
 
-        var captor = ArgumentCaptor.forClass(PaymentRecord.class);
-        verify(paymentRecordRepository).save(captor.capture());
-        var paymentRecord = captor.getValue();
-        assertThat(paymentRecord.getAppointment()).isEqualTo(appointment);
-        assertThat(paymentRecord.getAmount()).isEqualTo(appointment.getFinalPrice());
-        assertThat(paymentRecord.getPaymentMethod()).isEqualTo(PaymentMethod.STRIPE);
-        assertThat(paymentRecord.getPaymentDate()).isEqualTo(LocalDate.now());
-        assertThat(paymentRecord.getStripePaymentId()).isEqualTo(sessionId);
+            var providerResult = ProviderResult.builder()
+                    .appointmentId(appointmentId)
+                    .sessionId(sessionId)
+                    .amount(amount)
+                    .build();
 
-        verify(emailService).sendConfirmationEmail(appointment, "http://localhost:8080/manage.html?token=x");
-    }
+            when(appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId)).thenReturn(Optional.empty());
 
-    // --- Webhook confirmation: idempotent (already PAID) ---
-    @Test
-    void shouldIgnoreWebhookWhenAlreadyPaid() {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var sessionId = "cs_test_123";
-        var appointment = createAppointment(AppointmentState.PAID);
-        setId(appointment, appointmentId);
-        var slot = appointment.getTimeSlot();
+            // when
+            paymentService.handleStripeWebhookConfirmation(providerResult);
 
-        var providerResult = ProviderResult.builder()
-                .appointmentId(appointmentId)
-                .sessionId(sessionId)
-                .outcome(ProviderResult.PaymentOutcome.SUCCESS)
-                .amount(new BigDecimal("30.00"))
-                .build();
+            // then
+            verify(appointmentRepository).findByIdAndStripeSessionId(appointmentId, sessionId);
+            verify(emailService).sendOrphanPaymentAlert(appointmentId, sessionId, amount);
 
-        when(appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId))
-                .thenReturn(Optional.of(appointment));
+            verify(appointmentStateMachine, never()).transition(any(), any(), any());
+            verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+            verify(appointmentRepository, never()).save(any());
+            verify(timeSlotRepository, never()).save(any());
+        }
 
-        // when
-        paymentService.handleStripeWebhookConfirmation(providerResult);
+        // --- Webhook confirmation: idempotent (already PAID) ---
+        @Test
+        void shouldIgnoreWebhookWhenAlreadyPaid() {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sessionId = "cs_test_123";
+            var amount = new BigDecimal(30L);
+            var appointment = createAppointment(AppointmentState.PAID);
+            setId(appointment, appointmentId);
+            var slot = appointment.getTimeSlot();
 
-        // then
-        verify(appointmentStateMachine, never()).transition(any(), any(), any());
-        verify(timeSlotStateMachine, never()).transition(any(), any(), any());
-        verify(appointmentRepository, never()).save(appointment);
-        verify(timeSlotRepository, never()).save(slot);
-    }
+            var providerResult = ProviderResult.builder()
+                    .appointmentId(appointmentId)
+                    .sessionId(sessionId)
+                    .amount(amount)
+                    .build();
 
-    // --- Webhook confirmation: appointment not found ---
-    @Test
-    void shouldThrowWhenAppointmentNotFoundForWebhook() {
-        // given
-        var providerResult = ProviderResult.builder()
-                .appointmentId(UUID.randomUUID())
-                .sessionId("cs_unknown")
-                .outcome(ProviderResult.PaymentOutcome.SUCCESS)
-                .amount(new BigDecimal("30.00"))
-                .build();
+            when(appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId)).thenReturn(Optional.of(appointment));
 
-        when(appointmentRepository.findByIdAndStripeSessionId(any(), any()))
-                .thenReturn(Optional.empty());
+            // when
+            paymentService.handleStripeWebhookConfirmation(providerResult);
 
-        // when / then
-        assertThatThrownBy(() -> paymentService.handleStripeWebhookConfirmation(providerResult))
-                .isInstanceOf(WebhookVerificationException.class);
+            // then
+            verify(appointmentRepository).findByIdAndStripeSessionId(appointmentId, sessionId);
+
+            verify(appointmentStateMachine, never()).transition(any(), any(), any());
+            verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+            verify(appointmentRepository, never()).save(appointment);
+            verify(timeSlotRepository, never()).save(slot);
+        }
+
+        @Test
+        void shouldSendOrphanPaymentAlterWhenAppointmentNotInReserved() {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sessionId = "cs_unknown";
+            var amount = new BigDecimal(30L);
+            var appointment = createAppointment(AppointmentState.CANCELLED);
+            setId(appointment, appointmentId);
+
+            var providerResult = ProviderResult.builder()
+                    .appointmentId(appointmentId)
+                    .sessionId(sessionId)
+                    .amount(amount)
+                    .build();
+
+            when(appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId)).thenReturn(Optional.of(appointment));
+
+            // when
+            paymentService.handleStripeWebhookConfirmation(providerResult);
+
+            // then
+            verify(appointmentRepository).findByIdAndStripeSessionId(appointmentId, sessionId);
+            verify(emailService).sendOrphanPaymentAlert(appointmentId, sessionId, amount);
+
+            verify(appointmentStateMachine, never()).transition(any(), any(), any());
+            verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+            verify(appointmentRepository, never()).save(any());
+            verify(timeSlotRepository, never()).save(any());
+        }
     }
 
     // --- Helpers ---

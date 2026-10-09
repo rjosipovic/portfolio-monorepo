@@ -15,12 +15,6 @@ public class ProviderResult {
 
     String sessionId;
     UUID appointmentId;
-    PaymentOutcome outcome;
     BigDecimal amount;
-
-    public enum PaymentOutcome {
-        SUCCESS,
-        FAILED
-    }
 }
 

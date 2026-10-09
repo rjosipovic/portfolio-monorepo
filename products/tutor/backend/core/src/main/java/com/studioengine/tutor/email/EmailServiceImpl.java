@@ -14,8 +14,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.UUID;
 
 @ConditionalOnProperty(name = "app.email.enabled", havingValue = "true", matchIfMissing = true)
 @Service
@@ -277,6 +279,27 @@ public class EmailServiceImpl implements EmailService {
                 oldSlot.getStartTime().format(TIME_FMT),
                 newSlot.getSlotDate().format(DATE_FMT),
                 newSlot.getStartTime().format(TIME_FMT)
+        );
+
+        sendHtmlEmail(getTutorEmail(), subject, body, null, null);
+    }
+
+    @Override
+    public void sendOrphanPaymentAlert(UUID appointmentId, String sessionId, BigDecimal amount) {
+        var subject = "%s - Uplate za istekli/nevazeci termin".formatted(brandProperties.getName());
+        var body = """
+                <h2>Uplate za istekli/nevazeci termin</h2>
+                <p>Primljena je uplata za istekli/nevažeći termin.</p>
+                <ul>
+                    <li><strong>Termin:</strong> %s</li>
+                    <li><strong>Session ID:</strong> %s</li>
+                    <li><strong>Iznos:</strong> %s</li>
+                </ul>
+                <p>Provjerite u stripe nadzornoj ploči</p>
+                """.formatted(
+                appointmentId,
+                sessionId,
+                amount
         );
 
         sendHtmlEmail(getTutorEmail(), subject, body, null, null);

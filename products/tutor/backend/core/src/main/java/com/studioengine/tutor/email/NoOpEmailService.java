@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.util.UUID;
+
 @ConditionalOnProperty(name = "app.email.enabled", havingValue = "false")
 @Component
 @Slf4j
@@ -58,5 +61,10 @@ public class NoOpEmailService implements EmailService {
     @Override
     public void sendRescheduleNotification(Appointment originalAppointment, Appointment newAppointment) {
         log.info("[NO-OP] Reschedule notification for appointment {}", newAppointment.getId());
+    }
+
+    @Override
+    public void sendOrphanPaymentAlert(UUID appointmentId, String sessionId, BigDecimal amount) {
+        log.info("[NO-OP] Orphan payment alert for appointment {}, sessionId {}, amount {}", appointmentId, sessionId, amount);
     }
 }

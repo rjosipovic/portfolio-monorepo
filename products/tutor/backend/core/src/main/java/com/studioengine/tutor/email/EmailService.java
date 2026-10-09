@@ -2,6 +2,9 @@ package com.studioengine.tutor.email;
 
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 
+import java.math.BigDecimal;
+import java.util.UUID;
+
 public interface EmailService {
 
     void sendConfirmationEmail(Appointment appointment, String manageLink);
@@ -23,4 +26,6 @@ public interface EmailService {
     void sendOtpEmail(String email, String otp);
 
     void sendRescheduleNotification(Appointment originalAppointment, Appointment newAppointment);
+
+    void sendOrphanPaymentAlert(UUID appointmentId, String sessionId, BigDecimal amount);
 }

@@ -10,7 +10,6 @@ import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
 import com.studioengine.tutor.dataaccess.repositories.PaymentRecordRepository;
 import com.studioengine.tutor.dataaccess.repositories.TimeSlotRepository;
 import com.studioengine.tutor.email.EmailService;
-import com.studioengine.tutor.errors.exceptions.WebhookVerificationException;
 import com.studioengine.tutor.payment.provider.ProviderRequest;
 import com.studioengine.tutor.payment.provider.ProviderResult;
 import com.studioengine.tutor.payment.provider.ProviderSession;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -91,33 +89,53 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Transactional
     public void handleStripeWebhookConfirmation(ProviderResult result) {
-        findAppointment(result).ifPresent(appointment -> {
-            appointmentStateMachine.transition(appointment, AppointmentState.PAID, "STRIPE_WEBHOOK");
-            timeSlotStateMachine.transition(appointment.getTimeSlot(), TimeSlotState.BOOKED, "STRIPE_WEBHOOK");
-            appointmentRepository.save(appointment);
-            timeSlotRepository.save(appointment.getTimeSlot());
-            var paymentRecord = PaymentRecord.create(
-                    appointment,
-                    appointment.getFinalPrice(),
-                    PaymentMethod.STRIPE,
-                    LocalDate.now(),
-                    appointment.getStripeSessionId()
-            );
-            paymentRecordRepository.save(paymentRecord);
-            var manageLink = tokenService.generateManageLink(appointment);
-            emailService.sendConfirmationEmail(appointment, manageLink);
-        });
+        var appointmentId = result.getAppointmentId();
+        var sessionId = result.getSessionId();
+        var appointmentOptional = appointmentRepository.findByIdAndStripeSessionId(appointmentId, sessionId);
+
+        if (appointmentOptional.isEmpty()) {
+            handleOrphanedAppointment(result, "no matching appointment");
+            return;
+        }
+        var appointment = appointmentOptional.get();
+        var state = appointment.getState();
+
+        if (state == AppointmentState.PAID) {
+            log.info("Appointment {} already PAID — idempotent webhook ignored", appointmentId);
+            return;
+        }
+        if (state != AppointmentState.RESERVED) {
+            // any unexpected state: paid into a non-reservable appointment
+            handleOrphanedAppointment(result, "appointment in unexpected state %s".formatted(state));
+            return;
+        }
+
+        // happy path: RESERVED -> PAID transition
+        transitionAndSaveStates(appointment);
+        var paymentRecord = PaymentRecord.create(
+                appointment,
+                appointment.getFinalPrice(),
+                PaymentMethod.STRIPE,
+                LocalDate.now(),
+                appointment.getStripeSessionId()
+        );
+        paymentRecordRepository.save(paymentRecord);
+        var manageLink = tokenService.generateManageLink(appointment);
+        emailService.sendConfirmationEmail(appointment, manageLink);
     }
 
-    private Optional<Appointment> findAppointment(ProviderResult result) {
-        var appointment = appointmentRepository.findByIdAndStripeSessionId(result.getAppointmentId(), result.getSessionId())
-                .orElseThrow(() -> new WebhookVerificationException("No matching appointment for webhook payload"));
+    private void handleOrphanedAppointment(ProviderResult result, String why) {
+        var appointmentId = result.getAppointmentId();
+        var sessionId = result.getSessionId();
+        var amount = result.getAmount();
+        log.error("Stripe payment received but cannot be applied ({}): appointmentId={} sessionId={} amount={}", why, appointmentId, sessionId, amount);
+        emailService.sendOrphanPaymentAlert(appointmentId, sessionId, amount);
+    }
 
-        return Optional.of(appointment)
-                .filter(a -> a.getState() != AppointmentState.PAID)
-                .or(() -> {
-                    log.info("Appointment {} already PAID — idempotent webhook ignored", appointment.getId());
-                    return Optional.empty();
-                });
+    private void transitionAndSaveStates(Appointment appointment) {
+        appointmentStateMachine.transition(appointment, AppointmentState.PAID, "STRIPE_WEBHOOK");
+        timeSlotStateMachine.transition(appointment.getTimeSlot(), TimeSlotState.BOOKED, "STRIPE_WEBHOOK");
+        appointmentRepository.save(appointment);
+        timeSlotRepository.save(appointment.getTimeSlot());
     }
 }

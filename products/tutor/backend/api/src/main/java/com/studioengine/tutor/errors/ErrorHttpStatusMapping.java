@@ -12,6 +12,7 @@ import static com.studioengine.tutor.errors.ErrorCode.INVALID_RESERVATION;
 import static com.studioengine.tutor.errors.ErrorCode.INVALID_STATE_TRANSITION;
 import static com.studioengine.tutor.errors.ErrorCode.MISSING_CANCELLATION_REASON;
 import static com.studioengine.tutor.errors.ErrorCode.OTP_VERIFICATION_FAILED;
+import static com.studioengine.tutor.errors.ErrorCode.PAYMENT_PROVIDER_ERROR;
 import static com.studioengine.tutor.errors.ErrorCode.PREMATURE_CLOSURE;
 import static com.studioengine.tutor.errors.ErrorCode.PRE_BOOKED_SELF_SERVICE;
 import static com.studioengine.tutor.errors.ErrorCode.RESOURCE_NOT_FOUND;
@@ -20,12 +21,14 @@ import static com.studioengine.tutor.errors.ErrorCode.SLOT_IN_PAST;
 import static com.studioengine.tutor.errors.ErrorCode.SLOT_NOT_ON_THE_HOUR;
 import static com.studioengine.tutor.errors.ErrorCode.SLOT_WITHDRAWAL_BLOCKED;
 import static com.studioengine.tutor.errors.ErrorCode.TOKEN_EXPIRED;
+import static com.studioengine.tutor.errors.ErrorCode.WEBHOOK_DESERIALIZATION_FAILED;
 import static com.studioengine.tutor.errors.ErrorCode.WEBHOOK_VERIFICATION_FAILED;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.GONE;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 public final class ErrorHttpStatusMapping {
@@ -35,6 +38,8 @@ public final class ErrorHttpStatusMapping {
             Map.entry(INVALID_RESERVATION, BAD_REQUEST),
             Map.entry(INVALID_STATE_TRANSITION, BAD_REQUEST),
             Map.entry(WEBHOOK_VERIFICATION_FAILED, BAD_REQUEST),
+            Map.entry(WEBHOOK_DESERIALIZATION_FAILED, INTERNAL_SERVER_ERROR),
+            Map.entry(PAYMENT_PROVIDER_ERROR, SERVICE_UNAVAILABLE),
             Map.entry(DEADLINE_PASSED, BAD_REQUEST),
             Map.entry(TOKEN_EXPIRED, GONE),
             Map.entry(SLOT_WITHDRAWAL_BLOCKED, BAD_REQUEST),
