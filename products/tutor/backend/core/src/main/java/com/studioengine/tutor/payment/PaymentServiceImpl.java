@@ -127,9 +127,10 @@ public class PaymentServiceImpl implements PaymentService {
     private void handleOrphanedAppointment(ProviderResult result, String why) {
         var appointmentId = result.getAppointmentId();
         var sessionId = result.getSessionId();
+        var paymentIntentId = result.getPaymentIntentId();
         var amount = result.getAmount();
-        log.error("Stripe payment received but cannot be applied ({}): appointmentId={} sessionId={} amount={}", why, appointmentId, sessionId, amount);
-        emailService.sendOrphanPaymentAlert(appointmentId, sessionId, amount);
+        log.error("Stripe payment received but cannot be applied ({}): appointmentId={} paymentIntentId={} sessionId={} amount={}", why, appointmentId, paymentIntentId, sessionId, amount);
+        emailService.sendOrphanPaymentAlert(appointmentId, paymentIntentId, amount);
     }
 
     private void transitionAndSaveStates(Appointment appointment) {

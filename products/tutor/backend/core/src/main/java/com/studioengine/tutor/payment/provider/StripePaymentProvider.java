@@ -96,6 +96,7 @@ public class StripePaymentProvider implements PaymentProvider {
             var session = deserializeSession(event);
             return Optional.of(ProviderResult.builder()
                     .sessionId(session.getId())
+                    .paymentIntentId(session.getPaymentIntent())
                     .appointmentId(UUID.fromString(session.getClientReferenceId()))
                     .amount(BigDecimal.valueOf(session.getAmountTotal()).movePointLeft(2))
                     .build());
@@ -109,7 +110,7 @@ public class StripePaymentProvider implements PaymentProvider {
             return (Session) deserialized.get();
         }
         // API-version skew between the event payload and stripe-java: fall back to
-        // forced deserialization. We only read the stable fields (id, clientReferenceId, amountTotal)
+        // forced deserialization. We only read the stable fields (id, clientReferenceId, amountTotal, paymentIntent)
         try {
             log.warn("Stripe event {} not deserializable at pinned API version; falling back to deserializeUnsafe", event.getId());
             return (Session) deserializer.deserializeUnsafe();

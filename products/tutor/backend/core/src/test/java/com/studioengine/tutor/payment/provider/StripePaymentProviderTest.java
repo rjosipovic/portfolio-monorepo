@@ -237,13 +237,17 @@ class StripePaymentProviderTest {
 
     @Nested
     class ProcessCallback {
+
         @Test
         void shouldFallBackToDeserializeUnsafeWhenObjectNotPresent() throws Exception {
             // given
             var appointmentId = UUID.randomUUID();
+            var sessionId = "cs_test_123";
+            var paymentIntentId = "pi_12345";
             var session = mock(Session.class);
-            when(session.getId()).thenReturn("cs_test_123");
+            when(session.getId()).thenReturn(sessionId);
             when(session.getClientReferenceId()).thenReturn(appointmentId.toString());
+            when(session.getPaymentIntent()).thenReturn(paymentIntentId);
             when(session.getAmountTotal()).thenReturn(4500L);
 
             var deserializer = mock(EventDataObjectDeserializer.class);
@@ -264,7 +268,8 @@ class StripePaymentProviderTest {
 
                 // then
                 assertThat(result).isPresent();
-                assertThat(result.get().getSessionId()).isEqualTo("cs_test_123");
+                assertThat(result.get().getSessionId()).isEqualTo(sessionId);
+                assertThat(result.get().getPaymentIntentId()).isEqualTo(paymentIntentId);
                 assertThat(result.get().getAppointmentId()).isEqualTo(appointmentId);
                 assertThat(result.get().getAmount()).isEqualByComparingTo(new BigDecimal("45.00"));
                 verify(deserializer).deserializeUnsafe();
@@ -299,8 +304,11 @@ class StripePaymentProviderTest {
         void shouldUseObjectDirectlyWithoutFallbackWhenPresent() throws Exception {
             // given
             var appointmentId = UUID.randomUUID();
+            var sessionId = "cs_test_456";
+            var paymentIntentId = "pi_12345";
             var session = mock(Session.class);
-            when(session.getId()).thenReturn("cs_test_456");
+            when(session.getId()).thenReturn(sessionId);
+            when(session.getPaymentIntent()).thenReturn(paymentIntentId);
             when(session.getClientReferenceId()).thenReturn(appointmentId.toString());
             when(session.getAmountTotal()).thenReturn(1000L);
 
@@ -321,7 +329,8 @@ class StripePaymentProviderTest {
 
                 // then
                 assertThat(result).isPresent();
-                assertThat(result.get().getSessionId()).isEqualTo("cs_test_456");
+                assertThat(result.get().getSessionId()).isEqualTo(sessionId);
+                assertThat(result.get().getPaymentIntentId()).isEqualTo(paymentIntentId);
                 assertThat(result.get().getAppointmentId()).isEqualTo(appointmentId);
                 assertThat(result.get().getAmount()).isEqualByComparingTo(new BigDecimal("10.00"));
                 verify(deserializer, never()).deserializeUnsafe();

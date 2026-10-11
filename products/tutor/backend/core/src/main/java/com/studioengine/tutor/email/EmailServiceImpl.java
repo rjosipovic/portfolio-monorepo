@@ -285,20 +285,20 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendOrphanPaymentAlert(UUID appointmentId, String sessionId, BigDecimal amount) {
+    public void sendOrphanPaymentAlert(UUID appointmentId, String paymentIntentId, BigDecimal amount) {
         var subject = "%s - Uplate za istekli/nevazeci termin".formatted(brandProperties.getName());
         var body = """
                 <h2>Uplate za istekli/nevazeci termin</h2>
-                <p>Primljena je uplata za istekli/nevažeći termin.</p>
+                <p>Primljena je uplata za termin koji je u međuvremenu otkazan ili više ne postoji</p>
                 <ul>
                     <li><strong>Termin:</strong> %s</li>
-                    <li><strong>Session ID:</strong> %s</li>
+                    <li><strong>ID plaćanja:</strong> %s</li>
                     <li><strong>Iznos:</strong> %s</li>
                 </ul>
                 <p>Provjerite u stripe nadzornoj ploči</p>
                 """.formatted(
                 appointmentId,
-                sessionId,
+                Objects.nonNull(paymentIntentId) ? paymentIntentId : "(nije dostupno)",
                 amount
         );
 

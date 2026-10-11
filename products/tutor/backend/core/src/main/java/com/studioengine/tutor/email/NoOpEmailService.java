@@ -64,7 +64,7 @@ public class NoOpEmailService implements EmailService {
     }
 
     @Override
-    public void sendOrphanPaymentAlert(UUID appointmentId, String sessionId, BigDecimal amount) {
-        log.info("[NO-OP] Orphan payment alert for appointment {}, sessionId {}, amount {}", appointmentId, sessionId, amount);
+    public void sendOrphanPaymentAlert(UUID appointmentId, String paymentIndentId, BigDecimal amount) {
+        log.info("[NO-OP] Orphan payment alert for appointment {}, paymentIndent {}, amount {}", appointmentId, paymentIndentId, amount);
     }
 }

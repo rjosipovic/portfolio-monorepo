@@ -130,6 +130,7 @@ class PaymentServiceImplTest {
             // given
             var appointmentId = UUID.randomUUID();
             var sessionId = "cs_test_123";
+            var paymentIntentId = "pi_12345";
             var amount = new BigDecimal(30L);
             var manageLink = "http://localhost:8080/manage.html?token=x";
             var appointment = createAppointment(AppointmentState.RESERVED);
@@ -141,6 +142,7 @@ class PaymentServiceImplTest {
             var providerResult = ProviderResult.builder()
                     .appointmentId(appointmentId)
                     .sessionId(sessionId)
+                    .paymentIntentId(paymentIntentId)
                     .amount(amount)
                     .build();
 
@@ -176,11 +178,13 @@ class PaymentServiceImplTest {
             // given
             var appointmentId = UUID.randomUUID();
             var sessionId = "cs_unknown";
+            var paymentIntentId = "pi_12345";
             var amount = new BigDecimal(30L);
 
             var providerResult = ProviderResult.builder()
                     .appointmentId(appointmentId)
                     .sessionId(sessionId)
+                    .paymentIntentId(paymentIntentId)
                     .amount(amount)
                     .build();
 
@@ -191,7 +195,7 @@ class PaymentServiceImplTest {
 
             // then
             verify(appointmentRepository).findByIdAndStripeSessionId(appointmentId, sessionId);
-            verify(emailService).sendOrphanPaymentAlert(appointmentId, sessionId, amount);
+            verify(emailService).sendOrphanPaymentAlert(appointmentId, paymentIntentId, amount);
 
             verify(appointmentStateMachine, never()).transition(any(), any(), any());
             verify(timeSlotStateMachine, never()).transition(any(), any(), any());
@@ -205,6 +209,7 @@ class PaymentServiceImplTest {
             // given
             var appointmentId = UUID.randomUUID();
             var sessionId = "cs_test_123";
+            var paymentIntentId = "pi_12345";
             var amount = new BigDecimal(30L);
             var appointment = createAppointment(AppointmentState.PAID);
             setId(appointment, appointmentId);
@@ -213,6 +218,7 @@ class PaymentServiceImplTest {
             var providerResult = ProviderResult.builder()
                     .appointmentId(appointmentId)
                     .sessionId(sessionId)
+                    .paymentIntentId(paymentIntentId)
                     .amount(amount)
                     .build();
 
@@ -231,10 +237,12 @@ class PaymentServiceImplTest {
         }
 
         @Test
-        void shouldSendOrphanPaymentAlterWhenAppointmentNotInReserved() {
+        void shouldSendOrphanPaymentAlertWhenAppointmentNotInReserved() {
             // given
             var appointmentId = UUID.randomUUID();
-            var sessionId = "cs_unknown";
+            var sessionId = "cs_test_123";
+            var paymentIntentId = "pi_12345";
+
             var amount = new BigDecimal(30L);
             var appointment = createAppointment(AppointmentState.CANCELLED);
             setId(appointment, appointmentId);
@@ -242,6 +250,7 @@ class PaymentServiceImplTest {
             var providerResult = ProviderResult.builder()
                     .appointmentId(appointmentId)
                     .sessionId(sessionId)
+                    .paymentIntentId(paymentIntentId)
                     .amount(amount)
                     .build();
 
@@ -252,7 +261,7 @@ class PaymentServiceImplTest {
 
             // then
             verify(appointmentRepository).findByIdAndStripeSessionId(appointmentId, sessionId);
-            verify(emailService).sendOrphanPaymentAlert(appointmentId, sessionId, amount);
+            verify(emailService).sendOrphanPaymentAlert(appointmentId, paymentIntentId, amount);
 
             verify(appointmentStateMachine, never()).transition(any(), any(), any());
             verify(timeSlotStateMachine, never()).transition(any(), any(), any());

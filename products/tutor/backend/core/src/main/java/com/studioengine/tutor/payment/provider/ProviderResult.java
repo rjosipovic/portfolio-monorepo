@@ -14,6 +14,7 @@ import java.util.UUID;
 public class ProviderResult {
 
     String sessionId;
+    String paymentIntentId;
     UUID appointmentId;
     BigDecimal amount;
 }

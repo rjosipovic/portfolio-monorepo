@@ -27,5 +27,5 @@ public interface EmailService {
 
     void sendRescheduleNotification(Appointment originalAppointment, Appointment newAppointment);
 
-    void sendOrphanPaymentAlert(UUID appointmentId, String sessionId, BigDecimal amount);
+    void sendOrphanPaymentAlert(UUID appointmentId, String paymentIntentId, BigDecimal amount);
 }

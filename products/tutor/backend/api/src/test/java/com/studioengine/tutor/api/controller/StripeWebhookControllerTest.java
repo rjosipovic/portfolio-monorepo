@@ -61,6 +61,7 @@ class StripeWebhookControllerTest {
         // given
         var result = ProviderResult.builder()
                 .sessionId("cs_test_123")
+                .paymentIntentId("pi_12345")
                 .appointmentId(UUID.randomUUID())
                 .amount(new BigDecimal("30.00"))
                 .build();
