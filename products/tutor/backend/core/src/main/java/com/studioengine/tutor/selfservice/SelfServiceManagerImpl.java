@@ -22,8 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,6 +50,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
     private final TimeSlotRepository timeSlotRepository;
     private final EmailService emailService;
     private final TokenService tokenService;
+    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -91,7 +94,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         var rescheduleToken = CancellationToken.create(
                 appointment,
                 TokenType.RESCHEDULE_BOOKING,
-                OffsetDateTime.now().plusHours(24)
+                OffsetDateTime.now(clock).plusHours(24)
         );
         cancellationTokenRepository.save(rescheduleToken);
 
@@ -204,8 +207,9 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
 
     private boolean isDeadlinePassed(LocalDateTime appointmentStart) {
         var cancellationDeadline = schedulingProperties.getCancellationDeadline();
-        var deadline = appointmentStart.minus(cancellationDeadline);
-        var now = LocalDateTime.now();
+        var zone = clock.getZone();
+        var deadline = appointmentStart.atZone(zone).minus(cancellationDeadline);
+        var now = ZonedDateTime.now(clock);
         return now.isAfter(deadline);
     }
 }

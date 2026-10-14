@@ -20,21 +20,23 @@ import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.TokenExpiredException;
 import com.studioengine.tutor.scheduling.AppointmentStateMachine;
 import com.studioengine.tutor.scheduling.TimeSlotStateMachine;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -52,6 +54,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SelfServiceManagerImplTest {
 
+    private static final String ZONE_ID = "Europe/Zagreb";
+    private static final int YEAR_NOW = 2026;
+    private static final int MONTH_NOW = 9;
+    private static final int DAY_NOW = 22;
+    private static final int HOUR_NOW = 12;
+    private static final int MIN_NOW = 0;
+
+    private static final LocalDateTime FIXED_NOW = LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW, HOUR_NOW, MIN_NOW); // 2026-09-22 12:00
+
     @Mock
     private CancellationTokenRepository cancellationTokenRepository;
     @Mock
@@ -68,9 +79,27 @@ class SelfServiceManagerImplTest {
     private EmailService emailService;
     @Mock
     private TokenService tokenService;
+    private Clock clock;
 
-    @InjectMocks
     private SelfServiceManagerImpl selfServiceManager;
+
+    @BeforeEach
+    void setUp() {
+        var zone = ZoneId.of(ZONE_ID);
+        var fixedNow = LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW, HOUR_NOW, MIN_NOW).atZone(zone).toInstant();
+        clock = Clock.fixed(fixedNow, zone);
+        selfServiceManager = new SelfServiceManagerImpl(
+                cancellationTokenRepository,
+                schedulingProperties,
+                appointmentStateMachine,
+                appointmentRepository,
+                timeSlotStateMachine,
+                timeSlotRepository,
+                emailService,
+                tokenService,
+                clock
+        );
+    }
 
     @Nested
     class ValidateTokenTests {
@@ -201,11 +230,13 @@ class SelfServiceManagerImplTest {
         record ValidateTokenScenario(LocalDate date, LocalTime time, boolean deadlinePassed) {}
 
         private static Stream<ValidateTokenScenario> validateTokenScenarios() {
-            var deadlinePassed = LocalDateTime.now().plusHours(cancellationDeadline).plusMinutes(1);
-            var deadlineNotPassed = LocalDateTime.now().plusHours(cancellationDeadline).minusMinutes(1);
+            // slot start just BEYOND the 24h window -> deadline NOT passed -> deadlineMissed=false
+            var notMissed = FIXED_NOW.plusHours(cancellationDeadline).plusMinutes(1);
+            // slot start just INSIDE the 24h window -> deadline PASSED -> deadlineMissed=true
+            var missed = FIXED_NOW.plusHours(cancellationDeadline).minusMinutes(1);
             return Stream.of(
-                    new ValidateTokenScenario(deadlinePassed.toLocalDate(), deadlinePassed.toLocalTime(), false),
-                    new ValidateTokenScenario(deadlineNotPassed.toLocalDate(), deadlineNotPassed.toLocalTime(), true)
+                    new ValidateTokenScenario(notMissed.toLocalDate(), notMissed.toLocalTime(), false),
+                    new ValidateTokenScenario(missed.toLocalDate(), missed.toLocalTime(), true)
             );
         }
     }
@@ -220,8 +251,9 @@ class SelfServiceManagerImplTest {
             // given
             var token = UUID.randomUUID().toString();
             var appointmentId = UUID.randomUUID();
-            var timeSlotDate = LocalDate.now().plusDays(1);
-            var timeSlotStartTime = LocalTime.of(23, 59);
+            var slotStartDateTime = FIXED_NOW.plusHours(cancellationDeadline).plusMinutes(1);
+            var slotDate = slotStartDateTime.toLocalDate();
+            var slotStartTime = slotStartDateTime.toLocalTime();
             var cancellationToken = mock(CancellationToken.class);
             var appointment = mock(Appointment.class);
             var slot = mock(TimeSlot.class);
@@ -232,8 +264,8 @@ class SelfServiceManagerImplTest {
             when(appointment.getState()).thenReturn(AppointmentState.PENDING_PAYMENT);
             when(appointment.getId()).thenReturn(appointmentId);
             when(appointment.getTimeSlot()).thenReturn(slot);
-            when(slot.getSlotDate()).thenReturn(timeSlotDate);
-            when(slot.getStartTime()).thenReturn(timeSlotStartTime);
+            when(slot.getSlotDate()).thenReturn(slotDate);
+            when(slot.getStartTime()).thenReturn(slotStartTime);
             when(cancellationTokenRepository.findByToken(token)).thenReturn(Optional.of(cancellationToken));
             when(schedulingProperties.getCancellationDeadline()).thenReturn(Duration.ofHours(cancellationDeadline));
 
@@ -329,7 +361,7 @@ class SelfServiceManagerImplTest {
             var cancellationToken = mock(CancellationToken.class);
             var appointment = mock(Appointment.class);
             var slot = mock(TimeSlot.class);
-            var passedDeadline = LocalDateTime.now().plusHours(cancellationDeadline).minusMinutes(2);
+            var passedDeadline = FIXED_NOW.plusHours(cancellationDeadline).minusMinutes(2);
             var slotDate = passedDeadline.toLocalDate();
             var slotStartTime = passedDeadline.toLocalTime();
             when(cancellationTokenRepository.findByToken(token)).thenReturn(Optional.of(cancellationToken));
@@ -360,8 +392,7 @@ class SelfServiceManagerImplTest {
         void shouldConfirmReschedule() {
             // given
             var token = UUID.randomUUID().toString();
-            var now = LocalDateTime.now();
-            var slotStartDateTime = now.plusHours(cancellationDeadline).plusMinutes(1);
+            var slotStartDateTime = FIXED_NOW.plusHours(cancellationDeadline).plusMinutes(1);
             var slotDate = slotStartDateTime.toLocalDate();
             var slotStartTime = slotStartDateTime.toLocalTime();
             var appointmentId = UUID.randomUUID();
@@ -482,7 +513,7 @@ class SelfServiceManagerImplTest {
             var cancellationToken = mock(CancellationToken.class);
             var appointment = mock(Appointment.class);
             var slot = mock(TimeSlot.class);
-            var passedDeadline = LocalDateTime.now().plusHours(cancellationDeadline).minusMinutes(2);
+            var passedDeadline = FIXED_NOW.plusHours(cancellationDeadline).minusMinutes(2);
             var slotDate = passedDeadline.toLocalDate();
             var slotStartTime = passedDeadline.toLocalTime();
             when(cancellationTokenRepository.findByToken(token)).thenReturn(Optional.of(cancellationToken));
