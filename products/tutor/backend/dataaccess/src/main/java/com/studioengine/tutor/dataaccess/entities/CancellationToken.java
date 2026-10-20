@@ -1,5 +1,6 @@
 package com.studioengine.tutor.dataaccess.entities;
 
+import com.studioengine.tutor.dataaccess.enums.AppointmentState;
 import com.studioengine.tutor.dataaccess.enums.TokenType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,6 +36,10 @@ public class CancellationToken {
     @JoinColumn(name = "appointment_id", nullable = false)
     private Appointment appointment;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "original_state", nullable = true)
+    private AppointmentState originalState;
+
     @Column(nullable = false, unique = true)
     private String token;
 
@@ -52,17 +57,33 @@ public class CancellationToken {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    public static CancellationToken create(Appointment appointment, TokenType tokenType, OffsetDateTime expiresAt) {
-        if (Objects.isNull(appointment)) throw new IllegalArgumentException("appointment must not be null");
-        if (Objects.isNull(tokenType)) throw new IllegalArgumentException("tokenType must not be null");
-        if (Objects.isNull(expiresAt)) throw new IllegalArgumentException("expiresAt must not be null");
+    public static CancellationToken createManagement(Appointment appointment, OffsetDateTime expiresAt) {
+        validate(appointment, expiresAt);
         var entity = new CancellationToken();
         entity.appointment = appointment;
         entity.token = UUID.randomUUID().toString();
-        entity.tokenType = tokenType;
+        entity.tokenType = TokenType.APPOINTMENT_MANAGEMENT;
         entity.used = false;
         entity.expiresAt = expiresAt;
         return entity;
+    }
+
+    public static CancellationToken createReschedule(Appointment appointment, OffsetDateTime expiresAt, AppointmentState originalState) {
+        validate(appointment, expiresAt);
+        if (Objects.isNull(originalState)) throw new IllegalArgumentException("originalState must not be null");
+        var entity = new CancellationToken();
+        entity.appointment = appointment;
+        entity.token = UUID.randomUUID().toString();
+        entity.tokenType = TokenType.RESCHEDULE_BOOKING;
+        entity.used = false;
+        entity.expiresAt = expiresAt;
+        entity.originalState = originalState;
+        return entity;
+    }
+
+    private static void validate(Appointment appointment, OffsetDateTime expiresAt) {
+        if (Objects.isNull(appointment)) throw new IllegalArgumentException("appointment must not be null");
+        if (Objects.isNull(expiresAt)) throw new IllegalArgumentException("expiresAt must not be null");
     }
 
     public void markUsed() {

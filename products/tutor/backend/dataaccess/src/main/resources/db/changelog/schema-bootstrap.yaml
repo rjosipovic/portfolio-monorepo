@@ -731,4 +731,13 @@ databaseChangeLog:
       changes:
         - dropTable:
             tableName: instructor
-
+  - changeSet:
+      id: 020-cancelation-token-original-state
+      author: studioengine
+      changes:
+        - addColumn:
+            tableName: cancellation_token
+            columns:
+              - column:
+                  name: original_state
+                  type: varchar(20)

@@ -72,6 +72,7 @@ app:
     cancellation-deadline: ${SCHEDULING_CANCELLATION_DEADLINE:24h}
     nudge-delay: ${SCHEDULING_NUDGE_DELAY:2h}
     nudge-cooldown: ${SCHEDULING_NUDGE_COOLDOWN:24h}
+    reschedule-token-expiry: ${SCHEDULING_RESCHEDULE_TOKEN_EXPIRY:24h}
   instance:
     base-url: ${APP_BASE_URL:http://localhost:8080}
   cleanup:

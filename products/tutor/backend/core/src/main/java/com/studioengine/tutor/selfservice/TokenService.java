@@ -4,7 +4,6 @@ import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.config.InstanceProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.CancellationToken;
-import com.studioengine.tutor.dataaccess.enums.TokenType;
 import com.studioengine.tutor.dataaccess.repositories.CancellationTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ public class TokenService {
                 .atZone(zone)
                 .toOffsetDateTime();
 
-        var token = CancellationToken.create(appointment, TokenType.APPOINTMENT_MANAGEMENT, expiresAt);
+        var token = CancellationToken.createManagement(appointment, expiresAt);
         cancellationTokenRepository.save(token);
         return "%s/manage.html?token=%s".formatted(instanceProperties.getBaseUrl(), token.getToken());
     }

@@ -68,6 +68,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -559,6 +560,37 @@ class StorefrontControllerTest {
                             .param("token", token))
                     .andExpect(status().isOk())
                     .andDo(print())
+                    .andReturn().getResponse();
+
+            // then
+            verify(selfServiceManager).validateToken(token);
+            verify(storefrontMapper).toAppointmentDetailsResponse(appointmentDetails);
+
+            assertThat(response.getContentAsString()).isEqualTo(appointmentDetailsResponseJson.write(appointmentDetailsResponse).getJson());
+        }
+
+        @Test
+        void shouldReturnDeadlineMissedTrueWhenDeadlinePassed() throws Exception {
+            // given
+            var token = UUID.randomUUID().toString();
+            var appointmentDetails = mock(AppointmentDetails.class);
+            var appointmentDetailsResponse = mock(AppointmentDetailsResponse.class);
+
+            when(appointmentDetailsResponse.getAppointmentId()).thenReturn(UUID.randomUUID());
+            when(appointmentDetailsResponse.getStudentName()).thenReturn("Marko Markić");
+            when(appointmentDetailsResponse.getServiceCategoryName()).thenReturn("Pripreme za maturu");
+            when(appointmentDetailsResponse.getDate()).thenReturn(LocalDate.now().plusDays(1));
+            when(appointmentDetailsResponse.getStartTime()).thenReturn(LocalTime.now().plusMinutes(2));
+            when(appointmentDetailsResponse.isDeadlineMissed()).thenReturn(true);   // ← the flag under test
+
+            when(selfServiceManager.validateToken(token)).thenReturn(appointmentDetails);
+            when(storefrontMapper.toAppointmentDetailsResponse(appointmentDetails)).thenReturn(appointmentDetailsResponse);
+
+            // when
+            var response = mockMvc.perform(get("/api/v1/storefront/appointments")
+                            .param("token", token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.deadlineMissed").value(true))
                     .andReturn().getResponse();
 
             // then

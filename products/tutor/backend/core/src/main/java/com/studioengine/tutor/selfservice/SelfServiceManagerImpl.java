@@ -74,7 +74,10 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
     @Override
     @Transactional
     public AppointmentCancellation confirmCancellation(String token) {
-        var appointment = cancelAndRelease(token);
+        var cancellationToken = findAndValidateToken(token);
+        var appointment = cancellationToken.getAppointment();
+        cancelAndRelease(appointment);
+        markTokenAsUsed(cancellationToken);
 
         emailService.sendCancellationNotification(appointment, "Student self-cancellation");
 
@@ -89,12 +92,16 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
     @Override
     @Transactional
     public RescheduleInitiation confirmReschedule(String token) {
-        var appointment = cancelAndRelease(token);
+        var cancellationToken = findAndValidateToken(token);
+        var appointment = cancellationToken.getAppointment();
+        var originalState = appointment.getState();
+        cancelAndRelease(appointment);
+        markTokenAsUsed(cancellationToken);
 
-        var rescheduleToken = CancellationToken.create(
+        var rescheduleToken = CancellationToken.createReschedule(
                 appointment,
-                TokenType.RESCHEDULE_BOOKING,
-                OffsetDateTime.now(clock).plusHours(24)
+                OffsetDateTime.now(clock).plus(schedulingProperties.getRescheduleTokenExpiry()),
+                originalState
         );
         cancellationTokenRepository.save(rescheduleToken);
 
@@ -111,6 +118,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         var token = cancellationTokenRepository.findByToken(rescheduleToken).orElseThrow(() -> new TokenExpiredException("Reschedule token not found"));
         if (token.isUsed()) throw new TokenExpiredException("Token already used");
         if (token.isExpired()) throw new TokenExpiredException("Token expired");
+        if (token.getTokenType() != TokenType.RESCHEDULE_BOOKING) throw new TokenExpiredException("Invalid token type");
 
         // 2. Get student from original appointment
         var originalAppointment = token.getAppointment();
@@ -120,7 +128,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         // 3. Reserve and book slot atomically
         var slot = timeSlotRepository.findById(slotId).orElseThrow(() -> new ResourceNotFoundException("TimeSlot not found"));
         if (slot.getState() != TimeSlotState.AVAILABLE) throw new IllegalStateException("Slot not available");
-        var appointmentState = originalAppointment.getState();
+        var appointmentState = token.getOriginalState();
 
         if (!RESCHEDULABLE_STATES.contains(appointmentState)) {
             throw new IllegalStateException("Appointment in state %s cannot be rescheduled".formatted(appointmentState));
@@ -130,7 +138,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         timeSlotStateMachine.transition(slot, slotState, "RESCHEDULE");
         timeSlotRepository.save(slot);
 
-        // 4. Create appointment directly in PAID state
+        // 4. Create appointment directly in carried state
         var appointment = Appointment.create(
                 slot, category, student,
                 appointmentState,
@@ -141,8 +149,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         appointmentRepository.save(appointment);
 
         // 5. Mark token used
-        token.markUsed();
-        cancellationTokenRepository.save(token);
+        markTokenAsUsed(token);
 
         // 6. Send confirmation + generate manage link
         var manageLink = tokenService.generateManageLink(appointment);
@@ -156,9 +163,7 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         emailService.sendRescheduleNotification(originalAppointment, appointment);
     }
 
-    private Appointment cancelAndRelease(String token) {
-        var cancellationToken = findAndValidateToken(token);
-        var appointment = cancellationToken.getAppointment();
+    private void cancelAndRelease(Appointment appointment) {
         var appointmentState = appointment.getState();
         var slot = appointment.getTimeSlot();
 
@@ -173,10 +178,6 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
 
         appointmentRepository.save(appointment);
         timeSlotRepository.save(slot);
-
-        cancellationToken.markUsed();
-        cancellationTokenRepository.save(cancellationToken);
-        return appointment;
     }
 
     private CancellationToken findAndValidateToken(String token) {
@@ -211,5 +212,10 @@ public class SelfServiceManagerImpl implements SelfServiceManager {
         var deadline = appointmentStart.atZone(zone).minus(cancellationDeadline);
         var now = ZonedDateTime.now(clock);
         return now.isAfter(deadline);
+    }
+
+    private void markTokenAsUsed(CancellationToken token) {
+        token.markUsed();
+        cancellationTokenRepository.save(token);
     }
 }

@@ -387,6 +387,7 @@ class SelfServiceManagerImplTest {
     class RescheduleTests {
 
         private static final int cancellationDeadline = 24;
+        private static final int rescheduleTokenExpiry = 24;
 
         @Test
         void shouldConfirmReschedule() {
@@ -410,6 +411,7 @@ class SelfServiceManagerImplTest {
             when(schedulingProperties.getCancellationDeadline()).thenReturn(Duration.ofHours(cancellationDeadline));
             when(slot.getSlotDate()).thenReturn(slotDate);
             when(slot.getStartTime()).thenReturn(slotStartTime);
+            when(schedulingProperties.getRescheduleTokenExpiry()).thenReturn(Duration.ofHours(rescheduleTokenExpiry));
 
             // when
             var result = selfServiceManager.confirmReschedule(token);
@@ -417,6 +419,7 @@ class SelfServiceManagerImplTest {
             // then
             verify(cancellationTokenRepository).findByToken(token);
             verify(schedulingProperties).getCancellationDeadline();
+            verify(schedulingProperties).getRescheduleTokenExpiry();
             verify(appointmentStateMachine).transition(appointment, AppointmentState.CANCELLED, "STUDENT_SELF_SERVICE");
             verify(timeSlotStateMachine).transition(slot, TimeSlotState.AVAILABLE, "STUDENT_SELF_SERVICE");
             verify(appointmentRepository).save(appointment);
@@ -431,6 +434,7 @@ class SelfServiceManagerImplTest {
             assertThat(rescheduleToken.getAppointment()).isEqualTo(appointment);
             assertThat(originalToken).isEqualTo(cancellationToken);
             assertThat(rescheduleToken.getTokenType()).isEqualTo(TokenType.RESCHEDULE_BOOKING);
+            assertThat(rescheduleToken.getOriginalState()).isEqualTo(AppointmentState.PENDING_PAYMENT);
 
             assertThat(result.getOriginalAppointmentId()).isEqualTo(appointmentId);
         }
@@ -554,8 +558,9 @@ class SelfServiceManagerImplTest {
             when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
             when(token.isUsed()).thenReturn(false);
             when(token.isExpired()).thenReturn(false);
+            when(token.getTokenType()).thenReturn(TokenType.RESCHEDULE_BOOKING);
             when(token.getAppointment()).thenReturn(originalAppointment);
-            when(originalAppointment.getState()).thenReturn(originalState);
+            when(token.getOriginalState()).thenReturn(originalState);
             when(originalAppointment.getStudent()).thenReturn(student);
             when(originalAppointment.getServiceCategory()).thenReturn(category);
             when(originalAppointment.getOriginalPrice()).thenReturn(new BigDecimal("30.00"));
@@ -595,8 +600,9 @@ class SelfServiceManagerImplTest {
             when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
             when(token.isUsed()).thenReturn(false);
             when(token.isExpired()).thenReturn(false);
+            when(token.getTokenType()).thenReturn(TokenType.RESCHEDULE_BOOKING);
+            when(token.getOriginalState()).thenReturn(AppointmentState.PENDING_PAYMENT);
             when(token.getAppointment()).thenReturn(originalAppointment);
-            when(originalAppointment.getState()).thenReturn(AppointmentState.PENDING_PAYMENT);
             when(originalAppointment.getStudent()).thenReturn(student);
             when(originalAppointment.getServiceCategory()).thenReturn(category);
             when(originalAppointment.getOriginalPrice()).thenReturn(new BigDecimal("30.00"));
@@ -625,9 +631,10 @@ class SelfServiceManagerImplTest {
             var rescheduleToken = UUID.randomUUID().toString();
             when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.empty());
 
-            // when / then
-            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken))
-                    .isInstanceOf(TokenExpiredException.class);
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(TokenExpiredException.class);
+
+            // then
             verify(timeSlotStateMachine, never()).transition(any(), any(), any());
             verify(appointmentRepository, never()).save(any());
         }
@@ -641,9 +648,73 @@ class SelfServiceManagerImplTest {
             when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
             when(token.isUsed()).thenReturn(true);
 
-            // when / then
-            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken))
-                    .isInstanceOf(TokenExpiredException.class);
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(TokenExpiredException.class);
+
+            // then
+            verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+            verify(appointmentRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotCompleteRescheduleWhenTokenExpired() {
+            // given
+            var slotId = UUID.randomUUID();
+            var rescheduleToken = UUID.randomUUID().toString();
+            var token = mock(CancellationToken.class);
+            when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
+            when(token.isUsed()).thenReturn(false);
+            when(token.isExpired()).thenReturn(true);
+
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(TokenExpiredException.class);
+
+            // then
+            verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+            verify(appointmentRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotCompleteRescheduleWhenInvalidTokenType() {
+            // given
+            var slotId = UUID.randomUUID();
+            var rescheduleToken = UUID.randomUUID().toString();
+            var token = mock(CancellationToken.class);
+            when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
+            when(token.isUsed()).thenReturn(false);
+            when(token.isExpired()).thenReturn(false);
+            when(token.getTokenType()).thenReturn(TokenType.APPOINTMENT_MANAGEMENT);
+
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(TokenExpiredException.class);
+
+            // then
+            verify(timeSlotStateMachine, never()).transition(any(), any(), any());
+            verify(appointmentRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldNotCompleteRescheduleWhenSlotNotExists() {
+            // given
+            var slotId = UUID.randomUUID();
+            var rescheduleToken = UUID.randomUUID().toString();
+            var originalAppointment = mock(Appointment.class);
+            var student = mock(Student.class);
+            var category = mock(ServiceCategory.class);
+            var token = mock(CancellationToken.class);
+            when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
+            when(token.isUsed()).thenReturn(false);
+            when(token.isExpired()).thenReturn(false);
+            when(token.getTokenType()).thenReturn(TokenType.RESCHEDULE_BOOKING);
+            when(token.getAppointment()).thenReturn(originalAppointment);
+            when(originalAppointment.getStudent()).thenReturn(student);
+            when(originalAppointment.getServiceCategory()).thenReturn(category);
+            when(timeSlotRepository.findById(slotId)).thenReturn(Optional.empty());
+
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(ResourceNotFoundException.class);
+
+            // then
             verify(timeSlotStateMachine, never()).transition(any(), any(), any());
             verify(appointmentRepository, never()).save(any());
         }
@@ -661,15 +732,17 @@ class SelfServiceManagerImplTest {
             when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
             when(token.isUsed()).thenReturn(false);
             when(token.isExpired()).thenReturn(false);
+            when(token.getTokenType()).thenReturn(TokenType.RESCHEDULE_BOOKING);
             when(token.getAppointment()).thenReturn(originalAppointment);
             when(originalAppointment.getStudent()).thenReturn(student);
             when(originalAppointment.getServiceCategory()).thenReturn(category);
             when(timeSlotRepository.findById(slotId)).thenReturn(Optional.of(newSlot));
             when(newSlot.getState()).thenReturn(TimeSlotState.RESERVED);
 
-            // when / then
-            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken))
-                    .isInstanceOf(IllegalStateException.class);
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(IllegalStateException.class);
+
+            // then
             verify(timeSlotStateMachine, never()).transition(any(), any(), any());
             verify(appointmentRepository, never()).save(any());
         }
@@ -687,16 +760,18 @@ class SelfServiceManagerImplTest {
             when(cancellationTokenRepository.findByToken(rescheduleToken)).thenReturn(Optional.of(token));
             when(token.isUsed()).thenReturn(false);
             when(token.isExpired()).thenReturn(false);
+            when(token.getTokenType()).thenReturn(TokenType.RESCHEDULE_BOOKING);
             when(token.getAppointment()).thenReturn(originalAppointment);
-            when(originalAppointment.getState()).thenReturn(AppointmentState.COMPLETED);
+            when(token.getOriginalState()).thenReturn(AppointmentState.COMPLETED);
             when(originalAppointment.getStudent()).thenReturn(student);
             when(originalAppointment.getServiceCategory()).thenReturn(category);
             when(timeSlotRepository.findById(slotId)).thenReturn(Optional.of(newSlot));
             when(newSlot.getState()).thenReturn(TimeSlotState.AVAILABLE);
 
-            // when / then
-            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken))
-                    .isInstanceOf(IllegalStateException.class);
+            // when
+            assertThatThrownBy(() -> selfServiceManager.completeReschedule(slotId, rescheduleToken)).isInstanceOf(IllegalStateException.class);
+
+            // then
             verify(timeSlotStateMachine, never()).transition(any(), any(), any());
             verify(appointmentRepository, never()).save(any());
         }

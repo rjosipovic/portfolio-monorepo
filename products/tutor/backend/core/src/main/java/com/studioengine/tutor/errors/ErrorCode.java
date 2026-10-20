@@ -12,7 +12,7 @@ public enum ErrorCode {
     INVALID_STATE_TRANSITION("T003", "Invalid state transition"),
     WEBHOOK_VERIFICATION_FAILED("T004", "Webhook signature verification failed"),
     DEADLINE_PASSED("T005", "Cancellation/reschedule deadline passed"),
-    TOKEN_EXPIRED("T006", "Token expired or already used"),
+    TOKEN_EXPIRED("T006", "Token invalid, expired or already used"),
     SLOT_WITHDRAWAL_BLOCKED("T007", "Cannot withdraw slot with active appointment"),
     PREMATURE_CLOSURE("T008", "Cannot close appointment before end time"),
     MISSING_CANCELLATION_REASON("T009", "Cancellation reason required"),

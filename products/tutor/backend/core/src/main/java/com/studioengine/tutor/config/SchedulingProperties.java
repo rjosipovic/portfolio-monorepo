@@ -18,4 +18,5 @@ public class SchedulingProperties {
     private Duration cancellationDeadline;
     private Duration nudgeDelay;
     private Duration nudgeCooldown;
+    private Duration rescheduleTokenExpiry;
 }
