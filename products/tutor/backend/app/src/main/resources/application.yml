@@ -69,6 +69,7 @@ app:
   scheduling:
     reservation-timeout: ${SCHEDULING_RESERVATION_TIMEOUT:35m}
     payment-overdue-threshold: ${SCHEDULING_PAYMENT_OVERDUE_THRESHOLD:48h}
+    payment-overdue-notification-cooldown: ${SCHEDULING_PAYMENT_OVERDUE_NOTIFICATION_COOLDOWN:24h}
     cancellation-deadline: ${SCHEDULING_CANCELLATION_DEADLINE:24h}
     nudge-delay: ${SCHEDULING_NUDGE_DELAY:2h}
     nudge-cooldown: ${SCHEDULING_NUDGE_COOLDOWN:24h}

@@ -1,17 +1,23 @@
 package com.studioengine.tutor.jobs;
 
+import com.studioengine.tutor.config.BrandProperties;
 import com.studioengine.tutor.config.SchedulingProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.repositories.AppointmentRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +33,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BankTransferOverdueJobTest {
 
+    private static final String ZONE_ID = "Europe/Zagreb";
+    private static final int YEAR_NOW = 2026;
+    private static final int MONTH_NOW = 9;
+    private static final int DAY_NOW = 22;
+    private static final int HOUR_NOW = 12;
+    private static final int MIN_NOW = 0;
+
     @Mock
     private SchedulingProperties schedulingProperties;
     @Mock
@@ -34,8 +47,18 @@ class BankTransferOverdueJobTest {
     @Mock
     private OverduePaymentHandler overduePaymentHandler;
 
-    @InjectMocks
+    @Mock
+    private BrandProperties brandProperties;
+
     private BankTransferOverdueJob bankTransferOverdueJob;
+
+    @BeforeEach
+    void setUp() {
+        var zone = ZoneId.of(ZONE_ID);
+        var fixedNow = LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW, HOUR_NOW, MIN_NOW).atZone(zone).toInstant();
+        var clock = Clock.fixed(fixedNow, zone);
+        bankTransferOverdueJob = new BankTransferOverdueJob(schedulingProperties, appointmentRepository, overduePaymentHandler, clock, brandProperties);
+    }
 
     @Test
     void shouldTriggerOverdueNotifications() {
@@ -48,7 +71,8 @@ class BankTransferOverdueJobTest {
         when(appointment1.getId()).thenReturn(appointmentId1);
         when(appointment2.getId()).thenReturn(appointmentId2);
         when(schedulingProperties.getPaymentOverdueThreshold()).thenReturn(threshold);
-        when(appointmentRepository.findOverduePendingPayments(any(OffsetDateTime.class))).thenReturn(List.of(appointment1, appointment2));
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
+        when(appointmentRepository.findOverduePendingPayments(any(OffsetDateTime.class), any(LocalDate.class), any(LocalTime.class))).thenReturn(List.of(appointment1, appointment2));
 
         // when
         bankTransferOverdueJob.notifyOverduePayments();
@@ -56,11 +80,21 @@ class BankTransferOverdueJobTest {
         // then
         verify(schedulingProperties).getPaymentOverdueThreshold();
 
-        var captor = ArgumentCaptor.forClass(OffsetDateTime.class);
-        verify(appointmentRepository).findOverduePendingPayments(captor.capture());
-        var cutoff = captor.getValue();
-        assertThat(Duration.between(cutoff, OffsetDateTime.now())).isGreaterThanOrEqualTo(threshold);
+        var cutoffCaptor = ArgumentCaptor.forClass(OffsetDateTime.class);
+        var dateCaptor = ArgumentCaptor.forClass(LocalDate.class);
+        var timeCaptor = ArgumentCaptor.forClass(LocalTime.class);
+        verify(appointmentRepository).findOverduePendingPayments(
+                cutoffCaptor.capture(),
+                dateCaptor.capture(),
+                timeCaptor.capture()
+        );
+        var fixedNow = LocalDateTime.of(YEAR_NOW, MONTH_NOW, DAY_NOW, HOUR_NOW, MIN_NOW).atZone(ZoneId.of(ZONE_ID));
 
+        var expectedCutoff = fixedNow.toOffsetDateTime().minus(threshold);
+        assertThat(cutoffCaptor.getValue().toInstant()).isEqualTo(expectedCutoff.toInstant());
+
+        assertThat(dateCaptor.getValue()).isEqualTo(LocalDate.of(YEAR_NOW, MONTH_NOW, DAY_NOW));
+        assertThat(timeCaptor.getValue()).isEqualTo(LocalTime.of(HOUR_NOW, MIN_NOW));
         verify(overduePaymentHandler, times(2)).handle(argThat(a -> a.equals(appointment1.getId()) || a.equals(appointment2.getId())));
     }
 
@@ -69,7 +103,8 @@ class BankTransferOverdueJobTest {
         // given
         var threshold = Duration.ofHours(48);
         when(schedulingProperties.getPaymentOverdueThreshold()).thenReturn(threshold);
-        when(appointmentRepository.findOverduePendingPayments(any(OffsetDateTime.class))).thenReturn(List.of());
+        when(brandProperties.getTimezone()).thenReturn(ZONE_ID);
+        when(appointmentRepository.findOverduePendingPayments(any(OffsetDateTime.class), any(LocalDate.class), any(LocalTime.class))).thenReturn(List.of());
 
         // when
         bankTransferOverdueJob.notifyOverduePayments();

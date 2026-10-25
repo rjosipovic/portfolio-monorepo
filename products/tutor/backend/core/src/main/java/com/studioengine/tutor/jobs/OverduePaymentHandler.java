@@ -1,5 +1,6 @@
 package com.studioengine.tutor.jobs;
 
+import com.studioengine.tutor.config.SchedulingProperties;
 import com.studioengine.tutor.dataaccess.entities.Appointment;
 import com.studioengine.tutor.dataaccess.entities.NotificationLog;
 import com.studioengine.tutor.dataaccess.enums.NotificationType;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -22,11 +24,13 @@ public class OverduePaymentHandler {
     private final AppointmentRepository appointmentRepository;
     private final NotificationLogRepository notificationLogRepository;
     private final EmailService emailService;
+    private final SchedulingProperties schedulingProperties;
+    private final Clock clock;
 
     @Transactional
     public void handle(UUID appointmentId) {
         var appointment = findAppointment(appointmentId);
-        var cooldown = OffsetDateTime.now().minusHours(24);
+        var cooldown = OffsetDateTime.now(clock).minus(schedulingProperties.getPaymentOverdueNotificationCooldown());
 
         var tutorNotified = notificationLogRepository
                 .existsByAppointmentIdAndNotificationTypeAndSentAtAfter(
@@ -41,7 +45,7 @@ public class OverduePaymentHandler {
                         cooldown);
 
         if (tutorNotified && studentNotified) {
-            log.debug("Skipping appointment {} - already notified within 24h", appointmentId);
+            log.debug("Skipping appointment {} - already notified within cooldown window", appointmentId);
             return;
         }
 

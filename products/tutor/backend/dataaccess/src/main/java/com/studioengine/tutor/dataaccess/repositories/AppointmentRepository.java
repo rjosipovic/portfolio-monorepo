@@ -23,8 +23,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     List<Appointment> findByStateIn(Collection<AppointmentState> states);
 
-    @Query("SELECT a FROM Appointment a WHERE a.state = 'PENDING_PAYMENT' AND a.stateChangedAt < :cutoff")
-    List<Appointment> findOverduePendingPayments(OffsetDateTime cutoff);
+    @Query("""
+      SELECT a FROM Appointment a JOIN a.timeSlot t
+      WHERE a.state = 'PENDING_PAYMENT'
+        AND a.stateChangedAt < :cutoff
+        AND (t.slotDate > :date OR (t.slotDate = :date AND t.startTime > :time))
+      """)
+    List<Appointment> findOverduePendingPayments(OffsetDateTime cutoff, LocalDate date, LocalTime time);
 
     @Query("SELECT a FROM Appointment a JOIN a.timeSlot t WHERE a.state IN :states AND t.slotDate = :date ORDER BY t.startTime")
     List<Appointment> findByStatesAndSlotDate(Collection<AppointmentState> states, LocalDate date);

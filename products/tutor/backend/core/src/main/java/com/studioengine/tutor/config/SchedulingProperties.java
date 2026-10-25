@@ -15,6 +15,7 @@ public class SchedulingProperties {
 
     private Duration reservationTimeout;
     private Duration paymentOverdueThreshold;
+    private Duration paymentOverdueNotificationCooldown;
     private Duration cancellationDeadline;
     private Duration nudgeDelay;
     private Duration nudgeCooldown;
