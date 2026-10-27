@@ -3,6 +3,7 @@ package com.studioengine.tutor.errors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -75,6 +76,17 @@ public class GlobalExceptionHandler {
                 .reason("Parameter '%s' must be of type %s".formatted(ex.getName(), ex.getRequiredType().getSimpleName()))
                 .build();
 
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        log.warn("Malformed or missing request body: {}", ex.getMessage());
+        var response = ErrorResponse.builder()
+                .message("Malformed or missing request body")
+                .code("VALIDATION")
+                .reason("Request body is malformed or missing")
+                .build();
         return ResponseEntity.badRequest().body(response);
     }
 

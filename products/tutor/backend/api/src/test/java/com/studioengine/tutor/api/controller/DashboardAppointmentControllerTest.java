@@ -15,6 +15,7 @@ import com.studioengine.tutor.errors.GlobalExceptionHandler;
 import com.studioengine.tutor.errors.exceptions.PrematureClosureException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -65,172 +66,193 @@ class DashboardAppointmentControllerTest {
                 .build();
     }
 
-    @ParameterizedTest
-    @MethodSource("closeOutcomes")
-    void shouldClose(CloseAppointmentRequest.Outcome outcome) throws Exception {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var sendFollowup = true;
-        var closeRequest = CloseAppointmentRequest.builder()
-                .outcome(outcome)
-                .sendFollowup(sendFollowup)
-                .build();
+    @Nested
+    class CloseTest {
+        @ParameterizedTest
+        @MethodSource("closeOutcomes")
+        void shouldClose(CloseAppointmentRequest.Outcome outcome) throws Exception {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sendFollowup = true;
+            var closeRequest = CloseAppointmentRequest.builder()
+                    .outcome(outcome)
+                    .sendFollowup(sendFollowup)
+                    .build();
 
-        var commandOutcome = switch (outcome) {
-            case COMPLETED -> CloseAppointmentCommand.CloseOutcome.COMPLETED;
-            case NO_SHOW -> CloseAppointmentCommand.CloseOutcome.NO_SHOW;
-        };
-        var command = CloseAppointmentCommand.builder()
-                .appointmentId(appointmentId)
-                .outcome(commandOutcome)
-                .sendFollowup(sendFollowup)
-                .build();
-        var closedAppointment = ClosedAppointment.builder()
-                .appointmentId(appointmentId)
-                .state(AppointmentState.COMPLETED)
-                .build();
-        when(appointmentService.close(command)).thenReturn(closedAppointment);
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
+            var commandOutcome = switch (outcome) {
+                case COMPLETED -> CloseAppointmentCommand.CloseOutcome.COMPLETED;
+                case NO_SHOW -> CloseAppointmentCommand.CloseOutcome.NO_SHOW;
+            };
+            var command = CloseAppointmentCommand.builder()
+                    .appointmentId(appointmentId)
+                    .outcome(commandOutcome)
+                    .sendFollowup(sendFollowup)
+                    .build();
+            var closedAppointment = ClosedAppointment.builder()
+                    .appointmentId(appointmentId)
+                    .state(AppointmentState.COMPLETED)
+                    .build();
+            when(appointmentService.close(command)).thenReturn(closedAppointment);
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
 
-        // then
-        verify(appointmentService).close(command);
-        assertThat(response).isNotNull();
+            // then
+            verify(appointmentService).close(command);
+            assertThat(response).isNotNull();
+        }
+
+        static Stream<CloseAppointmentRequest.Outcome> closeOutcomes() {
+            return Stream.of(CloseAppointmentRequest.Outcome.values());
+        }
+
+        @Test
+        void shouldNotCloseWhenOutcomeIsNull() throws Exception {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sendFollowup = true;
+            var closeRequest = CloseAppointmentRequest.builder()
+                    .sendFollowup(sendFollowup)
+                    .build();
+
+            // when
+            mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
+                    .andExpect(status().isBadRequest())
+                    .andReturn().getResponse();
+
+            // then
+            verify(appointmentService, never()).close(any());
+        }
+
+        @Test
+        void shouldNotCloseWhenRequestBodyMissing() throws Exception {
+            // given
+            var appointmentId = UUID.randomUUID();
+
+            // when
+            mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest())
+                    .andReturn().getResponse();
+
+            // then
+            verify(appointmentService, never()).close(any());
+        }
+
+        @Test
+        void shouldNotCloseWhenAppointmentNotExists() throws Exception {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sendFollowup = true;
+            var closeRequest = CloseAppointmentRequest.builder()
+                    .outcome(CloseAppointmentRequest.Outcome.COMPLETED)
+                    .sendFollowup(sendFollowup)
+                    .build();
+
+            var command = CloseAppointmentCommand.builder()
+                    .appointmentId(appointmentId)
+                    .outcome(CloseAppointmentCommand.CloseOutcome.COMPLETED)
+                    .sendFollowup(sendFollowup)
+                    .build();
+
+            var reason = "Appointment not found: %s".formatted(appointmentId);
+            when(appointmentService.close(command)).thenThrow(new ResourceNotFoundException(reason));
+            var expectedError = ErrorResponse.builder()
+                    .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
+                    .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
+                    .andExpect(status().isNotFound())
+                    .andReturn().getResponse();
+
+            // then
+            verify(appointmentService).close(command);
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+        }
+
+        @Test
+        void shouldNotCloseWhenEndTimeNotPassed() throws Exception {
+            // given
+            var appointmentId = UUID.randomUUID();
+            var sendFollowup = true;
+            var closeRequest = CloseAppointmentRequest.builder()
+                    .outcome(CloseAppointmentRequest.Outcome.COMPLETED)
+                    .sendFollowup(sendFollowup)
+                    .build();
+
+            var command = CloseAppointmentCommand.builder()
+                    .appointmentId(appointmentId)
+                    .outcome(CloseAppointmentCommand.CloseOutcome.COMPLETED)
+                    .sendFollowup(sendFollowup)
+                    .build();
+
+            var slotEnd = LocalDateTime.now().plusHours(1);
+            var reason = "Cannot close appointment %s - end time %s has not passed".formatted(appointmentId, slotEnd);
+            when(appointmentService.close(command)).thenThrow(new PrematureClosureException(reason));
+            var expectedError = ErrorResponse.builder()
+                    .message(ErrorCode.PREMATURE_CLOSURE.getMessage())
+                    .code(ErrorCode.PREMATURE_CLOSURE.getCode())
+                    .reason(reason)
+                    .build();
+
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
+                    .andExpect(status().isBadRequest())
+                    .andReturn().getResponse();
+
+            // then
+            verify(appointmentService).close(command);
+            assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
+        }
     }
 
-    static Stream<CloseAppointmentRequest.Outcome> closeOutcomes() {
-        return Stream.of(CloseAppointmentRequest.Outcome.values());
-    }
+    @Nested
+    class CancelTest {
+        @Test
+        void shouldCancel() throws Exception {
+            // given
+            var reason = "Need to cancel!";
+            var appointmentId = UUID.randomUUID();
+            var cancelRequest = CancelAppointmentRequest.builder().reason(reason).build();
+            var command = CancelAppointmentCommand.builder().appointmentId(appointmentId).reason(reason).build();
+            var canceledAppointment = CanceledAppointment.builder().appointmentId(appointmentId).state(AppointmentState.CANCELLED).build();
+            when(appointmentService.cancel(command)).thenReturn(canceledAppointment);
 
-    @Test
-    void shouldNotCloseWhenOutcomeIsNull() throws Exception {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var sendFollowup = true;
-        var closeRequest = CloseAppointmentRequest.builder()
-                .sendFollowup(sendFollowup)
-                .build();
+            // when
+            var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/cancel", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(cancelAppointmentRequestJson.write(cancelRequest).getJson()))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse();
 
-        // when
-        mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse();
+            // then
+            verify(appointmentService).cancel(command);
+            assertThat(response).isNotNull();
+        }
 
-        // then
-        verify(appointmentService, never()).close(any());
-    }
+        @Test
+        void shouldNotCancelWhenReasonMissing() throws Exception {
+            var appointmentId = UUID.randomUUID();
+            var cancelRequest = CancelAppointmentRequest.builder().build();
 
-    @Test
-    void shouldNotCloseWhenAppointmentNotExists() throws Exception {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var sendFollowup = true;
-        var closeRequest = CloseAppointmentRequest.builder()
-                .outcome(CloseAppointmentRequest.Outcome.COMPLETED)
-                .sendFollowup(sendFollowup)
-                .build();
+            mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/cancel", appointmentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(cancelAppointmentRequestJson.write(cancelRequest).getJson()))
+                    .andExpect(status().isBadRequest());
 
-        var command = CloseAppointmentCommand.builder()
-                .appointmentId(appointmentId)
-                .outcome(CloseAppointmentCommand.CloseOutcome.COMPLETED)
-                .sendFollowup(sendFollowup)
-                .build();
-
-        var reason = "Appointment not found: %s".formatted(appointmentId);
-        when(appointmentService.close(command)).thenThrow(new ResourceNotFoundException(reason));
-        var expectedError = ErrorResponse.builder()
-                .message(ErrorCode.RESOURCE_NOT_FOUND.getMessage())
-                .code(ErrorCode.RESOURCE_NOT_FOUND.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
-                .andExpect(status().isNotFound())
-                .andReturn().getResponse();
-
-        // then
-        verify(appointmentService).close(command);
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
-    }
-
-    @Test
-    void shouldNotCloseWhenEndTimeNotPassed() throws Exception {
-        // given
-        var appointmentId = UUID.randomUUID();
-        var sendFollowup = true;
-        var closeRequest = CloseAppointmentRequest.builder()
-                .outcome(CloseAppointmentRequest.Outcome.COMPLETED)
-                .sendFollowup(sendFollowup)
-                .build();
-
-        var command = CloseAppointmentCommand.builder()
-                .appointmentId(appointmentId)
-                .outcome(CloseAppointmentCommand.CloseOutcome.COMPLETED)
-                .sendFollowup(sendFollowup)
-                .build();
-
-        var slotEnd = LocalDateTime.now().plusHours(1);
-        var reason = "Cannot close appointment %s - end time %s has not passed".formatted(appointmentId, slotEnd);
-        when(appointmentService.close(command)).thenThrow(new PrematureClosureException(reason));
-        var expectedError = ErrorResponse.builder()
-                .message(ErrorCode.PREMATURE_CLOSURE.getMessage())
-                .code(ErrorCode.PREMATURE_CLOSURE.getCode())
-                .reason(reason)
-                .build();
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/close", appointmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(closeAppointmentRequestJson.write(closeRequest).getJson()))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse();
-
-        // then
-        verify(appointmentService).close(command);
-        assertThat(response.getContentAsString()).isEqualTo(errorResponseJson.write(expectedError).getJson());
-    }
-
-    @Test
-    void shouldCancel() throws Exception {
-        // given
-        var reason = "Need to cancel!";
-        var appointmentId = UUID.randomUUID();
-        var cancelRequest = CancelAppointmentRequest.builder().reason(reason).build();
-        var command = CancelAppointmentCommand.builder().appointmentId(appointmentId).reason(reason).build();
-        var canceledAppointment = CanceledAppointment.builder().appointmentId(appointmentId).state(AppointmentState.CANCELLED).build();
-        when(appointmentService.cancel(command)).thenReturn(canceledAppointment);
-
-        // when
-        var response = mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/cancel", appointmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(cancelAppointmentRequestJson.write(cancelRequest).getJson()))
-                .andExpect(status().isOk())
-                .andReturn().getResponse();
-
-        // then
-        verify(appointmentService).cancel(command);
-        assertThat(response).isNotNull();
-    }
-
-    @Test
-    void shouldNotCancelWhenReasonMissing() throws Exception {
-        var appointmentId = UUID.randomUUID();
-        var cancelRequest = CancelAppointmentRequest.builder().build();
-
-        mockMvc.perform(post("/api/v1/dashboard/appointments/{id}/cancel", appointmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(cancelAppointmentRequestJson.write(cancelRequest).getJson()))
-                .andExpect(status().isBadRequest());
-
-        verify(appointmentService, never()).cancel(any());
+            verify(appointmentService, never()).cancel(any());
+        }
     }
 }
