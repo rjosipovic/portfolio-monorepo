@@ -94,6 +94,17 @@ class StripeWebhookControllerTest {
     }
 
     @Test
+    void shouldNotProcessWhenStripeSignatureMissing() throws Exception {
+        // given / when / then
+        mockMvc.perform(post("/api/v1/webhooks/stripe")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"type\": \"checkout.session.completed\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(paymentService, never()).handleStripeWebhookConfirmation(any());
+    }
+
+    @Test
     void shouldNotProcessWhenValidationFailed() throws Exception {
         // given
         var reason = "Stripe webhook processing failed";

@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -76,6 +77,17 @@ public class GlobalExceptionHandler {
                 .reason("Parameter '%s' must be of type %s".formatted(ex.getName(), ex.getRequiredType().getSimpleName()))
                 .build();
 
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingHeader(MissingRequestHeaderException ex) {
+        log.warn("Missing request header: {}", ex.getHeaderName());
+        var response = ErrorResponse.builder()
+                .message("Missing required header")
+                .code("VALIDATION")
+                .reason("Header '%s' is required".formatted(ex.getHeaderName()))
+                .build();
         return ResponseEntity.badRequest().body(response);
     }
 
