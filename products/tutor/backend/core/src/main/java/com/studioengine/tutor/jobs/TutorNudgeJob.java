@@ -11,8 +11,8 @@ import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Set;
 
@@ -31,17 +31,18 @@ public class TutorNudgeJob {
     private final BrandProperties brandProperties;
     private final SchedulingProperties schedulingProperties;
     private final TutorNudgeHandler tutorNudgeHandler;
+    private final Clock clock;
 
     @Scheduled(fixedRate = 1_800_000) // every 30 min
     @SchedulerLock(name = "tutorNudgeJob", lockAtLeastFor = "PT5M", lockAtMostFor = "PT25M")
     public void nudgeTutor() {
         var timezone = ZoneId.of(brandProperties.getTimezone());
-        var now = LocalTime.now(timezone);
-        var today = LocalDate.now(timezone);
-        var nudgeAfter = now.minus(schedulingProperties.getNudgeDelay());
+        var cutoff = LocalDateTime.now(clock.withZone(timezone)).minus(schedulingProperties.getNudgeDelay());
+        var cutoffDate = cutoff.toLocalDate();
+        var cutoffTime = cutoff.toLocalTime();
 
         var unclosedAppointmentIds = appointmentRepository
-                .findUnclosedPastAppointments(UNCLOSED_STATES, today, nudgeAfter).stream()
+                .findUnclosedPastAppointments(UNCLOSED_STATES, cutoffDate, cutoffTime).stream()
                 .map(Appointment::getId)
                 .toList();
 
