@@ -13,7 +13,7 @@ import com.studioengine.tutor.errors.ErrorResponse;
 import com.studioengine.tutor.errors.GlobalExceptionHandler;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
-import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
+import com.studioengine.tutor.errors.exceptions.SlotModificationBlockedException;
 import com.studioengine.tutor.scheduling.CreateSlotsCommand;
 import com.studioengine.tutor.scheduling.CalendarSlot;
 import com.studioengine.tutor.scheduling.CreatedSlot;
@@ -360,10 +360,10 @@ class DashboardCalendarControllerTest {
         var command = WithdrawSlotsCommand.builder()
                 .slotIds(List.of(slotToWithdrawId1, slotToWithdrawId2))
                 .build();
-        doThrow(new SlotWithdrawalBlockedException("Slot %s has an active appointment".formatted(slotToWithdrawId2))).when(timeSlotService).withdrawSlots(command);
+        doThrow(new SlotModificationBlockedException("Slot %s has an active appointment".formatted(slotToWithdrawId2))).when(timeSlotService).withdrawSlots(command);
         var expectedError = ErrorResponse.builder()
-                .message(ErrorCode.SLOT_WITHDRAWAL_BLOCKED.getMessage())
-                .code(ErrorCode.SLOT_WITHDRAWAL_BLOCKED.getCode())
+                .message(ErrorCode.SLOT_MODIFICATION_BLOCKED.getMessage())
+                .code(ErrorCode.SLOT_MODIFICATION_BLOCKED.getCode())
                 .reason("Slot %s has an active appointment".formatted(slotToWithdrawId2))
                 .build();
 

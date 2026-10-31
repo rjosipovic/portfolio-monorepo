@@ -13,7 +13,7 @@ public enum ErrorCode {
     WEBHOOK_VERIFICATION_FAILED("T004", "Webhook signature verification failed"),
     DEADLINE_PASSED("T005", "Cancellation/reschedule deadline passed"),
     TOKEN_EXPIRED("T006", "Token invalid, expired or already used"),
-    SLOT_WITHDRAWAL_BLOCKED("T007", "Cannot withdraw slot with active appointment"),
+    SLOT_MODIFICATION_BLOCKED("T007", "Cannot modify slot with active appointment"),
     PREMATURE_CLOSURE("T008", "Cannot close appointment before end time"),
     MISSING_CANCELLATION_REASON("T009", "Cancellation reason required"),
     AUTHENTICATION_FAILED("T010", "Missing or invalid JWT"),

@@ -11,7 +11,7 @@ import com.studioengine.tutor.errors.exceptions.InvalidSlotTimeException;
 import com.studioengine.tutor.errors.exceptions.PastSlotException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
-import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
+import com.studioengine.tutor.errors.exceptions.SlotModificationBlockedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,7 +143,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         var blockers = appointmentRepository.findByTimeSlotIdInAndStateIn(slotIds, ACTIVE_APPOINTMENT_STATES);
         if (!blockers.isEmpty()) {
             var blockedSlotId = blockers.getFirst().getTimeSlot().getId();
-            throw new SlotWithdrawalBlockedException(
+            throw new SlotModificationBlockedException(
                     "Slot %s has an active appointment".formatted(blockedSlotId)
             );
         }

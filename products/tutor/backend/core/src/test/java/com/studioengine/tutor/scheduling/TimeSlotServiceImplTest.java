@@ -11,7 +11,7 @@ import com.studioengine.tutor.errors.exceptions.InvalidSlotTimeException;
 import com.studioengine.tutor.errors.exceptions.PastSlotException;
 import com.studioengine.tutor.errors.exceptions.ResourceNotFoundException;
 import com.studioengine.tutor.errors.exceptions.SlotConflictException;
-import com.studioengine.tutor.errors.exceptions.SlotWithdrawalBlockedException;
+import com.studioengine.tutor.errors.exceptions.SlotModificationBlockedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -327,7 +327,7 @@ class TimeSlotServiceImplTest {
 
         // when
         assertThatThrownBy(() -> timeSlotService.withdrawSlots(command))
-                .isInstanceOf(SlotWithdrawalBlockedException.class);
+                .isInstanceOf(SlotModificationBlockedException.class);
         // then
         verify(timeSlotRepository).findAllByIdForUpdate(ids);
         verify(stateMachine, never()).transition(any(), any(), any());
@@ -384,7 +384,7 @@ class TimeSlotServiceImplTest {
 
         // when
         assertThatThrownBy(() -> timeSlotService.deleteSlots(command))
-                .isInstanceOf(SlotWithdrawalBlockedException.class);
+                .isInstanceOf(SlotModificationBlockedException.class);
 
         // then
         verify(timeSlotRepository).findAllByIdForUpdate(ids);

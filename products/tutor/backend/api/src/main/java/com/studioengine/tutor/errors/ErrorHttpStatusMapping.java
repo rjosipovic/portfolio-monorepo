@@ -19,7 +19,7 @@ import static com.studioengine.tutor.errors.ErrorCode.RESOURCE_NOT_FOUND;
 import static com.studioengine.tutor.errors.ErrorCode.SLOT_CONFLICT;
 import static com.studioengine.tutor.errors.ErrorCode.SLOT_IN_PAST;
 import static com.studioengine.tutor.errors.ErrorCode.SLOT_NOT_ON_THE_HOUR;
-import static com.studioengine.tutor.errors.ErrorCode.SLOT_WITHDRAWAL_BLOCKED;
+import static com.studioengine.tutor.errors.ErrorCode.SLOT_MODIFICATION_BLOCKED;
 import static com.studioengine.tutor.errors.ErrorCode.TOKEN_EXPIRED;
 import static com.studioengine.tutor.errors.ErrorCode.WEBHOOK_DESERIALIZATION_FAILED;
 import static com.studioengine.tutor.errors.ErrorCode.WEBHOOK_VERIFICATION_FAILED;
@@ -42,7 +42,7 @@ public final class ErrorHttpStatusMapping {
             Map.entry(PAYMENT_PROVIDER_ERROR, SERVICE_UNAVAILABLE),
             Map.entry(DEADLINE_PASSED, BAD_REQUEST),
             Map.entry(TOKEN_EXPIRED, GONE),
-            Map.entry(SLOT_WITHDRAWAL_BLOCKED, BAD_REQUEST),
+            Map.entry(SLOT_MODIFICATION_BLOCKED, BAD_REQUEST),
             Map.entry(PREMATURE_CLOSURE, BAD_REQUEST),
             Map.entry(MISSING_CANCELLATION_REASON, BAD_REQUEST),
             Map.entry(AUTHENTICATION_FAILED, UNAUTHORIZED),
