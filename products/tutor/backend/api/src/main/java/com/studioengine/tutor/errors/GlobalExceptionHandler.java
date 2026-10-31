@@ -1,16 +1,20 @@
 package com.studioengine.tutor.errors;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -100,6 +104,32 @@ public class GlobalExceptionHandler {
                 .reason("Request body is malformed or missing")
                 .build();
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        log.warn("Method not supported: {}", ex.getMessage());
+        var response = ErrorResponse.builder()
+                .message("Method not allowed")
+                .code("METHOD_NOT_ALLOWED")
+                .reason("HTTP method '%s' is not supported for this endpoint".formatted(ex.getMethod()))
+                .build();
+        var builder = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (Objects.nonNull(ex.getSupportedHttpMethods())) {
+            builder.allow(ex.getSupportedHttpMethods().toArray(new HttpMethod[0]));
+        }
+        return builder.body(response);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("No resource found: {}", ex.getResourcePath());
+        var response = ErrorResponse.builder()
+                .message("Resource not found")
+                .code("NOT_FOUND")
+                .reason("No endpoint found for the requested path")
+                .build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(Exception.class)
