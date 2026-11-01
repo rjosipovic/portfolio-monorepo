@@ -39,10 +39,12 @@ import { api } from '../api.js';
       });
   
       document.getElementById('new-student-btn').addEventListener('click', () => {
+          resetNewStudentForm();
           document.getElementById('new-student-form').classList.remove('hidden');
       });
   
       document.getElementById('cancel-student-btn').addEventListener('click', () => {
+        resetNewStudentForm();
           document.getElementById('new-student-form').classList.add('hidden');
       });
   
@@ -61,6 +63,7 @@ import { api } from '../api.js';
           try {
               await api.post('/dashboard/students', { name, email, phone });
               document.getElementById('new-student-form').classList.add('hidden');
+              resetNewStudentForm();
               await loadStudents('');
           } catch (err) {
               errorEl.textContent = err.reason || 'Greška pri spremanju';
@@ -194,6 +197,9 @@ import { api } from '../api.js';
   
               try {
                   await api.post(`/dashboard/students/${studentId}/benefits`, body);
+                  document.getElementById('benefit-value').value = '';
+                  document.getElementById('benefit-note').value = '';
+                  document.getElementById('benefit-type').selectedIndex = 0;
                   const updatedBenefits = await api.get(`/dashboard/students/${studentId}/benefits`);
                   document.getElementById('benefits-list').innerHTML = renderBenefits(updatedBenefits);
               } catch (err) {
@@ -274,4 +280,13 @@ import { api } from '../api.js';
               </tbody>
           </table>
       `;
+  }
+
+  function resetNewStudentForm() {
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-email').value = '';
+    document.getElementById('new-phone').value = '';
+    const errorEl = document.getElementById('new-student-error');
+    errorEl.textContent = '';
+    errorEl.classList.add('hidden');
   }
