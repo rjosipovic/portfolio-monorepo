@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface StudentBenefitRepository extends JpaRepository<StudentBenefit, UUID> {
 
-    @Query("SELECT b FROM StudentBenefit b WHERE b.student.id = :studentId AND b.consumed = false ORDER BY b.grantedAt ASC")
+    @Query("SELECT b FROM StudentBenefit b WHERE b.student.id = :studentId AND b.consumed = false ORDER BY b.grantedAt ASC LIMIT 1")
     Optional<StudentBenefit> findOldestUnconsumedByStudentId(UUID studentId);
 
     List<StudentBenefit> findByStudentIdOrderByGrantedAtDesc(UUID studentId);
